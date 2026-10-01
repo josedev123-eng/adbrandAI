@@ -4,6 +4,7 @@ import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.GenerarAnuncioRequest;
 import com.adbrand.core.contenido.service.AnuncioService;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,5 +26,11 @@ public class AnuncioController {
     @PostMapping
     public AnuncioGeneradoResponse generar(@Valid @RequestBody GenerarAnuncioRequest datos) {
         return servicio.generar(USUARIO_DE_PRUEBA, datos);
+    }
+
+    // HU 12: regenerar contenido con los mismos parámetros
+    @PostMapping("/{id}/regenerar")
+    public AnuncioGeneradoResponse regenerar(@PathVariable Long id) {
+        return servicio.regenerar(USUARIO_DE_PRUEBA, id);
     }
 }
