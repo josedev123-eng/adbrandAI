@@ -1,4 +1,4 @@
-// Model: llamadas a la API de moderación (HU-14).
+// Model: llamadas a la API de moderación (HU-14, HU-15).
 import { apiRequest } from '../../../shared/services/apiClient'
 
 export const NOMBRES_RED = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook' }
@@ -11,6 +11,20 @@ export function listarDudosos() {
 
 export function obtenerContenido(id) {
   return apiRequest(`/moderacion/contenidos/${id}/`)
+}
+
+export function moderarContenido(id, accion, moderadorId) {
+  return apiRequest(`/moderacion/contenidos/${id}/moderar/`, {
+    method: 'POST',
+    body: { accion, moderador_id: moderadorId },
+  })
+}
+
+export function actualizarEstado(id, estado, moderadorId, motivoRechazo = '') {
+  return apiRequest(`/moderacion/contenido/${id}/estado/`, {
+    method: 'PATCH',
+    body: { estado, moderador_id: moderadorId, motivo_rechazo: motivoRechazo },
+  })
 }
 
 const FORMATO_FECHA = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeStyle: 'short' })
