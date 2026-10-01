@@ -5,6 +5,8 @@ class Contenido(models.Model):
     """Contenido generado por la IA. La tabla la crea Flyway (V3) y la llena Spring (HU 13)."""
 
     DUDOSO = "DUDOSO"
+    APROBADO = "APROBADO"
+    RECHAZADO = "RECHAZADO"
 
     usuario_id = models.BigIntegerField()
     tipo = models.CharField(max_length=20)
@@ -14,6 +16,7 @@ class Contenido(models.Model):
     texto = models.TextField()
     estado = models.CharField(max_length=20)
     motivo_revision = models.CharField(max_length=500, null=True, blank=True)
+    moderador_id = models.BigIntegerField(null=True, blank=True)
     fecha_creacion = models.DateTimeField()
     fecha_actualizacion = models.DateTimeField()
 
