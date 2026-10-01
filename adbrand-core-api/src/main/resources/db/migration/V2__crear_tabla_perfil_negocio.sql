@@ -1,0 +1,11 @@
+CREATE TABLE perfil_negocio (
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id BIGINT NOT NULL UNIQUE,
+    nombre_comercial VARCHAR(120) NOT NULL,
+    rubro VARCHAR(80) NOT NULL,
+    publico_objetivo VARCHAR(300) NOT NULL,
+    tono VARCHAR(20) NOT NULL CHECK (tono IN ('CERCANO', 'PROFESIONAL', 'DIVERTIDO', 'ELEGANTE')),
+    descripcion VARCHAR(500),
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
