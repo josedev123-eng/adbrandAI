@@ -40,9 +40,25 @@ class ContenidoDetalleSerializer(serializers.ModelSerializer):
             "oferta",
             "texto",
             "motivo_revision",
+            "moderador_id",
             "negocio",
             "fecha_creacion",
         ]
 
     def get_negocio(self, contenido):
         return _negocio_de(contenido)
+
+
+class ModerarContenidoSerializer(serializers.Serializer):
+    """Serializador para aprobar o rechazar contenido (HU 15)."""
+
+    accion = serializers.ChoiceField(choices=["APROBAR", "RECHAZAR"])
+    moderador_id = serializers.IntegerField(min_value=1)
+
+
+class ActualizarEstadoSerializer(serializers.Serializer):
+    """Serializador para PATCH /api/contenido/{id}/estado (HU 15)."""
+
+    estado = serializers.ChoiceField(choices=["APROBADO", "RECHAZADO"])
+    motivo_rechazo = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    moderador_id = serializers.IntegerField(min_value=1, required=False)
