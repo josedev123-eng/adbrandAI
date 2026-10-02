@@ -7,6 +7,9 @@ export default function GenerarAnuncioView({ irAPerfil }) {
   const { solicitud, errores, anuncio, aviso, faltaPerfil, generando, copiado, cambiarCampo, generar, copiar } =
     useGenerarAnuncio()
 
+  // HU 13: si el filtro lo marcó como dudoso, no se puede copiar para publicarlo.
+  const enRevision = anuncio?.estado === 'DUDOSO'
+
   function alEnviar(evento) {
     evento.preventDefault()
     generar()
@@ -86,16 +89,27 @@ export default function GenerarAnuncioView({ irAPerfil }) {
 
           {!generando && anuncio && (
             <>
-              <p className="resultado-texto">{anuncio.texto}</p>
+              {enRevision && (
+                <div className="aviso aviso-revision">
+                  <strong>Tu anuncio quedó en revisión.</strong> El filtro automático encontró algo que un
+                  moderador debe revisar antes de que puedas publicarlo.
+                  <span className="aviso-motivo">Motivo: {anuncio.motivoRevision}</span>
+                </div>
+              )}
+              <p className={enRevision ? 'resultado-texto resultado-texto-revision' : 'resultado-texto'}>
+                {anuncio.texto}
+              </p>
               <div className="resultado-datos">
                 <span>Tono: {NOMBRES_TONO[anuncio.tono]}</span>
                 <span>{REDES.find((red) => red.valor === anuncio.redSocial)?.nombre}</span>
                 {anuncio.simulado && <span className="etiqueta-simulado">Respuesta simulada</span>}
               </div>
               <div className="resultado-acciones">
-                <button type="button" className="boton-primario" onClick={copiar}>
-                  {copiado ? '¡Copiado!' : 'Copiar texto'}
-                </button>
+                {!enRevision && (
+                  <button type="button" className="boton-primario" onClick={copiar}>
+                    {copiado ? '¡Copiado!' : 'Copiar texto'}
+                  </button>
+                )}
                 <button type="button" className="boton-secundario" onClick={generar}>
                   Generar otra versión
                 </button>
