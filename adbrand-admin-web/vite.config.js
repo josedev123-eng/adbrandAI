@@ -5,4 +5,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: { port: 5174 },
+  // Pruebas con Vitest: simula un navegador (jsdom) para dibujar las pantallas.
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+  },
 })
