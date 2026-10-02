@@ -1,6 +1,6 @@
-// ViewModel: pide el anuncio a la IA, maneja los errores y permite copiarlo (HU-10).
+// ViewModel: pide el anuncio a la IA, maneja los errores y permite copiarlo/regenerarlo (HU-10, HU-12).
 import { useState } from 'react'
-import { generarAnuncio } from '../models/anunciosApi'
+import { generarAnuncio, regenerarAnuncio } from '../models/anunciosApi'
 
 export const MAXIMO_OFERTA = 300
 
@@ -19,6 +19,7 @@ export function useGenerarAnuncio() {
   const [aviso, setAviso] = useState(null)
   const [faltaPerfil, setFaltaPerfil] = useState(false)
   const [generando, setGenerando] = useState(false)
+  const [regenerando, setRegenerando] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
   function cambiarCampo(campo, valor) {
@@ -54,6 +55,28 @@ export function useGenerarAnuncio() {
     }
   }
 
+  // HU 12: regenerar contenido con los mismos parámetros
+  async function regenerar() {
+    if (!anuncio) return
+
+    setAviso(null)
+    setCopiado(false)
+    setRegenerando(true)
+    try {
+      setAnuncio(await regenerarAnuncio(anuncio.id))
+    } catch (error) {
+      if (error.codigo === 'IA_NO_DISPONIBLE') {
+        setAviso(error.message)
+      } else if (error.status === 404) {
+        setAviso('El contenido original ya no existe.')
+      } else {
+        setAviso('No se pudo regenerar el contenido.')
+      }
+    } finally {
+      setRegenerando(false)
+    }
+  }
+
   async function copiar() {
     try {
       await navigator.clipboard.writeText(anuncio.texto)
@@ -63,5 +86,5 @@ export function useGenerarAnuncio() {
     }
   }
 
-  return { solicitud, errores, anuncio, aviso, faltaPerfil, generando, copiado, cambiarCampo, generar, copiar }
+  return { solicitud, errores, anuncio, aviso, faltaPerfil, generando, regenerando, copiado, cambiarCampo, generar, regenerar, copiar }
 }
