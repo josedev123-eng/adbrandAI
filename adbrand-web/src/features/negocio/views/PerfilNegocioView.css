@@ -1,0 +1,30 @@
+.pagina { max-width: 680px; margin: 0 auto; padding: 40px 16px; display: flex; flex-direction: column; gap: 20px; }
+.pagina-cabecera p { margin: 4px 0 0; color: var(--muted); }
+.cargando { color: var(--muted); }
+.tarjeta { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); }
+.formulario { display: flex; flex-direction: column; gap: 18px; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campo > span, .tonos legend { font-size: 0.85rem; font-weight: 600; }
+.campo input, .campo select, .campo textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font: inherit; color: inherit; }
+.campo textarea { resize: vertical; }
+.campo input:focus, .campo select:focus, .campo textarea:focus { border-color: var(--primary); outline: 2px solid var(--primary-soft); }
+.campo-con-error input, .campo-con-error select, .campo-con-error textarea { border-color: var(--bad); }
+.campo-error { font-size: 0.8rem; color: var(--bad); }
+.campo-ayuda { font-size: 0.78rem; color: var(--muted); }
+.tonos { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tonos legend { margin-bottom: 8px; padding: 0; }
+.tonos-opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tono { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.tono input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.tono small { color: var(--muted); font-size: 0.78rem; }
+.tono-activo { border-color: var(--primary); background: var(--primary-soft); }
+.tono-activo b { color: var(--primary); }
+.tono:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tonos.campo-con-error .tono { border-color: var(--bad); }
+.boton-primario { padding: 11px 18px; border: none; border-radius: 10px; background: var(--primary); color: #ffffff; font-weight: 600; cursor: pointer; }
+.boton-primario:disabled { opacity: 0.6; cursor: wait; }
+.aviso { padding: 12px 14px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; }
+.aviso-exito { background: var(--ok-soft); color: var(--ok); }
+.aviso-error { background: var(--bad-soft); color: var(--bad); }
+@media (max-width: 560px) { .fila { grid-template-columns: 1fr; } }
