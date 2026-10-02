@@ -1,0 +1,6 @@
+.menu-usuario { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.menu-marca { font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; }
+.menu-marca b { color: var(--ia); }
+.menu-opciones { display: flex; gap: 4px; }
+.menu-opcion { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.menu-opcion-activa { background: var(--primary-soft); color: var(--primary); }
