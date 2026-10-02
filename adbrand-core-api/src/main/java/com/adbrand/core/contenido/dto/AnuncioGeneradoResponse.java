@@ -1,7 +1,28 @@
 package com.adbrand.core.contenido.dto;
 
+import com.adbrand.core.contenido.entity.Contenido;
+import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.negocio.entity.Tono;
 
-// El anuncio listo para copiar. "simulado" avisa a la web si vino del modo de prueba.
-public record AnuncioGeneradoResponse(String texto, RedSocial redSocial, Tono tono, boolean simulado) {
+// El anuncio generado. "simulado" avisa si vino del modo de prueba;
+// "estado" y "motivoRevision" dicen si pasó el filtro automático (HU 13).
+public record AnuncioGeneradoResponse(
+        Long id,
+        String texto,
+        RedSocial redSocial,
+        Tono tono,
+        boolean simulado,
+        EstadoContenido estado,
+        String motivoRevision) {
+
+    public static AnuncioGeneradoResponse desde(Contenido contenido, boolean simulado) {
+        return new AnuncioGeneradoResponse(
+                contenido.getId(),
+                contenido.getTexto(),
+                contenido.getRedSocial(),
+                contenido.getTono(),
+                simulado,
+                contenido.getEstado(),
+                contenido.getMotivoRevision());
+    }
 }

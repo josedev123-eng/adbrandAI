@@ -20,5 +20,8 @@
 .resultado-datos span { background: var(--surface-2); padding: 3px 10px; border-radius: 999px; }
 .resultado-datos .etiqueta-simulado { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
 .resultado-acciones { display: flex; flex-wrap: wrap; gap: 10px; }
+.aviso-revision { display: flex; flex-direction: column; gap: 4px; background: var(--warn-soft); color: var(--warn); font-weight: 500; }
+.aviso-motivo { font-weight: 700; }
+.resultado-texto-revision { opacity: 0.6; }
 .aviso-con-accion { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
 @media (max-width: 760px) { .anuncio-columnas { grid-template-columns: 1fr; } }

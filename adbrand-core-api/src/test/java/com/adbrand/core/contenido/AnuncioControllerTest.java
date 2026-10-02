@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.adbrand.core.contenido.controller.AnuncioController;
 import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.RedSocial;
+import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.service.AnuncioService;
 import com.adbrand.core.ia.service.IaNoDisponibleException;
 import com.adbrand.core.negocio.entity.Tono;
@@ -36,13 +37,15 @@ class AnuncioControllerTest {
     @Test
     void devuelveElAnuncioListoParaCopiar() throws Exception {
         when(servicio.generar(eq(1L), any())).thenReturn(
-                new AnuncioGeneradoResponse("¡2x1 hoy!", RedSocial.INSTAGRAM, Tono.DIVERTIDO, false));
+                new AnuncioGeneradoResponse(7L, "¡2x1 hoy!", RedSocial.INSTAGRAM, Tono.DIVERTIDO, false,
+                        EstadoContenido.APROBADO, null));
 
         mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"oferta\":\"2x1 en tortas\",\"redSocial\":\"INSTAGRAM\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.texto").value("¡2x1 hoy!"))
-                .andExpect(jsonPath("$.tono").value("DIVERTIDO"));
+                .andExpect(jsonPath("$.tono").value("DIVERTIDO"))
+                .andExpect(jsonPath("$.estado").value("APROBADO"));
     }
 
     @Test

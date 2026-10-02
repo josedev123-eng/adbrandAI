@@ -2,6 +2,7 @@ package com.adbrand.core.contenido;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,9 @@ import static org.mockito.Mockito.when;
 import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.GenerarAnuncioRequest;
 import com.adbrand.core.contenido.dto.RedSocial;
+import com.adbrand.core.contenido.entity.Contenido;
+import com.adbrand.core.contenido.entity.EstadoContenido;
+import com.adbrand.core.contenido.repository.ContenidoRepository;
 import com.adbrand.core.contenido.service.AnuncioService;
 import com.adbrand.core.contenido.service.PlantillaPromptAnuncio;
 import com.adbrand.core.ia.service.IaNoDisponibleException;
@@ -18,6 +22,8 @@ import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
 import com.adbrand.core.negocio.entity.Tono;
 import com.adbrand.core.negocio.service.PerfilNegocioService;
+import com.adbrand.core.revision.dto.ResultadoRevision;
+import com.adbrand.core.revision.service.FiltroContenido;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,13 +37,21 @@ class AnuncioServiceTest {
 
     private PerfilNegocioService perfilService;
     private ServicioIa ia;
+    private FiltroContenido filtro;
+    private ContenidoRepository contenidos;
     private AnuncioService servicio;
 
     @BeforeEach
     void preparar() {
         perfilService = mock(PerfilNegocioService.class);
         ia = mock(ServicioIa.class);
-        servicio = new AnuncioService(perfilService, new PlantillaPromptAnuncio(), ia);
+        filtro = mock(FiltroContenido.class);
+        contenidos = mock(ContenidoRepository.class);
+        servicio = new AnuncioService(perfilService, new PlantillaPromptAnuncio(), ia, filtro, contenidos);
+
+        // Por defecto el filtro aprueba y "guardar" devuelve lo mismo que recibe.
+        when(filtro.revisar(anyString())).thenReturn(ResultadoRevision.sinObservaciones());
+        when(contenidos.save(any(Contenido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
     }
 
     private void perfilConTono(Tono tono) {
@@ -66,6 +80,7 @@ class AnuncioServiceTest {
         assertThat(anuncio.texto()).isEqualTo("Texto del anuncio");
         assertThat(anuncio.tono()).isEqualTo(tono);
         assertThat(anuncio.redSocial()).isEqualTo(red);
+        assertThat(anuncio.estado()).isEqualTo(EstadoContenido.APROBADO);
     }
 
     @Test
