@@ -1,5 +1,6 @@
 package com.adbrand.core.shared.error;
 
+import com.adbrand.core.ia.service.IaNoDisponibleException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -34,5 +35,11 @@ public class ManejadorDeErrores {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse noEncontrado(RecursoNoEncontradoException ex) {
         return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
+    @ExceptionHandler(IaNoDisponibleException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse iaNoDisponible(IaNoDisponibleException ex) {
+        return new ErrorResponse("IA_NO_DISPONIBLE",
+                "El servicio de IA no responde en este momento. Intenta de nuevo en unos minutos.", Map.of());
     }
 }
