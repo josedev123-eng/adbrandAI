@@ -1,0 +1,24 @@
+.pagina.pagina-anuncio { max-width: 960px; }
+.anuncio-columnas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.redes { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.redes legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; padding: 0; }
+.redes-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.red { position: relative; padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px; font-size: 0.9rem; cursor: pointer; }
+.red input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.red-activa { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.red:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+.boton-ia { padding: 11px 18px; border: none; border-radius: 10px; background: var(--ia); color: #ffffff; font-weight: 600; cursor: pointer; }
+.boton-ia:disabled { opacity: 0.6; cursor: wait; }
+.boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; cursor: pointer; }
+.resultado { display: flex; flex-direction: column; gap: 14px; }
+.resultado-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.resultado-cabecera h2 { font-size: 1.15rem; }
+.etiqueta-ia { background: var(--ia-soft); color: var(--ia); font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.resultado-vacio { color: var(--muted); padding: 32px 12px; text-align: center; border: 1.5px dashed var(--line); border-radius: 10px; margin: 0; }
+.resultado-texto { white-space: pre-wrap; background: var(--surface-2); padding: 14px; border-radius: 10px; margin: 0; line-height: 1.6; }
+.resultado-datos { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.resultado-datos span { background: var(--surface-2); padding: 3px 10px; border-radius: 999px; }
+.resultado-datos .etiqueta-simulado { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+.resultado-acciones { display: flex; flex-wrap: wrap; gap: 10px; }
+.aviso-con-accion { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+@media (max-width: 760px) { .anuncio-columnas { grid-template-columns: 1fr; } }
