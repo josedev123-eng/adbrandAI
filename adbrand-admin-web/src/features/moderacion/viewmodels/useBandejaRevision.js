@@ -9,6 +9,7 @@ export function useBandejaRevision() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [version, setVersion] = useState(0)
+  const [seleccionadoId, setSeleccionadoId] = useState(null)
 
   // Se vuelve a ejecutar cada vez que cambia "version" (botón Actualizar).
   useEffect(() => {
@@ -26,5 +27,14 @@ export function useBandejaRevision() {
     setVersion((actual) => actual + 1)
   }
 
-  return { contenidos, cargando, error, recargar }
+  // HU 14, criterio 2: al abrir un contenido se muestra su detalle.
+  function abrir(id) {
+    setSeleccionadoId(id)
+  }
+
+  function volverALaBandeja() {
+    setSeleccionadoId(null)
+  }
+
+  return { contenidos, cargando, error, recargar, seleccionadoId, abrir, volverALaBandeja }
 }

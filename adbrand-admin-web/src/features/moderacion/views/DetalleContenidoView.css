@@ -1,0 +1,16 @@
+.detalle { display: flex; flex-direction: column; gap: 18px; }
+.boton-volver { align-self: flex-start; border: 0; background: transparent; padding: 0; color: var(--primary); font-weight: 600; cursor: pointer; }
+.detalle-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.detalle-cabecera h2 { margin: 0; }
+.etiqueta-estado { font-size: 0.8rem; font-weight: 700; padding: 3px 12px; border-radius: 999px; }
+.estado-dudoso { background: var(--warn-soft); color: var(--warn); }
+.estado-aprobado { background: var(--ok-soft); color: var(--ok); }
+.estado-rechazado { background: var(--bad-soft); color: var(--bad); }
+.detalle-motivo { background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 14px 16px; }
+.detalle-motivo p { margin: 4px 0 0; font-weight: 600; }
+.detalle-subtitulo { font-size: 0.85rem; font-weight: 700; color: var(--muted); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.detalle-texto { white-space: pre-wrap; background: var(--surface-2); padding: 14px; border-radius: 10px; margin: 0; line-height: 1.6; }
+.detalle-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 0; }
+.dato { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.dato dt { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.dato dd { margin: 2px 0 0; font-weight: 600; }
