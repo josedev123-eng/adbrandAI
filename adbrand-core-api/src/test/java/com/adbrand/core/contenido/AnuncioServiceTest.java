@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import java.util.List;
 import org.mockito.ArgumentCaptor;
 
 // Tarea 4 de la HU 10: probar distintas ofertas y tonos sin llamar a la IA real.
@@ -99,5 +100,57 @@ class AnuncioServiceTest {
 
         assertThatThrownBy(() -> servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM)))
                 .isInstanceOf(IaNoDisponibleException.class);
+    }
+
+    // HU 13, criterio 1: el anuncio que pasa el filtro se guarda APROBADO y sin motivo.
+    @Test
+    void elAnuncioQuePasaElFiltroSeGuardaAprobado() {
+        perfilConTono(Tono.CERCANO);
+        when(ia.generarTexto(anyString(), anyString())).thenReturn("2 panetones por S/ 35");
+
+        servicio.generar(1L, new GenerarAnuncioRequest("2 panetones por S/ 35", RedSocial.INSTAGRAM));
+
+        Contenido guardado = contenidoGuardado();
+        assertThat(guardado.getEstado()).isEqualTo(EstadoContenido.APROBADO);
+        assertThat(guardado.getMotivoRevision()).isNull();
+        assertThat(guardado.getTexto()).isEqualTo("2 panetones por S/ 35");
+        assertThat(guardado.getUsuarioId()).isEqualTo(1L);
+        assertThat(guardado.getTipo()).isEqualTo(Contenido.TIPO_ANUNCIO);
+        verify(filtro).revisar("2 panetones por S/ 35");
+    }
+
+    // HU 13, criterio 2: el anuncio que incumple se guarda DUDOSO con su motivo y la web lo recibe así.
+    @Test
+    void elAnuncioQueIncumpleSeGuardaDudosoConSuMotivo() {
+        perfilConTono(Tono.CERCANO);
+        when(ia.generarTexto(anyString(), anyString())).thenReturn("Cigarrillos importados a S/ 10");
+        when(filtro.revisar("Cigarrillos importados a S/ 10")).thenReturn(
+                new ResultadoRevision(false, List.of("\"cigarrillos\": Publicidad de tabaco.")));
+
+        AnuncioGeneradoResponse anuncio = servicio.generar(
+                1L, new GenerarAnuncioRequest("Cigarrillos importados a S/ 10", RedSocial.FACEBOOK));
+
+        Contenido guardado = contenidoGuardado();
+        assertThat(guardado.getEstado()).isEqualTo(EstadoContenido.DUDOSO);
+        assertThat(guardado.getMotivoRevision()).isEqualTo("\"cigarrillos\": Publicidad de tabaco.");
+        assertThat(anuncio.estado()).isEqualTo(EstadoContenido.DUDOSO);
+        assertThat(anuncio.motivoRevision()).contains("Publicidad de tabaco.");
+    }
+
+    @Test
+    void unMotivoMuyLargoSeRecortaA500Caracteres() {
+        perfilConTono(Tono.CERCANO);
+        when(ia.generarTexto(anyString(), anyString())).thenReturn("texto");
+        when(filtro.revisar("texto")).thenReturn(new ResultadoRevision(false, List.of("x".repeat(800))));
+
+        servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM));
+
+        assertThat(contenidoGuardado().getMotivoRevision()).hasSize(500).endsWith("...");
+    }
+
+    private Contenido contenidoGuardado() {
+        ArgumentCaptor<Contenido> captor = ArgumentCaptor.forClass(Contenido.class);
+        verify(contenidos).save(captor.capture());
+        return captor.getValue();
     }
 }
