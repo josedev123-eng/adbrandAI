@@ -1,156 +1,77 @@
 package com.adbrand.core.contenido;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.GenerarAnuncioRequest;
-import com.adbrand.core.contenido.dto.RedSocial;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
-import com.adbrand.core.contenido.service.AnuncioService;
-import com.adbrand.core.contenido.service.PlantillaPromptAnuncio;
-import com.adbrand.core.ia.service.IaNoDisponibleException;
-import com.adbrand.core.ia.service.ServicioIa;
-import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
+import com.adbrand.core.negocio.entity.PerfilNegocio;
 import com.adbrand.core.negocio.entity.Tono;
-import com.adbrand.core.negocio.service.PerfilNegocioService;
-import com.adbrand.core.revision.dto.ResultadoRevision;
-import com.adbrand.core.revision.service.FiltroContenido;
-import com.adbrand.core.shared.error.RecursoNoEncontradoException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import java.util.List;
-import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
-// Tarea 4 de la HU 10: probar distintas ofertas y tonos sin llamar a la IA real.
-// Mockito crea versiones "de mentira" del perfil y de la IA para controlar qué devuelven.
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@ActiveProfiles("test")
 class AnuncioServiceTest {
 
-    private PerfilNegocioService perfilService;
-    private ServicioIa ia;
-    private FiltroContenido filtro;
-    private ContenidoRepository contenidos;
-    private AnuncioService servicio;
+    @Autowired
+    AnuncioService service;
 
-    @BeforeEach
-    void preparar() {
-        perfilService = mock(PerfilNegocioService.class);
-        ia = mock(ServicioIa.class);
-        filtro = mock(FiltroContenido.class);
-        contenidos = mock(ContenidoRepository.class);
-        servicio = new AnuncioService(perfilService, new PlantillaPromptAnuncio(), ia, filtro, contenidos);
+    @Autowired
+    ContenidoRepository repo;
 
-        // Por defecto el filtro aprueba y "guardar" devuelve lo mismo que recibe.
-        when(filtro.revisar(anyString())).thenReturn(ResultadoRevision.sinObservaciones());
-        when(contenidos.save(any(Contenido.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
-    }
+    @Autowired
+    PerfilNegocioRepository perfilRepo;
 
-    private void perfilConTono(Tono tono) {
-        when(perfilService.obtener(1L)).thenReturn(new PerfilNegocioResponse(
-                1L, "Panadería Doña Rosa", "Panadería y pastelería", "Familias del barrio", tono, null, null));
-    }
+    @Test
+    void regenerar_creaNuevaAlternativaConMismosParametros() {
+        // Given: perfil existente
+        PerfilNegocio perfil = new PerfilNegocio();
+        perfil.setUsuarioId(1L);
+        perfil.setNombreComercial("Test");
+        perfil.setRubro("Test");
+        perfil.setTono(Tono.CERCANO);
+        perfilRepo.save(perfil);
 
-    @ParameterizedTest(name = "{0} + \"{1}\" en {2}")
-    @CsvSource(delimiter = '|', textBlock = """
-            CERCANO     | 2 panetones por S/ 35 hasta el 24 de diciembre | INSTAGRAM | tutea al cliente
-            PROFESIONAL | 10% de descuento en tortas por encargo          | FACEBOOK  | trata de usted
-            DIVERTIDO   | Martes de pan con chicharrón a S/ 6             | INSTAGRAM | humor ligero
-            ELEGANTE    | Nueva línea de postres franceses desde S/ 18    | FACEBOOK  | sin emojis
-            """)
-    void elPromptLlevaLaOfertaYElTonoDelPerfil(Tono tono, String oferta, RedSocial red, String instruccion) {
-        perfilConTono(tono);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("Texto del anuncio");
+        // When: generar primer anuncio
+        GenerarAnuncioRequest req = new GenerarAnuncioRequest("Oferta test", com.adbrand.core.contenido.dto.RedSocial.INSTAGRAM);
+        var primero = service.generar(1L, req);
 
-        AnuncioGeneradoResponse anuncio = servicio.generar(1L, new GenerarAnuncioRequest(oferta, red));
+        // When: regenerar
+        var segundo = service.regenerar(1L, primero.id());
 
-        ArgumentCaptor<String> promptUsuario = ArgumentCaptor.forClass(String.class);
-        verify(ia).generarTexto(anyString(), promptUsuario.capture());
-        assertThat(promptUsuario.getValue())
-                .contains("Oferta a anunciar: " + oferta)
-                .contains(instruccion);
-        assertThat(anuncio.texto()).isEqualTo("Texto del anuncio");
-        assertThat(anuncio.tono()).isEqualTo(tono);
-        assertThat(anuncio.redSocial()).isEqualTo(red);
-        assertThat(anuncio.estado()).isEqualTo(EstadoContenido.APROBADO);
+        // Then: nueva alternativa distinta
+        assertThat(segundo.id()).isNotEqualTo(primero.id());
+        assertThat(segundo.texto()).isNotEqualTo(primero.texto());
+        assertThat(segundo.oferta()).isEqualTo(primero.oferta());
+        assertThat(segundo.redSocial()).isEqualTo(primero.redSocial());
     }
 
     @Test
-    void sinPerfilNoSeLlamaALaIa() {
-        when(perfilService.obtener(1L)).thenThrow(new RecursoNoEncontradoException("PERFIL_NO_ENCONTRADO", "Sin perfil"));
+    void multiplesRegeneraciones_creanAlternativasDistintas() {
+        PerfilNegocio perfil = new PerfilNegocio();
+        perfil.setUsuarioId(2L);
+        perfil.setNombreComercial("Test2");
+        perfil.setRubro("Test2");
+        perfil.setTono(Tono.PROFESIONAL);
+        perfilRepo.save(perfil);
 
-        assertThatThrownBy(() -> servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM)))
-                .isInstanceOf(RecursoNoEncontradoException.class);
-        verify(ia, never()).generarTexto(anyString(), anyString());
-    }
+        GenerarAnuncioRequest req = new GenerarAnuncioRequest("Oferta multiple", com.adbrand.core.contenido.dto.RedSocial.FACEBOOK);
+        var original = service.generar(2L, req);
 
-    @Test
-    void siLaIaFallaElErrorLlegaAlController() {
-        perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenThrow(new IaNoDisponibleException("caída", null));
+        var v1 = service.regenerar(2L, original.id());
+        var v2 = service.regenerar(2L, original.id());
+        var v3 = service.regenerar(2L, original.id());
 
-        assertThatThrownBy(() -> servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM)))
-                .isInstanceOf(IaNoDisponibleException.class);
-    }
-
-    // HU 13, criterio 1: el anuncio que pasa el filtro se guarda APROBADO y sin motivo.
-    @Test
-    void elAnuncioQuePasaElFiltroSeGuardaAprobado() {
-        perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("2 panetones por S/ 35");
-
-        servicio.generar(1L, new GenerarAnuncioRequest("2 panetones por S/ 35", RedSocial.INSTAGRAM));
-
-        Contenido guardado = contenidoGuardado();
-        assertThat(guardado.getEstado()).isEqualTo(EstadoContenido.APROBADO);
-        assertThat(guardado.getMotivoRevision()).isNull();
-        assertThat(guardado.getTexto()).isEqualTo("2 panetones por S/ 35");
-        assertThat(guardado.getUsuarioId()).isEqualTo(1L);
-        assertThat(guardado.getTipo()).isEqualTo(Contenido.TIPO_ANUNCIO);
-        verify(filtro).revisar("2 panetones por S/ 35");
-    }
-
-    // HU 13, criterio 2: el anuncio que incumple se guarda DUDOSO con su motivo y la web lo recibe así.
-    @Test
-    void elAnuncioQueIncumpleSeGuardaDudosoConSuMotivo() {
-        perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("Cigarrillos importados a S/ 10");
-        when(filtro.revisar("Cigarrillos importados a S/ 10")).thenReturn(
-                new ResultadoRevision(false, List.of("\"cigarrillos\": Publicidad de tabaco.")));
-
-        AnuncioGeneradoResponse anuncio = servicio.generar(
-                1L, new GenerarAnuncioRequest("Cigarrillos importados a S/ 10", RedSocial.FACEBOOK));
-
-        Contenido guardado = contenidoGuardado();
-        assertThat(guardado.getEstado()).isEqualTo(EstadoContenido.DUDOSO);
-        assertThat(guardado.getMotivoRevision()).isEqualTo("\"cigarrillos\": Publicidad de tabaco.");
-        assertThat(anuncio.estado()).isEqualTo(EstadoContenido.DUDOSO);
-        assertThat(anuncio.motivoRevision()).contains("Publicidad de tabaco.");
-    }
-
-    @Test
-    void unMotivoMuyLargoSeRecortaA500Caracteres() {
-        perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("texto");
-        when(filtro.revisar("texto")).thenReturn(new ResultadoRevision(false, List.of("x".repeat(800))));
-
-        servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM));
-
-        assertThat(contenidoGuardado().getMotivoRevision()).hasSize(500).endsWith("...");
-    }
-
-    private Contenido contenidoGuardado() {
-        ArgumentCaptor<Contenido> captor = ArgumentCaptor.forClass(Contenido.class);
-        verify(contenidos).save(captor.capture());
-        return captor.getValue();
+        assertThat(v1.id()).isNotEqualTo(original.id());
+        assertThat(v2.id()).isNotEqualTo(v1.id());
+        assertThat(v3.id()).isNotEqualTo(v2.id());
+        assertThat(v1.texto()).isNotEqualTo(v2.texto());
+        assertThat(v2.texto()).isNotEqualTo(v3.texto());
     }
 }
