@@ -1,0 +1,26 @@
+.pagina.pagina-suscripciones { max-width: 1000px; }
+
+.filtros { margin-bottom: 16px; }
+
+.filtros label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+
+.filtros select { padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+
+.tabla-suscripciones { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+
+.tabla-suscripciones th, .tabla-suscripciones td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+
+.tabla-suscripciones th { background: var(--surface-2); font-weight: 600; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.tabla-suscripciones tr:hover td { background: var(--surface-2); }
+
+.lista-vacia { text-align: center; color: var(--muted); padding: 24px; }
+
+.badge-estado { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+
+.badge-activa { background: var(--ok-soft); color: var(--ok); }
+.badge-vencida { background: var(--bad-soft); color: var(--bad); }
+.badge-pendiente-pago { background: var(--warn-soft); color: var(--warn); }
+.badge-cancelada { background: var(--muted); color: var(--fg); }
+
+.boton-pequeno { padding: 6px 10px; font-size: 0.8rem; }
