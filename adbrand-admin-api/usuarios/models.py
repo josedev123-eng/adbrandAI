@@ -15,11 +15,15 @@ class Rol(models.Model):
 
 
 class UsuarioAdmin(models.Model):
+    ACTIVO = "ACTIVO"
+    INACTIVO = "INACTIVO"
+
     nombres = models.CharField(max_length=100)
     apellidos = models.CharField(max_length=100)
     correo = models.CharField(max_length=150, unique=True)
     contrasena = models.CharField(max_length=255)
     rol = models.ForeignKey(Rol, on_delete=models.PROTECT, db_column="rol_id")
+    estado = models.CharField(max_length=20, choices=[(ACTIVO, "Activo"), (INACTIVO, "Inactivo")], default=ACTIVO)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
