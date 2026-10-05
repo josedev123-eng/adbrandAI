@@ -1,0 +1,145 @@
+/* AdministradoresView.css */
+.tabla-administradores {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla-administradores th,
+.tabla-administradores td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla-administradores th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tabla-administradores tr:hover td {
+  background: var(--surface-2);
+}
+
+.lista-vacia {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px;
+}
+
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.badge-estado.activo {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.badge-estado.inactivo {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.acciones {
+  white-space: nowrap;
+}
+
+.boton-pequeno {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.texto-inactivo {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 29, 46, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: modal-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-cabecera h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-cerrar {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.modal-cerrar:hover {
+  color: var(--fg);
+}
+
+.modal-cuerpo {
+  padding: 20px;
+}
+
+.modal-cuerpo p {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.advertencia {
+  color: var(--warn);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.modal-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
