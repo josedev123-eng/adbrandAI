@@ -36,4 +36,10 @@ class AdministradorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UsuarioAdmin
-        fields = ["id", "nombres", "apellidos", "correo", "rol", "fecha_creacion"]
+        fields = ["id", "nombres", "apellidos", "correo", "rol", "estado", "fecha_creacion"]
+
+
+class DesactivarAdministradorSerializer(serializers.Serializer):
+    """Serializador para desactivar un administrador (HU 03)."""
+
+    confirmar = serializers.BooleanField(default=False)
