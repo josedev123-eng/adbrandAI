@@ -1,1 +1,0 @@
-fix(db): corregir encoding UTF-8 y agregar datos de prueba en migracion V7
