@@ -1,0 +1,14 @@
+# Contraseñas y configuración local
+.env
+# Java / Spring Boot
+target/
+# Python / Django
+venv/
+__pycache__/
+*.pyc
+# React
+node_modules/
+dist/
+# Editores
+.vscode/
+.idea/

@@ -1,0 +1,1 @@
+feat(frontend): construir interfaz para mostrar y validar propuesta visual del kit de marca

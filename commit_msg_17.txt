@@ -1,0 +1,1 @@
+test(backend): probar deteccion automatica de vencimientos y pagos pendientes

@@ -1,0 +1,1 @@
+test(backend): probar publicacion y descarte de contenido segun la decision

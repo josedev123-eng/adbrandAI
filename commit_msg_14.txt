@@ -1,0 +1,1 @@
+feat(db): definir enum y estados de suscripcion vencida y pendiente en esquema

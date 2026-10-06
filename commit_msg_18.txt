@@ -1,0 +1,1 @@
+feat(frontend): agregar boton y modal para desactivar cuentas de administrador

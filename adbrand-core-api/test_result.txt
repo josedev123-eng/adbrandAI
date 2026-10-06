@@ -1,0 +1,127 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.adbrand:adbrand-core-api >--------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ adbrand-core-api ---
+[INFO] Deleting C:\Users\User\Documents\pruebas de software\proyecto\adbrandAI\adbrand-core-api\target
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ adbrand-core-api ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 9 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ adbrand-core-api ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 43 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ adbrand-core-api ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ adbrand-core-api ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 6 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ adbrand-core-api ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.adbrand.core.AdbrandCoreApiApplicationTests
+23:49:19.226 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.adbrand.core.AdbrandCoreApiApplicationTests]: AdbrandCoreApiApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+23:49:19.583 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.adbrand.core.AdbrandCoreApiApplication for test class com.adbrand.core.AdbrandCoreApiApplicationTests
+23:49:19.718 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.adbrand.core.AdbrandCoreApiApplicationTests]: AdbrandCoreApiApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+23:49:19.721 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.adbrand.core.AdbrandCoreApiApplication for test class com.adbrand.core.AdbrandCoreApiApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-10-04T23:49:20.579-05:00  INFO 5632 --- [           main] c.a.core.AdbrandCoreApiApplicationTests  : Starting AdbrandCoreApiApplicationTests using Java 25.0.4.1 with PID 5632 (started by User in C:\Users\User\Documents\pruebas de software\proyecto\adbrandAI\adbrand-core-api)
+2026-10-04T23:49:20.583-05:00  INFO 5632 --- [           main] c.a.core.AdbrandCoreApiApplicationTests  : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T23:49:21.772-05:00  INFO 5632 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T23:49:21.918-05:00  INFO 5632 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 134 ms. Found 4 JPA repository interfaces.
+2026-10-04T23:49:23.013-05:00  INFO 5632 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-04T23:49:23.308-05:00  INFO 5632 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@3f357c9d
+2026-10-04T23:49:23.310-05:00  INFO 5632 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-04T23:49:23.341-05:00  INFO 5632 --- [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/adbrand (PostgreSQL 18.6)
+2026-10-04T23:49:23.531-05:00  INFO 5632 --- [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 7
+2026-10-04T23:49:23.531-05:00  WARN 5632 --- [           main] o.f.core.internal.command.DbMigrate      : outOfOrder mode is active. Migration of schema "public" may not be reproducible.
+2026-10-04T23:49:23.553-05:00  INFO 5632 --- [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "8 - crear tabla kit marca"
+2026-10-04T23:49:23.610-05:00  INFO 5632 --- [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 1 migration to schema "public", now at version v8 (execution time 00:00.037s)
+2026-10-04T23:49:23.779-05:00  INFO 5632 --- [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-04T23:49:23.847-05:00  INFO 5632 --- [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-10-04T23:49:24.616-05:00  INFO 5632 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T23:49:24.861-05:00  INFO 5632 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/adbrand]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 18.6
+	Default catalog/schema: adbrand/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T23:49:27.226-05:00  INFO 5632 --- [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T23:49:27.235-05:00  INFO 5632 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T23:49:27.338-05:00  INFO 5632 --- [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-04T23:49:28.123-05:00  WARN 5632 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-10-04T23:49:28.697-05:00  INFO 5632 --- [           main] c.a.core.AdbrandCoreApiApplicationTests  : Started AdbrandCoreApiApplicationTests in 8.82 seconds (process running for 11.558)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\User\.m2\repository\net\bytebuddy\byte-buddy-agent\1.18.11\byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.57 s -- in com.adbrand.core.AdbrandCoreApiApplicationTests
+[INFO] Running com.adbrand.core.contenido.AnuncioControllerTest
+2026-10-04T23:49:29.576-05:00  INFO 5632 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.adbrand.core.contenido.AnuncioControllerTest]: AnuncioControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T23:49:29.662-05:00  INFO 5632 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.adbrand.core.AdbrandCoreApiApplication for test class com.adbrand.core.contenido.AnuncioControllerTest
+2026-10-04T23:49:29.663-05:00  INFO 5632 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.adbrand.core.contenido.AnuncioControllerTest]: AnuncioControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T23:49:29.671-05:00  INFO 5632 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.adbrand.core.AdbrandCoreApiApplication for test class com.adbrand.core.contenido.AnuncioControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-10-04T23:49:29.735-05:00  INFO 5632 --- [           main] c.a.c.contenido.AnuncioControllerTest    : Starting AnuncioControllerTest using Java 25.0.4.1 with PID 5632 (started by User in C:\Users\User\Documents\pruebas de software\proyecto\adbrandAI\adbrand-core-api)
+2026-10-04T23:49:29.736-05:00  INFO 5632 --- [           main] c.a.c.contenido.AnuncioControllerTest    : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T23:49:30.636-05:00  INFO 5632 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T23:49:30.636-05:00  INFO 5632 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T23:49:30.638-05:00  INFO 5632 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-10-04T23:49:30.662-05:00  INFO 5632 --- [           main] c.a.c.contenido.AnuncioControllerTest    : Started AnuncioControllerTest in 0.985 seconds (process running for 13.524)
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.523 s -- in com.adbrand.core.contenido.AnuncioControllerTest
+[INFO] Running com.adbrand.core.contenido.AnuncioServiceTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.706 s -- in com.adbrand.core.contenido.AnuncioServiceTest
+[INFO] Running com.adbrand.core.contenido.PlantillaPromptAnuncioTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s -- in com.adbrand.core.contenido.PlantillaPromptAnuncioTest
+[INFO] Running com.adbrand.core.ia.ServicioIaTest
+2026-10-04T23:49:31.886-05:00  WARN 5632 --- [           main] com.adbrand.core.ia.service.ServicioIa   : Falló la llamada al servidor de IA: timeout
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.057 s -- in com.adbrand.core.ia.ServicioIaTest
+[INFO] Running com.adbrand.core.revision.FiltroContenidoTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.211 s -- in com.adbrand.core.revision.FiltroContenidoTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 39, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  24.184 s
+[INFO] Finished at: 2026-10-04T23:49:32-05:00
+[INFO] ------------------------------------------------------------------------

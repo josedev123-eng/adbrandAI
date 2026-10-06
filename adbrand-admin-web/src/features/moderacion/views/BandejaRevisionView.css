@@ -1,0 +1,20 @@
+.pagina.pagina-bandeja { max-width: 960px; }
+.bandeja-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; cursor: pointer; }
+.boton-secundario:disabled { opacity: 0.6; cursor: wait; }
+.bandeja { display: flex; flex-direction: column; gap: 14px; }
+.bandeja-titulo { display: flex; align-items: center; gap: 10px; }
+.bandeja-titulo h2 { margin: 0; }
+.contador { background: var(--warn-soft); color: var(--warn); font-weight: 700; font-size: 0.8rem; padding: 2px 10px; border-radius: 999px; }
+.bandeja-vacia { color: var(--muted); padding: 32px 12px; text-align: center; border: 1.5px dashed var(--line); border-radius: 10px; margin: 0; }
+.bandeja-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bandeja-fila { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: 10px; background: var(--surface); cursor: pointer; }
+.bandeja-fila:hover { border-color: var(--primary); border-left-color: var(--warn); background: var(--primary-soft); }
+.bandeja-fila:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fila-accion { align-self: flex-end; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+.fila-datos { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.fila-datos span { background: var(--surface-2); padding: 2px 10px; border-radius: 999px; }
+.fila-datos .etiqueta-dudoso { background: var(--warn-soft); color: var(--warn); font-weight: 700; }
+.fila-oferta { display: block; margin: 0; font-weight: 700; }
+.fila-extracto { display: block; margin: 0; color: var(--muted); font-size: 0.9rem; }
+.fila-motivo { display: block; margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--bad); }
