@@ -4,7 +4,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
 from . import services
+from .authentication import AdminAuthentication
 from .models import Rol, UsuarioAdmin
+from .permissions import IsAdminActivo
 from .serializers import AdministradorSerializer, CrearAdministradorSerializer, DesactivarAdministradorSerializer, RolSerializer
 
 
@@ -17,7 +19,7 @@ class RolesView(APIView):
 
 
 class AdministradoresView(APIView):
-    """POST /api/usuarios/administradores/ : crea una cuenta de administrador con su rol."""
+    """POST /api/usuarios/administradores/ : crea una cuenta de administrador con su rol (HU 01)."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -28,9 +30,26 @@ class AdministradoresView(APIView):
 
 
 class DesactivarAdministradorView(APIView):
-    """PATCH /api/usuarios/administradores/<id>/desactivar/ : desactiva un administrador (HU 03)."""
+    """PATCH /api/usuarios/administradores/<id>/desactivar/ : desactiva un administrador (HU 03).
+
+    Solo un superadministrador activo puede usarlo, y nunca sobre su propia cuenta.
+    """
+    authentication_classes = [AdminAuthentication]
+    permission_classes = [IsAdminActivo]
 
     def patch(self, request, admin_id):
+        if getattr(request.user.rol, "nombre", None) != "SUPERADMIN":
+            return Response(
+                {"detail": "Solo un superadministrador puede desactivar cuentas."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if request.user.id == admin_id:
+            return Response(
+                {"detail": "No puedes desactivar tu propia cuenta."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = DesactivarAdministradorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

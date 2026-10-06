@@ -143,12 +143,3 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://localhost:5174"]
 TEST_RUNNER = "core.test_runner.PruebasConTablasFlyway"
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "usuarios.authentication.AdminAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "usuarios.permissions.IsAdminActivo",
-    ],
-}
