@@ -1,3 +1,7 @@
+from django.test import TestCase
+
+# Create your tests here.
+
 from datetime import timedelta
 from decimal import Decimal
 
