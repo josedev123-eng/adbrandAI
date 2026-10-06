@@ -1,0 +1,1 @@
+feat(backend): implementar integracion con IA para solicitar generacion del kit de marca

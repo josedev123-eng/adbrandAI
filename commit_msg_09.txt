@@ -1,0 +1,1 @@
+test(backend): probar multiples regeneraciones y validar alternativas generadas

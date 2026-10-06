@@ -1,0 +1,1 @@
+test(backend): probar bloqueo e imposibilidad de acceso para cuentas desactivadas

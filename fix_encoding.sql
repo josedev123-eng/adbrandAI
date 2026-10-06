@@ -1,0 +1,38 @@
+-- Corregir problemas de encoding en tabla contenido
+UPDATE contenido SET
+    oferta = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(oferta,
+        'TÃ©', 'Té'),
+        'dânas', 'días'),
+        '±os', 'años'),
+        'fÃ¡cil', 'fácil'),
+        'mã©dica', 'médica'),
+        'enga±osa', 'engañosa'),
+        'cientón', 'científico'),
+        'Ã±', 'ñ'),
+        'Ã³', 'ó'),
+        'Ã¡', 'á'),
+    texto = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(texto,
+        'TÃ©', 'Té'),
+        'dânas', 'días'),
+        '±os', 'años'),
+        'fÃ¡cil', 'fácil'),
+        'mã©dica', 'médica'),
+        'enga±osa', 'engañosa'),
+        'cientón', 'científico'),
+        'Ã±', 'ñ'),
+        'Ã³', 'ó'),
+        'Ã¡', 'á'),
+    motivo_revision = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(motivo_revision,
+        'TÃ©', 'Té'),
+        'dânas', 'días'),
+        '±os', 'años'),
+        'fÃ¡cil', 'fácil'),
+        'mã©dica', 'médica'),
+        'enga±osa', 'engañosa'),
+        'cientón', 'científico'),
+        'Ã±', 'ñ'),
+        'Ã³', 'ó'),
+        'Ã¡', 'á');
+
+-- Verificar resultado
+SELECT id, oferta, motivo_revision FROM contenido ORDER BY id;
