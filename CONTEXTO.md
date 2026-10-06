@@ -14,9 +14,9 @@ Dos lados que comparten **una sola base de datos PostgreSQL**:
 
 ```
 ADMINISTRACIÓN   adbrand-admin-web (React + Vite, puerto 5174) ──► adbrand-admin-api (Django 5.2 + DRF, puerto 8000) ─┐
-                                                                                                                        ├──► PostgreSQL 17 (base "adbrand")
+                                                                                                                       ├──► PostgreSQL 17 (base "adbrand")
 USUARIO          adbrand-web (React + Vite, puerto 5173)       ─┐                                                      │
-                  adbrand-mobile (Kotlin + Compose)              ┴► adbrand-core-api (Spring Boot 4.1.1, Java 17, puerto 8080) ┘
+                 adbrand-mobile (Kotlin + Compose)              ┴► adbrand-core-api (Spring Boot 4.1.1, Java 17, puerto 8080) ┘
 ```
 
 - La web de administración solo habla con Django.
@@ -53,6 +53,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 1 | Crear administradores con rol | Django `usuarios` + admin-web `features/admin` |
 | 2 | (parte de 1/3) | Django `usuarios` |
 | 3 | Desactivar cuenta de administrador | Django `usuarios` + admin-web `features/admin` |
+| 8 | Suscripciones vencidas y pendientes de pago | Django `suscripciones` + admin-web `features/suscripciones` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
 | 11 | Solicitar Kit de Marca básico | Spring `brandkit` + web `features/brandkit` |
@@ -76,11 +77,12 @@ Spring Boot (`http://localhost:8080/api`):
 
 Django (`http://localhost:8000/api`):
 - `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
-- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta (HU 3).
+- `GET /usuarios/administradores/`: lista los administradores con su estado (HU 3).
+- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción (HU 3).
+- `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
-- `POST /moderacion/contenidos/<id>/moderar/`: aprueba/rechaza con `accion` y `moderador_id` (HU 15).
-- `PATCH /api/contenido/<id>/estado`: actualiza estado con `moderador_id` y `motivo_rechazo` opcional (HU 15).
+- `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion` y `moderador_id`; acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
 
 ### Migraciones Flyway aplicadas (la siguiente libre es V9)
 
@@ -92,8 +94,10 @@ Django (`http://localhost:8000/api`):
 | V4 | `contenido.moderador_id` (quién aprobó/rechazó) | 15 |
 | V5 | `contenido.prompt_original` (para regenerar con HU 12) | 12 |
 | V6 | `usuario_admin.estado` (ACTIVO/INACTIVO) | 3 |
-| V7 | Datos de prueba para `contenido` | - |
+| V7 | `suscripcion` (estado, fechas, monto y plan de cada cliente) | 8 |
 | V8 | `kit_marca` (logo, tipografías, paleta, voz) | 11 |
+
+Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
