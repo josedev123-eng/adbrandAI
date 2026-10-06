@@ -1,10 +1,10 @@
 // Cliente HTTP único hacia el backend de administración (Django).
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
-export async function apiRequest(ruta, { method = 'GET', body } = {}) {
+export async function apiRequest(ruta, { method = 'GET', body, headers = {} } = {}) {
   const respuesta = await fetch(`${BASE_URL}${ruta}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: body ? JSON.stringify(body) : undefined,
   })
 
