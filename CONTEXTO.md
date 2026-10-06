@@ -14,9 +14,9 @@ Dos lados que comparten **una sola base de datos PostgreSQL**:
 
 ```
 ADMINISTRACIÓN   adbrand-admin-web (React + Vite, puerto 5174) ──► adbrand-admin-api (Django 5.2 + DRF, puerto 8000) ─┐
-                                                                                                                       ├──► PostgreSQL 17 (base "adbrand")
+                                                                                                                        ├──► PostgreSQL 17 (base "adbrand")
 USUARIO          adbrand-web (React + Vite, puerto 5173)       ─┐                                                      │
-                 adbrand-mobile (Kotlin + Compose)              ┴► adbrand-core-api (Spring Boot 4.1.1, Java 17, puerto 8080) ┘
+                  adbrand-mobile (Kotlin + Compose)              ┴► adbrand-core-api (Spring Boot 4.1.1, Java 17, puerto 8080) ┘
 ```
 
 - La web de administración solo habla con Django.
@@ -51,10 +51,15 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | HU | Qué hace | Dónde está |
 |---|---|---|
 | 1 | Crear administradores con rol | Django `usuarios` + admin-web `features/admin` |
+| 2 | (parte de 1/3) | Django `usuarios` |
+| 3 | Desactivar cuenta de administrador | Django `usuarios` + admin-web `features/admin` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
+| 11 | Solicitar Kit de Marca básico | Spring `brandkit` + web `features/brandkit` |
+| 12 | Regenerar contenido que no convenció | Spring `contenido` + web `features/contenido` |
 | 13 | Filtro automático del contenido | Spring `revision` + estado en `contenido` |
 | 14 | Bandeja de revisión manual | Django `moderacion` + admin-web `features/moderacion` |
+| 15 | Aprobar o rechazar contenido | Django `moderacion` + admin-web `features/moderacion` |
 
 Pendiente conocido:
 - Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
@@ -65,11 +70,30 @@ Pendiente conocido:
 Spring Boot (`http://localhost:8080/api`):
 - `GET /negocio/perfil` y `PUT /negocio/perfil`: perfil del negocio (HU 9).
 - `POST /contenido/anuncios`: genera el anuncio, lo pasa por el filtro y lo guarda (HU 10 y 13). Responde `{id, texto, redSocial, tono, simulado, estado, motivoRevision}`.
+- `POST /contenido/anuncios/{id}/regenerar`: regenera contenido con los mismos parámetros (HU 12). Responde igual que generar.
+- `POST /kit-marca/generar`: genera Kit de Marca (logo, tipografías, paleta, voz) (HU 11).
+- `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11).
 
 Django (`http://localhost:8000/api`):
 - `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
+- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta (HU 3).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
+- `POST /moderacion/contenidos/<id>/moderar/`: aprueba/rechaza con `accion` y `moderador_id` (HU 15).
+- `PATCH /api/contenido/<id>/estado`: actualiza estado con `moderador_id` y `motivo_rechazo` opcional (HU 15).
+
+### Migraciones Flyway aplicadas (la siguiente libre es V9)
+
+| Versión | Tablas | HU |
+|---|---|---|
+| V1 | `rol` (SUPERADMIN, MODERADOR, FINANZAS) y `usuario_admin` | 1 |
+| V2 | `perfil_negocio` (un perfil por `usuario_id`; tono CERCANO, PROFESIONAL, DIVERTIDO o ELEGANTE) | 9 |
+| V3 | `regla_revision` (término, categoría, motivo, activa; 10 reglas iniciales) y `contenido` (cada anuncio generado con `estado` y `motivo_revision`) | 13 |
+| V4 | `contenido.moderador_id` (quién aprobó/rechazó) | 15 |
+| V5 | `contenido.prompt_original` (para regenerar con HU 12) | 12 |
+| V6 | `usuario_admin.estado` (ACTIVO/INACTIVO) | 3 |
+| V7 | Datos de prueba para `contenido` | - |
+| V8 | `kit_marca` (logo, tipografías, paleta, voz) | 11 |
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
@@ -96,14 +120,6 @@ Regla de oro: **una vista nunca llama a la API directamente**; siempre pasa por 
 - En Django los modelos llevan `class Meta: managed = False` y `db_table = '<tabla>'`. No usar `makemigrations` ni `migrate` para estas tablas.
 - Nombres de tablas y columnas en español, minúsculas y con guion bajo (ej. `perfil_negocio`, `fecha_creacion`).
 
-### Migraciones que ya existen (la siguiente libre es V4)
-
-| Versión | Tablas | HU |
-|---|---|---|
-| V1 | `rol` (SUPERADMIN, MODERADOR, FINANZAS) y `usuario_admin` | 1 |
-| V2 | `perfil_negocio` (un perfil por `usuario_id`; tono CERCANO, PROFESIONAL, DIVERTIDO o ELEGANTE) | 9 |
-| V3 | `regla_revision` (término, categoría, motivo, activa; 10 reglas iniciales) y `contenido` (cada anuncio generado con `estado` y `motivo_revision`) | 13 |
-
 ### Cómo se comunican los dos lados
 
 Spring Boot genera el anuncio, lo revisa con las reglas de `regla_revision` y lo guarda en `contenido`:
@@ -126,16 +142,18 @@ Los archivos `.env` NO se suben a GitHub (están en `.gitignore`). Cada uno crea
 
 | Parte | Carpeta | Comando |
 |---|---|---|
-| Spring Boot | `adbrand-core-api` | `.\mvnw spring-boot:run` |
-| Django | `adbrand-admin-api` | `venv\Scripts\activate` y luego `python manage.py runserver` |
+| Spring Boot | `adbrand-core-api` | `mvnw.cmd spring-boot:run` |
+| Django | `adbrand-admin-api` | `python manage.py runserver 8000` |
 | Web del usuario | `adbrand-web` | `npm install` (la primera vez) y `npm run dev` |
 | Web de administración | `adbrand-admin-web` | `npm install` (la primera vez) y `npm run dev` |
+
+Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si ocupado).
 
 ## Pruebas
 
 | Parte | Herramientas | Comando |
 |---|---|---|
-| Spring Boot | JUnit 5, AssertJ, Mockito, `@WebMvcTest` | `.\mvnw test -Dtest="NombreDeLaPrueba"` |
+| Spring Boot | JUnit 5, AssertJ, Mockito, `@WebMvcTest` | `mvnw.cmd test -Dtest="NombreDeLaPrueba"` |
 | Django | `APITestCase` de DRF | `python manage.py test <app>` |
 | Web de administración | Vitest y Testing Library | `npm test` |
 | Las dos webs | ESLint | `npm run lint` |
