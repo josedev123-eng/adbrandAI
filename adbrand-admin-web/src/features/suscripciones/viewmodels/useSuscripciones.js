@@ -10,8 +10,6 @@ export function useSuscripciones() {
 
   useEffect(() => {
     let vigente = true
-    setCargando(true)
-    setError(null)
 
     listarSuscripcionesPorEstado(filtroEstado)
       .then(datos => {
@@ -29,5 +27,11 @@ export function useSuscripciones() {
     }
   }, [filtroEstado])
 
-  return { suscripciones, cargando, error, filtroEstado, setFiltroEstado }
+  function cambiarFiltroEstado(estado) {
+    setError(null)
+    setCargando(true)
+    setFiltroEstado(estado)
+  }
+
+  return { suscripciones, cargando, error, filtroEstado, cambiarFiltroEstado }
 }

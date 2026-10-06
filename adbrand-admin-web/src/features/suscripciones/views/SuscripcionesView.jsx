@@ -9,7 +9,7 @@ function BadgeEstado({ estado }) {
 }
 
 export default function SuscripcionesView() {
-  const { suscripciones, cargando, error, filtroEstado, setFiltroEstado } = useSuscripciones()
+  const { suscripciones, cargando, error, filtroEstado, cambiarFiltroEstado } = useSuscripciones()
 
   return (
     <main className="pagina pagina-suscripciones">
@@ -24,7 +24,7 @@ export default function SuscripcionesView() {
         <div className="filtros">
           <label>
             Filtrar por estado:
-            <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
+            <select value={filtroEstado} onChange={e => cambiarFiltroEstado(e.target.value)}>
               <option value="">Todos</option>
               {ESTADOS_CON_DEUDA.map(estado => (
                 <option key={estado} value={estado}>{ESTADOS_SUSCRIPCION[estado]}</option>
