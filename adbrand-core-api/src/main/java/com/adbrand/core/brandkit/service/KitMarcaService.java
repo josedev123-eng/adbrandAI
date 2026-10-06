@@ -49,8 +49,8 @@ public class KitMarcaService {
         // La IA debería devolver JSON puro. En modo simulado, el JSON ya viene bien formado.
         // Usamos Jackson manualmente para evitar dependencia extra en el DTO.
         try {
-            com.fasterxml.jackson.databind.JsonNode node =
-                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(json);
+            tools.jackson.databind.JsonNode node =
+                    new tools.jackson.databind.ObjectMapper().readTree(json);
 
             KitMarca kit = new KitMarca();
             kit.setUsuarioId(usuarioId);
