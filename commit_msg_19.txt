@@ -1,1 +1,0 @@
-feat(db): agregar columna estado a tabla administradores y actualizar en desactivacion

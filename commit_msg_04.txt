@@ -1,1 +1,0 @@
-feat(db): registrar decision del moderador y moderador_id en la base de datos

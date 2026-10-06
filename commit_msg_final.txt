@@ -1,1 +1,0 @@
-chore: actualizar CONTEXTO.md y configuraciones generales del proyecto

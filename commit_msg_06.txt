@@ -1,1 +1,0 @@
-feat(frontend): agregar boton para regenerar contenido en la app cliente

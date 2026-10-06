@@ -1,1 +1,0 @@
-feat(backend): validar permisos de autorizacion para desactivacion de administradores

@@ -1,1 +1,0 @@
-feat(backend): implementar consulta y filtrado de suscripciones con deuda
