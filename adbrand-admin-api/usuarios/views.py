@@ -19,8 +19,13 @@ class RolesView(APIView):
 
 
 class AdministradoresView(APIView):
-    """POST /api/usuarios/administradores/ : crea una cuenta de administrador con su rol (HU 01)."""
+    """GET /api/usuarios/administradores/ : lista las cuentas, nunca la contraseña (HU 03).
+    POST /api/usuarios/administradores/ : crea una cuenta de administrador con su rol (HU 01)."""
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        administradores = UsuarioAdmin.objects.select_related("rol").order_by("id")
+        return Response(AdministradorSerializer(administradores, many=True).data)
 
     def post(self, request):
         serializer = CrearAdministradorSerializer(data=request.data)
