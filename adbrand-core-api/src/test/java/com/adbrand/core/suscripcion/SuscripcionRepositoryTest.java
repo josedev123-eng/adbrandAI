@@ -5,7 +5,8 @@ import com.adbrand.core.suscripcion.entity.Suscripcion;
 import com.adbrand.core.suscripcion.repository.SuscripcionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @ActiveProfiles("test")
 class SuscripcionRepositoryTest {
 
@@ -24,9 +26,11 @@ class SuscripcionRepositoryTest {
     void findByEstado_filtraCorrectamente() {
         Suscripcion activa = new Suscripcion();
         activa.setEstado(EstadoSuscripcion.ACTIVA);
+        activa.setFechaInicio(LocalDate.now());
 
         Suscripcion vencida = new Suscripcion();
         vencida.setEstado(EstadoSuscripcion.VENCIDA);
+        vencida.setFechaInicio(LocalDate.now());
 
         repo.saveAll(List.of(activa, vencida));
 
@@ -36,14 +40,17 @@ class SuscripcionRepositoryTest {
         assertThat(resultado.get(0).getEstado()).isEqualTo(EstadoSuscripcion.ACTIVA);
     }
 
+    @Test
     void findVencidas_detectaAutomaticamente() {
         Suscripcion vigente = new Suscripcion();
         vigente.setEstado(EstadoSuscripcion.ACTIVA);
         vigente.setFechaVencimiento(LocalDate.now().plusDays(10));
+        vigente.setFechaInicio(LocalDate.now());
 
         Suscripcion vencida = new Suscripcion();
         vencida.setEstado(EstadoSuscripcion.ACTIVA);
         vencida.setFechaVencimiento(LocalDate.now().minusDays(5));
+        vencida.setFechaInicio(LocalDate.now());
 
         repo.saveAll(List.of(vigente, vencida));
 
@@ -53,6 +60,7 @@ class SuscripcionRepositoryTest {
         assertThat(vencidas.get(0).getFechaVencimiento()).isBefore(LocalDate.now());
     }
 
+    @Test
     void findPendientesPago_filtraCorrectamente() {
         Suscripcion pendiente = new Suscripcion();
         pendiente.setEstado(EstadoSuscripcion.PENDIENTE_PAGO);

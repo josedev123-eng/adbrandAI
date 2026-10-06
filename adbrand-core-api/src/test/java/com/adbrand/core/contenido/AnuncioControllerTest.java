@@ -37,7 +37,7 @@ class AnuncioControllerTest {
     @Test
     void devuelveElAnuncioListoParaCopiar() throws Exception {
         when(servicio.generar(eq(1L), any())).thenReturn(
-                new AnuncioGeneradoResponse(7L, "¡2x1 hoy!", RedSocial.INSTAGRAM, Tono.DIVERTIDO, false,
+                new AnuncioGeneradoResponse(7L, "¡2x1 hoy!", RedSocial.INSTAGRAM, Tono.DIVERTIDO, "2x1 en tortas", false,
                         EstadoContenido.APROBADO, null));
 
         mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)

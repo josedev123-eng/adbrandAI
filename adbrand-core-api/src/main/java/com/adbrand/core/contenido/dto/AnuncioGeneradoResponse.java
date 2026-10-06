@@ -11,6 +11,7 @@ public record AnuncioGeneradoResponse(
         String texto,
         RedSocial redSocial,
         Tono tono,
+        String oferta,
         boolean simulado,
         EstadoContenido estado,
         String motivoRevision) {
@@ -21,6 +22,7 @@ public record AnuncioGeneradoResponse(
                 contenido.getTexto(),
                 contenido.getRedSocial(),
                 contenido.getTono(),
+                contenido.getOferta(),
                 simulado,
                 contenido.getEstado(),
                 contenido.getMotivoRevision());
