@@ -8,10 +8,14 @@ export const ESTADOS_SUSCRIPCION = {
   CANCELADA: 'Cancelada',
 }
 
+// Estados que el endpoint /con-deuda/ sabe filtrar.
+export const ESTADOS_CON_DEUDA = ['VENCIDA', 'PENDIENTE_PAGO']
+
 export function listarSuscripciones() {
-  return apiRequest('/suscripciones/')
+  return apiRequest('/suscripciones/con-deuda/')
 }
 
-export function obtenerSuscripcion(id) {
-  return apiRequest(`/suscripciones/${id}/`)
+export function listarSuscripcionesPorEstado(estado) {
+  if (!estado) return listarSuscripciones()
+  return apiRequest(`/suscripciones/con-deuda/?estado=${estado}`)
 }

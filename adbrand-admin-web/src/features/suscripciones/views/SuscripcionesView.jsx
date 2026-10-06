@@ -1,5 +1,5 @@
 // View: tabla de suscripciones con filtro por estado (HU-08).
-import { ESTADOS_SUSCRIPCION } from '../models/suscripcionesApi'
+import { ESTADOS_CON_DEUDA, ESTADOS_SUSCRIPCION } from '../models/suscripcionesApi'
 import { useSuscripciones } from '../viewmodels/useSuscripciones'
 import './SuscripcionesView.css'
 
@@ -26,8 +26,8 @@ export default function SuscripcionesView() {
             Filtrar por estado:
             <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
               <option value="">Todos</option>
-              {Object.entries(ESTADOS_SUSCRIPCION).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
+              {ESTADOS_CON_DEUDA.map(estado => (
+                <option key={estado} value={estado}>{ESTADOS_SUSCRIPCION[estado]}</option>
               ))}
             </select>
           </label>
@@ -36,7 +36,7 @@ export default function SuscripcionesView() {
         {cargando && <p className="lista-vacia">Cargando suscripciones...</p>}
 
         {!cargando && suscripciones.length === 0 && (
-          <p className="lista-vacia">No hay suscripciones registradas.</p>
+          <p className="lista-vacia">No hay suscripciones con deuda pendiente.</p>
         )}
 
         {!cargando && suscripciones.length > 0 && (
@@ -55,10 +55,10 @@ export default function SuscripcionesView() {
               {suscripciones.map(s => (
                 <tr key={s.id}>
                   <td>#{s.id}</td>
-                  <td>{s.cliente?.nombre ?? '—'}</td>
-                  <td>{s.plan?.nombre ?? '—'}</td>
+                  <td>{s.cliente || '—'}</td>
+                  <td>{s.plan || '—'}</td>
                   <td><BadgeEstado estado={s.estado} /></td>
-                  <td>{s.fechaVencimiento ? new Date(s.fechaVencimiento).toLocaleDateString('es-PE') : '—'}</td>
+                  <td>{s.fecha_vencimiento ? new Date(s.fecha_vencimiento).toLocaleDateString('es-PE') : '—'}</td>
                   <td>
                     <button type="button" className="boton-secundario boton-pequeno" disabled>Ver detalle</button>
                   </td>
