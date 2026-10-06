@@ -172,95 +172,30 @@ class ModerarContenidoTests(APITestCase):
 
         self.assertEqual(respuesta.status_code, 404)
 
-
-class ActualizarEstadoTests(APITestCase):
-    """HU-15: endpoint PATCH /api/contenido/{id}/estado para aprobar/rechazar."""
-
-    @classmethod
-    def setUpTestData(cls):
-        PerfilNegocio.objects.create(usuario_id=1, nombre_comercial="Panadería Doña Rosa", rubro="Panadería")
-        cls.dudoso = crear_contenido(
-            "DUDOSO", "Cigarrillos importados", motivo='"cigarrillos": Publicidad de tabaco.'
-        )
-        cls.aprobado = crear_contenido("APROBADO", "Promo válida")
-        cls.rechazado = crear_contenido("RECHAZADO", "Otra promo rechazada")
-
-    def test_aprobar_con_patch_actualiza_estado_y_moderador(self):
-        respuesta = self.client.patch(
-            f"/api/moderacion/contenido/{self.dudoso.id}/estado/",
-            {"estado": "APROBADO", "moderador_id": 42},
+    def test_rechazar_con_motivo_guarda_el_motivo_en_motivo_revision(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "RECHAZAR", "moderador_id": 99, "motivo_rechazo": "Publicidad de apuestas"},
             format="json",
         )
 
         self.assertEqual(respuesta.status_code, 200)
-        self.assertEqual(respuesta.data["estado"], "APROBADO")
-        self.assertEqual(respuesta.data["moderador_id"], 42)
-
-        self.dudoso.refresh_from_db()
-        self.assertEqual(self.dudoso.estado, "APROBADO")
-        self.assertEqual(self.dudoso.moderador_id, 42)
-
-    def test_rechazar_con_patch_requiere_motivo_y_actualiza_estado(self):
-        respuesta = self.client.patch(
-            f"/api/moderacion/contenido/{self.dudoso.id}/estado/",
-            {"estado": "RECHAZADO", "moderador_id": 99, "motivo_rechazo": "Contenido inapropiado"},
-            format="json",
-        )
-
-        self.assertEqual(respuesta.status_code, 200)
-        self.assertEqual(respuesta.data["estado"], "RECHAZADO")
-        self.assertEqual(respuesta.data["moderador_id"], 99)
-        self.assertEqual(respuesta.data["motivo_revision"], "Contenido inapropiado")
+        self.assertEqual(respuesta.data["motivo_revision"], "Publicidad de apuestas")
 
         self.dudoso.refresh_from_db()
         self.assertEqual(self.dudoso.estado, "RECHAZADO")
-        self.assertEqual(self.dudoso.moderador_id, 99)
-        self.assertEqual(self.dudoso.motivo_revision, "Contenido inapropiado")
+        self.assertEqual(self.dudoso.motivo_revision, "Publicidad de apuestas")
 
-    def test_rechazar_sin_motivo_devuelve_400(self):
-        respuesta = self.client.patch(
-            f"/api/moderacion/contenido/{self.dudoso.id}/estado/",
-            {"estado": "RECHAZADO", "moderador_id": 1},
+    def test_rechazar_sin_motivo_conserva_el_motivo_de_la_observacion(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "RECHAZAR", "moderador_id": 1},
             format="json",
         )
 
-        self.assertEqual(respuesta.status_code, 400)
-        self.assertIn("motivo de rechazo", respuesta.data["detail"].lower())
+        self.assertEqual(respuesta.status_code, 200)
 
-    def test_estado_invalido_devuelve_400(self):
-        respuesta = self.client.patch(
-            f"/api/moderacion/contenido/{self.dudoso.id}/estado/",
-            {"estado": "INVALIDO", "moderador_id": 1},
-            format="json",
-        )
+        self.dudoso.refresh_from_db()
+        self.assertEqual(self.dudoso.estado, "RECHAZADO")
+        self.assertEqual(self.dudoso.motivo_revision, '"cigarrillos": Publicidad de tabaco.')
 
-        self.assertEqual(respuesta.status_code, 400)
-
-    def test_moderador_id_faltante_devuelve_400(self):
-        respuesta = self.client.patch(
-            f"/api/moderacion/contenido/{self.dudoso.id}/estado/",
-            {"estado": "APROBADO"},
-            format="json",
-        )
-
-        self.assertEqual(respuesta.status_code, 400)
-        self.assertIn("moderador", respuesta.data["detail"].lower())
-
-    def test_no_se_puede_actualizar_contenido_ya_aprobado(self):
-        respuesta = self.client.patch(
-            f"/api/moderacion/contenido/{self.aprobado.id}/estado/",
-            {"estado": "RECHAZADO", "moderador_id": 1, "motivo_rechazo": "Test"},
-            format="json",
-        )
-
-        self.assertEqual(respuesta.status_code, 400)
-        self.assertIn("Solo se pueden moderar", respuesta.data["detail"])
-
-    def test_contenido_inexistente_devuelve_404(self):
-        respuesta = self.client.patch(
-            "/api/moderacion/contenido/99999/estado/",
-            {"estado": "APROBADO", "moderador_id": 1},
-            format="json",
-        )
-
-        self.assertEqual(respuesta.status_code, 404)

@@ -28,7 +28,7 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
     if (!hayModerador) return
     try {
       await aprobar(Number(moderadorId))
-    } catch (_) {
+    } catch {
       // El error ya se muestra en el viewmodel
     }
   }
@@ -45,7 +45,7 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
     try {
       await rechazar(Number(moderadorId), motivoRechazo)
       setMostrarRechazo(false)
-    } catch (_) {
+    } catch {
       // El error ya se muestra en el viewmodel
     }
   }

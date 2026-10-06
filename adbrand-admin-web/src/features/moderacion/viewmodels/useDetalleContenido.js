@@ -1,7 +1,7 @@
 // ViewModel: carga el detalle completo de un contenido y el motivo de la observación (HU-14).
 // Incluye acciones para aprobar o rechazar el contenido (HU-15).
 import { useEffect, useState } from 'react'
-import { obtenerContenido, moderarContenido, actualizarEstado } from '../models/moderacionApi'
+import { obtenerContenido, moderarContenido } from '../models/moderacionApi'
 
 export function useDetalleContenido(id, onActualizado) {
   const [contenido, setContenido] = useState(null)
@@ -22,7 +22,7 @@ export function useDetalleContenido(id, onActualizado) {
     setModerando(true)
     setError(null)
     try {
-      const actualizado = await actualizarEstado(id, 'APROBADO', moderadorId)
+      const actualizado = await moderarContenido(id, 'APROBAR', moderadorId)
       setContenido(actualizado)
       onActualizado?.()
       return actualizado
@@ -34,7 +34,7 @@ export function useDetalleContenido(id, onActualizado) {
     }
   }
 
-  async function rechazar(moderadorId, motivoRechazo) {
+  async function rechazar(moderadorId, motivoRechazo = '') {
     if (!window.confirm('¿Confirmas rechazar este contenido?')) return null
     if (!motivoRechazo.trim()) {
       setError('El motivo de rechazo es obligatorio.')
@@ -44,7 +44,7 @@ export function useDetalleContenido(id, onActualizado) {
     setModerando(true)
     setError(null)
     try {
-      const actualizado = await actualizarEstado(id, 'RECHAZADO', moderadorId, motivoRechazo)
+      const actualizado = await moderarContenido(id, 'RECHAZAR', moderadorId, motivoRechazo)
       setContenido(actualizado)
       onActualizado?.()
       return actualizado

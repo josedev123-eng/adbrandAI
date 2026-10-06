@@ -13,17 +13,10 @@ export function obtenerContenido(id) {
   return apiRequest(`/moderacion/contenidos/${id}/`)
 }
 
-export function moderarContenido(id, accion, moderadorId) {
+export function moderarContenido(id, accion, moderadorId, motivoRechazo = '') {
   return apiRequest(`/moderacion/contenidos/${id}/moderar/`, {
     method: 'POST',
-    body: { accion, moderador_id: moderadorId },
-  })
-}
-
-export function actualizarEstado(id, estado, moderadorId, motivoRechazo = '') {
-  return apiRequest(`/moderacion/contenido/${id}/estado/`, {
-    method: 'PATCH',
-    body: { estado, moderador_id: moderadorId, motivo_rechazo: motivoRechazo },
+    body: { accion, moderador_id: moderadorId, ...(motivoRechazo ? { motivo_rechazo: motivoRechazo } : {}) },
   })
 }
 

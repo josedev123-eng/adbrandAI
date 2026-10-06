@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
 from . import services
-from .serializers import ContenidoBandejaSerializer, ContenidoDetalleSerializer, ModerarContenidoSerializer, ActualizarEstadoSerializer
+from .serializers import ContenidoBandejaSerializer, ContenidoDetalleSerializer, ModerarContenidoSerializer
 
 
 class BandejaRevisionView(APIView):
@@ -38,30 +38,6 @@ class ModerarContenidoView(APIView):
                 contenido_id=contenido_id,
                 accion=serializer.validated_data["accion"],
                 moderador_id=serializer.validated_data["moderador_id"],
-            )
-        except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(ContenidoDetalleSerializer(contenido).data)
-
-
-class ActualizarEstadoView(APIView):
-    """PATCH /api/contenido/<id>/estado : actualiza el estado del contenido (HU 15)."""
-    permission_classes = [AllowAny]
-
-    def patch(self, request, contenido_id):
-        serializer = ActualizarEstadoSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        moderador_id = serializer.validated_data.get("moderador_id") or getattr(request.user, "id", None)
-        if not moderador_id:
-            return Response({"detail": "Se requiere ID de moderador."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            contenido = services.actualizar_estado(
-                contenido_id=contenido_id,
-                estado=serializer.validated_data["estado"],
-                moderador_id=moderador_id,
                 motivo_rechazo=serializer.validated_data.get("motivo_rechazo"),
             )
         except ValueError as e:
