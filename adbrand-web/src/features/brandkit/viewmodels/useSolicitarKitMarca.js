@@ -22,6 +22,7 @@ export function useSolicitarKitMarca() {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO)
   const [errores, setErrores] = useState({})
   const [kit, setKit] = useState(null)
+  const [mostrarResultado, setMostrarResultado] = useState(false)
   const [aviso, setAviso] = useState(null)
   const [generando, setGenerando] = useState(false)
 
@@ -40,6 +41,7 @@ export function useSolicitarKitMarca() {
     try {
       const creado = await generarKitMarca({ ...formulario })
       setKit(creado)
+      setMostrarResultado(true)
       setAviso({ tipo: 'exito', texto: '¡Kit de Marca generado correctamente!' })
     } catch (error) {
       if (error.status === 404 && error.codigo === 'PERFIL_NO_ENCONTRADO') {
@@ -61,12 +63,42 @@ export function useSolicitarKitMarca() {
     }
   }
 
+  function pedirOtraVersion() {
+    return generar()
+  }
+
+  function aceptarKit() {
+    setKit(null)
+    setMostrarResultado(false)
+    setAviso({ tipo: 'exito', texto: 'Kit de Marca aceptado. Ya puedes usarlo en tu negocio.' })
+  }
+
+  function volverAlFormulario() {
+    setMostrarResultado(false)
+    setAviso(null)
+  }
+
   function reiniciar() {
     setFormulario(FORMULARIO_VACIO)
     setErrores({})
     setKit(null)
+    setMostrarResultado(false)
     setAviso(null)
   }
 
-  return { formulario, errores, kit, aviso, generando, estilos: ESTILOS_VISUALES, cambiarCampo, generar, reiniciar }
+  return {
+    formulario,
+    errores,
+    kit,
+    mostrarResultado,
+    aviso,
+    generando,
+    estilos: ESTILOS_VISUALES,
+    cambiarCampo,
+    generar,
+    pedirOtraVersion,
+    aceptarKit,
+    volverAlFormulario,
+    reiniciar,
+  }
 }

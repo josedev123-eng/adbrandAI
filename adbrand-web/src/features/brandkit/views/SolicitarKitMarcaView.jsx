@@ -1,5 +1,6 @@
 // View: formulario para solicitar el Kit de Marca. La lógica está en useSolicitarKitMarca.
 import { useSolicitarKitMarca } from '../viewmodels/useSolicitarKitMarca'
+import KitMarcaResultadoView from './KitMarcaResultadoView'
 import './SolicitarKitMarcaView.css'
 
 function Campo({ etiqueta, error, children, ayuda }) {
@@ -29,12 +30,39 @@ function SelectEstilo({ valor, error, onChange, opciones }) {
   )
 }
 
-export default function SolicitarKitMarcaView({ alGenerar }) {
-  const { formulario, errores, aviso, generando, estilos, cambiarCampo, generar, reiniciar } = useSolicitarKitMarca()
+export default function SolicitarKitMarcaView() {
+  const {
+    formulario,
+    errores,
+    kit,
+    mostrarResultado,
+    aviso,
+    generando,
+    estilos,
+    cambiarCampo,
+    generar,
+    pedirOtraVersion,
+    aceptarKit,
+    volverAlFormulario,
+    reiniciar,
+  } = useSolicitarKitMarca()
 
   function alEnviar(evento) {
     evento.preventDefault()
     generar()
+  }
+
+  if (mostrarResultado && kit) {
+    return (
+      <KitMarcaResultadoView
+        kit={kit}
+        aviso={aviso}
+        generando={generando}
+        alAceptar={aceptarKit}
+        alPedirOtra={pedirOtraVersion}
+        alVolver={volverAlFormulario}
+      />
+    )
   }
 
   return (

@@ -50,7 +50,7 @@ function Tipografia({ primaria, secundaria }) {
   )
 }
 
-export default function KitMarcaResultadoView({ kit, alVolver, alNuevaSolicitud }) {
+export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar, alPedirOtra, alVolver }) {
   const [copiado, setCopiado] = useState(null)
 
   async function copiarJson() {
@@ -92,6 +92,8 @@ export default function KitMarcaResultadoView({ kit, alVolver, alNuevaSolicitud 
         </div>
       )}
 
+      {aviso && <div className={`aviso aviso-${aviso.tipo}`}>{aviso.texto}</div>}
+
       <div className="kit-grid">
         <Seccion titulo="Concepto de Logo" icono="🎨">
           <p className="kit-texto">{kit.logoConcepto || 'No disponible'}</p>
@@ -111,16 +113,16 @@ export default function KitMarcaResultadoView({ kit, alVolver, alNuevaSolicitud 
       </div>
 
       <div className="kit-acciones">
-        <button type="button" className="boton-secundario" onClick={alVolver}>
-          ← Volver al formulario
+        <button type="button" className="boton-primario" onClick={alAceptar} disabled={generando}>
+          ✓ Aceptar kit
         </button>
-        <button type="button" className="boton-secundario" onClick={alNuevaSolicitud}>
-          Nueva solicitud
+        <button type="button" className="boton-secundario" onClick={alPedirOtra} disabled={generando}>
+          {generando ? '✦ Generando otra versión...' : '🔁 Pedir otra versión'}
         </button>
-        <button type="button" className="boton-secundario" onClick={copiarJson}>
+        <button type="button" className="boton-secundario" onClick={copiarJson} disabled={generando}>
           {copiado === 'json' ? '✓ Copiado' : '📋 Copiar JSON'}
         </button>
-        <button type="button" className="boton-primario" onClick={descargarJson}>
+        <button type="button" className="boton-secundario" onClick={descargarJson} disabled={generando}>
           💾 Descargar JSON
         </button>
       </div>
