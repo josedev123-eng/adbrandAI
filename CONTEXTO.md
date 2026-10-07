@@ -56,7 +56,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 8 | Suscripciones vencidas y pendientes de pago | Django `suscripciones` + admin-web `features/suscripciones` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
-| 11 | Solicitar Kit de Marca básico | Spring `brandkit` + web `features/brandkit` |
+| 11 | Solicitar Kit de Marca básico | Spring `brandkit` + web `features/brandkit` (entrada en el menú `Kit de Marca`; pantalla con Aceptar kit y Pedir otra versión) |
 | 12 | Regenerar contenido que no convenció | Spring `contenido` + web `features/contenido` |
 | 13 | Filtro automático del contenido | Spring `revision` + estado en `contenido` |
 | 14 | Bandeja de revisión manual | Django `moderacion` + admin-web `features/moderacion` |
@@ -78,7 +78,7 @@ Spring Boot (`http://localhost:8080/api`):
 Django (`http://localhost:8000/api`):
 - `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
 - `GET /usuarios/administradores/`: lista los administradores con su estado (HU 3).
-- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción (HU 3).
+- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción; sin login aún, se usa la constante `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js` (HU 3).
 - `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
@@ -97,7 +97,7 @@ Django (`http://localhost:8000/api`):
 | V7 | `suscripcion` (estado, fechas, monto y plan de cada cliente) | 8 |
 | V8 | `kit_marca` (logo, tipografías, paleta, voz) | 11 |
 
-Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local.
+Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/contenido-dudoso.sql` y se cargan a mano sobre la base local.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
@@ -157,7 +157,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 
 | Parte | Herramientas | Comando |
 |---|---|---|
-| Spring Boot | JUnit 5, AssertJ, Mockito, `@WebMvcTest` | `mvnw.cmd test -Dtest="NombreDeLaPrueba"` |
+| Spring Boot | JUnit 6, AssertJ, Mockito, `@WebMvcTest` | `mvnw.cmd test -Dtest="NombreDeLaPrueba"` |
 | Django | `APITestCase` de DRF | `python manage.py test <app>` |
 | Web de administración | Vitest y Testing Library | `npm test` |
 | Las dos webs | ESLint | `npm run lint` |
