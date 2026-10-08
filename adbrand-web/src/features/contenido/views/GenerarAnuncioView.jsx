@@ -4,11 +4,12 @@ import { MAXIMO_OFERTA, useGenerarAnuncio } from '../viewmodels/useGenerarAnunci
 import './GenerarAnuncioView.css'
 
 export default function GenerarAnuncioView({ irAPerfil }) {
-  const { solicitud, errores, anuncio, aviso, faltaPerfil, generando, copiado, cambiarCampo, generar, copiar } =
+  const { solicitud, errores, anuncio, aviso, faltaPerfil, generando, regenerando, copiado, cambiarCampo, generar, regenerar, copiar } =
     useGenerarAnuncio()
 
   // HU 13: si el filtro lo marcó como dudoso, no se puede copiar para publicarlo.
   const enRevision = anuncio?.estado === 'DUDOSO'
+  const cargando = generando || regenerando
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -70,8 +71,8 @@ export default function GenerarAnuncioView({ irAPerfil }) {
             {errores.redSocial && <small className="campo-error">{errores.redSocial}</small>}
           </fieldset>
 
-          <button className="boton-ia" type="submit" disabled={generando}>
-            {generando ? 'Generando...' : '✦ Generar con IA'}
+          <button className="boton-ia" type="submit" disabled={cargando}>
+            {cargando ? 'Generando...' : '✦ Generar con IA'}
           </button>
         </form>
 
@@ -81,13 +82,13 @@ export default function GenerarAnuncioView({ irAPerfil }) {
             {anuncio && <span className="etiqueta-ia">✦ Generado con IA</span>}
           </div>
 
-          {generando && <p className="resultado-vacio">La IA está escribiendo tu anuncio...</p>}
+          {cargando && <p className="resultado-vacio">La IA está escribiendo tu anuncio...</p>}
 
-          {!generando && !anuncio && (
+          {!cargando && !anuncio && (
             <p className="resultado-vacio">Aquí aparecerá el texto listo para copiar y pegar en tu red social.</p>
           )}
 
-          {!generando && anuncio && (
+          {!cargando && anuncio && (
             <>
               {enRevision && (
                 <div className="aviso aviso-revision">
@@ -110,8 +111,18 @@ export default function GenerarAnuncioView({ irAPerfil }) {
                     {copiado ? '¡Copiado!' : 'Copiar texto'}
                   </button>
                 )}
-                <button type="button" className="boton-secundario" onClick={generar}>
+                <button type="button" className="boton-secundario" onClick={generar} disabled={cargando}>
                   Generar otra versión
+                </button>
+                {/* HU 12: Botón para regenerar con los mismos parámetros */}
+                <button
+                  type="button"
+                  className="boton-secundario"
+                  onClick={regenerar}
+                  disabled={cargando}
+                  title="Regenerar con los mismos parámetros"
+                >
+                  {regenerando ? '🔄 Regenerando...' : '🔄 Regenerar'}
                 </button>
               </div>
             </>

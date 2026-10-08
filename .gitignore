@@ -12,3 +12,19 @@ dist/
 # Editores
 .vscode/
 .idea/
+# Archivos sueltos de pruebas y utilidades (no se versionan)
+bootrun.txt
+testrun.txt
+compile_out.txt
+dep_out.txt
+dep_tree.txt
+test_log.txt
+test_out*.txt
+test_output.txt
+test_result.txt
+commit_msg_*.txt
+insert_*.py
+fix_*.sql
+clean_insert_content.sql
+insert_test_data.sql
+/query

@@ -53,6 +53,9 @@ public class Contenido {
     @Column(name = "motivo_revision", length = 500)
     private String motivoRevision;
 
+    @Column(name = "prompt_original", columnDefinition = "TEXT")
+    private String promptOriginal;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -95,6 +98,9 @@ public class Contenido {
 
     public String getMotivoRevision() { return motivoRevision; }
     public void setMotivoRevision(String motivoRevision) { this.motivoRevision = motivoRevision; }
+
+    public String getPromptOriginal() { return promptOriginal; }
+    public void setPromptOriginal(String promptOriginal) { this.promptOriginal = promptOriginal; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }

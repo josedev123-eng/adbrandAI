@@ -4,6 +4,7 @@ import './MenuUsuario.css'
 const OPCIONES = [
   { id: 'perfil', nombre: 'Mi negocio' },
   { id: 'anuncio', nombre: 'Crear anuncio' },
+  { id: 'kit', nombre: 'Kit de Marca' },
 ]
 
 export default function MenuUsuario({ actual, alCambiar }) {

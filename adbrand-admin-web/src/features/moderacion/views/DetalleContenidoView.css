@@ -14,3 +14,23 @@
 .dato { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .dato dt { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
 .dato dd { margin: 2px 0 0; font-weight: 600; }
+
+/* HU-15: botones de moderar */
+.detalle-moderar { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; border-top: 1px solid var(--border); }
+.moderar-campos label { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+.moderar-campos input { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; width: 100%; max-width: 200px; }
+.moderar-campos input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.moderar-campos textarea { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; width: 100%; max-width: 400px; resize: vertical; min-height: 80px; }
+.moderar-campos textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.moderar-botones { display: flex; gap: 10px; flex-wrap: wrap; }
+.boton-primario, .boton-peligro, .boton-secundario { padding: 10px 18px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+.boton-primario { background: var(--ok); color: white; }
+.boton-primario:hover:not(:disabled) { opacity: 0.9; }
+.boton-peligro { background: var(--bad); color: white; }
+.boton-peligro:hover:not(:disabled) { opacity: 0.9; }
+.boton-secundario { background: var(--surface-2); color: var(--fg); border: 1px solid var(--border); }
+.boton-secundario:hover:not(:disabled) { background: var(--line); }
+.boton-primario:disabled, .boton-peligro:disabled, .boton-secundario:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Rechazo form específico */
+.rechazo-form { background: var(--bad-soft); border: 1px solid var(--bad); border-radius: 10px; padding: 16px; }

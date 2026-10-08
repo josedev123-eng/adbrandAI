@@ -80,3 +80,122 @@ class BandejaRevisionTests(APITestCase):
         respuesta = self.client.get("/api/moderacion/contenidos/99999/")
 
         self.assertEqual(respuesta.status_code, 404)
+
+
+class ModerarContenidoTests(APITestCase):
+    """HU-15: aprobar o rechazar contenido desde la bandeja de revisión."""
+
+    @classmethod
+    def setUpTestData(cls):
+        PerfilNegocio.objects.create(usuario_id=1, nombre_comercial="Panadería Doña Rosa", rubro="Panadería")
+        cls.dudoso = crear_contenido(
+            "DUDOSO", "Cigarrillos importados", motivo='"cigarrillos": Publicidad de tabaco.'
+        )
+        cls.aprobado = crear_contenido("APROBADO", "Promo válida")
+        cls.rechazado = crear_contenido("RECHAZADO", "Otra promo rechazada")
+
+    def test_aprobar_contenido_dudoso_cambia_estado_a_aprobado_y_guarda_moderador(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "APROBAR", "moderador_id": 42},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["estado"], "APROBADO")
+        self.assertEqual(respuesta.data["moderador_id"], 42)
+
+        # Verificar en BD
+        self.dudoso.refresh_from_db()
+        self.assertEqual(self.dudoso.estado, "APROBADO")
+        self.assertEqual(self.dudoso.moderador_id, 42)
+
+    def test_rechazar_contenido_dudoso_cambia_estado_a_rechazado_y_guarda_moderador(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "RECHAZAR", "moderador_id": 99},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["estado"], "RECHAZADO")
+        self.assertEqual(respuesta.data["moderador_id"], 99)
+
+        self.dudoso.refresh_from_db()
+        self.assertEqual(self.dudoso.estado, "RECHAZADO")
+        self.assertEqual(self.dudoso.moderador_id, 99)
+
+    def test_no_se_puede_moderar_contenido_ya_aprobado(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.aprobado.id}/moderar/",
+            {"accion": "RECHAZAR", "moderador_id": 1},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("Solo se pueden moderar", respuesta.data["detail"])
+
+    def test_no_se_puede_moderar_contenido_ya_rechazado(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.rechazado.id}/moderar/",
+            {"accion": "APROBAR", "moderador_id": 1},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("Solo se pueden moderar", respuesta.data["detail"])
+
+    def test_accion_invalida_devuelve_400(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "INVALIDO", "moderador_id": 1},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 400)
+
+    def test_moderador_id_faltante_devuelve_400(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "APROBAR"},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 400)
+
+    def test_moderar_contenido_inexistente_devuelve_404(self):
+        respuesta = self.client.post(
+            "/api/moderacion/contenidos/99999/moderar/",
+            {"accion": "APROBAR", "moderador_id": 1},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 404)
+
+    def test_rechazar_con_motivo_guarda_el_motivo_en_motivo_revision(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "RECHAZAR", "moderador_id": 99, "motivo_rechazo": "Publicidad de apuestas"},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["motivo_revision"], "Publicidad de apuestas")
+
+        self.dudoso.refresh_from_db()
+        self.assertEqual(self.dudoso.estado, "RECHAZADO")
+        self.assertEqual(self.dudoso.motivo_revision, "Publicidad de apuestas")
+
+    def test_rechazar_sin_motivo_conserva_el_motivo_de_la_observacion(self):
+        respuesta = self.client.post(
+            f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
+            {"accion": "RECHAZAR", "moderador_id": 1},
+            format="json",
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+
+        self.dudoso.refresh_from_db()
+        self.assertEqual(self.dudoso.estado, "RECHAZADO")
+        self.assertEqual(self.dudoso.motivo_revision, '"cigarrillos": Publicidad de tabaco.')
+

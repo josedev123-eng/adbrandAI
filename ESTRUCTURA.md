@@ -25,8 +25,8 @@ adbrand/
 
 | Lado | Historias |
 |---|---|
-| Administración (React + Django) | HU 1 a 4 administradores y auditoría, HU 5 a 8 suscripciones e ingresos, HU 13 a 16 moderación, HU 17 a 20 tokens y servidor |
-| Usuario (React + Kotlin + Spring Boot) | HU 9 a 12 negocio y generación con IA, HU 21 a 24 cuenta, HU 25 a 28 pagos, HU 29 a 32 kit de marca, HU 33 a 36 calendario, HU 37 a 40 reportes, HU 41 a 60 app móvil |
+| Administración (React + Django) | HU 1 a 4 administradores y auditoría, HU 5 a 8 suscripciones e ingresos, HU 14 a 16 moderación, HU 17 a 20 tokens y servidor |
+| Usuario (React + Kotlin + Spring Boot) | HU 9 a 12 negocio y generación con IA, HU 13 filtro automático, HU 21 a 24 cuenta, HU 25 a 28 pagos, HU 29 a 32 kit de marca, HU 33 a 36 calendario, HU 37 a 40 reportes, HU 41 a 60 app móvil |
 
 ## adbrand-admin-api (Django) — ADMINISTRACIÓN
 
@@ -36,13 +36,13 @@ core/            Inicio de sesión de administradores, permisos por rol, formato
 usuarios/        HU 1, 2, 3: cuentas de administrador, roles y permisos
 auditoria/       HU 4: registro de acciones de administradores
 suscripciones/   HU 5, 6, 7, 8: suscripciones activas, ingresos, filtros, morosos
-moderacion/      HU 13 a 16: reglas del filtro, bandeja, aprobar o rechazar, historial
+moderacion/      HU 14 a 16: bandeja, aprobar o rechazar, historial (el filtro de la HU 13 está en Spring Boot)
 tokens/          HU 17, 19, 20: consumo de tokens y alertas
 servidor/        HU 18: estado del servidor
 ```
 
 Cada app de Django se crea con `python manage.py startapp <nombre>` y usa siempre los mismos archivos:
-`models.py` (tablas) → `serializers.py` (lo que entra y sale) → `services.py` (reglas) → `views.py` (endpoints) → `urls.py`, y `tests/`.
+`models.py` (tablas) → `serializers.py` (lo que entra y sale) → `services.py` (reglas) → `views.py` (endpoints) → `urls.py`, y `tests.py`.
 
 ## adbrand-admin-web (React) — ADMINISTRACIÓN, MVVM
 
@@ -60,7 +60,7 @@ src/
     ├── auth/            Inicio de sesión del administrador
     ├── admin/           HU 1, 2, 3, 4
     ├── suscripciones/   HU 5, 6, 7, 8
-    ├── moderacion/      HU 13 a 16
+    ├── moderacion/      HU 14 a 16
     ├── tokens/          HU 17, 19, 20
     └── servidor/        HU 18
 ```
@@ -71,12 +71,13 @@ src/
 src/main/java/com/adbrand/core/
 ├── config/          CORS, seguridad con JWT, variables del servidor de IA
 ├── shared/
-│   ├── error/       Formato de error {codigo, mensaje}, el mismo que Django
+│   ├── error/       Formato de error {codigo, mensaje, campos}
 │   └── util/
 ├── ia/              Cliente hacia el servidor de IA del instituto (client/, service/, dto/) y modo simulado
 ├── auth/            HU 21, 22, 24: registro, inicio de sesión, recuperar contraseña
 ├── negocio/         HU 9, 23: perfil del negocio y datos de la empresa
 ├── contenido/       HU 10, 11, 12: anuncio, kit de marca, regenerar
+├── revision/        HU 13: filtro automático del contenido generado (reglas en la tabla regla_revision)
 ├── pago/            HU 25 a 28: planes, tarjeta y Yape, confirmación
 ├── brandkit/        HU 29 a 32: logo, colores e identidad visual
 ├── calendario/      HU 33 a 36: calendario de publicaciones
@@ -149,13 +150,14 @@ Los dos backends usan la misma BD. Para que no se pisen:
 
 - Todas las tablas se crean con migraciones Flyway en `adbrand-core-api/src/main/resources/db/migration` (`V1__...sql`, `V2__...sql`), también las del lado de administración.
 - En Django los modelos llevan `managed = False` y no se usa `makemigrations` para esas tablas.
-- Cómo se comunican los dos lados: por las tablas. Ejemplo: Spring Boot guarda el anuncio generado con estado `PENDIENTE`, aplicando las reglas que el moderador registró desde Django (HU 13); el moderador lo ve en la bandeja de Django (HU 14) y lo aprueba o rechaza (HU 15).
+- Cómo se comunican los dos lados: por las tablas. Ejemplo: Spring Boot genera el anuncio, lo revisa con las reglas de `regla_revision` (HU 13) y lo guarda en `contenido` como `APROBADO` o `DUDOSO`; el moderador ve los dudosos en la bandeja de Django (HU 14) y los aprueba o rechaza (HU 15).
 
 ## Reglas para trabajar en equipo
 
 1. Cada historia va en su lado y en su módulo (ver la tabla de arriba). No se crean carpetas nuevas en la raíz.
    Si aparece una historia que no encaja, el grupo decide el módulo nuevo y lo agrega aquí antes de programar.
-2. Una rama por historia, por ejemplo `hu-15-aprobar-rechazar`. Nadie sube directo a `main`.
+2. Cada integrante trabaja en su rama (`rama-jose`, `rama-karim`, `rama-edu`) y la une a `main` con un PR. Nadie sube directo a `main`.
+   Antes de crear una migración nueva, `git pull origin main` y avisar al grupo qué número se toma.
 3. Las tablas solo se crean con migraciones nuevas. No se edita una migración que ya se subió.
 4. Respeta MVVM: la pantalla en views/ o screens/, la lógica en viewmodels/ o viewmodel/.
 5. Antes de usar la IA para programar, pásale el archivo `CONTEXTO.md` de la raíz para que siga estas mismas reglas.

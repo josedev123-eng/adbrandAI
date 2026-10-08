@@ -1,0 +1,7 @@
+.pagina.pagina-kit { max-width: 720px; }
+
+.formulario { display: flex; flex-direction: column; gap: 18px; }
+
+.formulario-acciones { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+
+.pagina-kit .boton-ia { padding: 12px 20px; font-size: 1rem; }
