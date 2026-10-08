@@ -2,6 +2,7 @@ package com.adbrand.core.ia.service;
 
 import com.adbrand.core.config.IaProperties;
 import com.adbrand.core.ia.client.ClienteIa;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,11 @@ import org.springframework.web.client.RestClientException;
 public class ServicioIa {
 
     private static final Logger log = LoggerFactory.getLogger(ServicioIa.class);
+
+    // Qwen3 a veces escribe su "razonamiento" entre <think> y </think> antes de la respuesta.
+    // Ese texto no es el anuncio, así que se quita.
+    private static final Pattern BLOQUE_THINK = Pattern.compile("(?s)<think>.*?</think>");
+    private static final String FIN_THINK = "</think>";
 
     private final ClienteIa cliente;
     private final IaProperties ia;
@@ -31,7 +37,7 @@ public class ServicioIa {
             return respuestaSimulada(usuario);
         }
         try {
-            String texto = cliente.completar(sistema, usuario);
+            String texto = quitarRazonamiento(cliente.completar(sistema, usuario));
             if (texto == null || texto.isBlank()) {
                 throw new IaNoDisponibleException("La IA respondió sin texto", null);
             }
@@ -40,6 +46,20 @@ public class ServicioIa {
             log.warn("Falló la llamada al servidor de IA: {}", ex.getMessage());
             throw new IaNoDisponibleException("No se pudo conectar con la IA", ex);
         }
+    }
+
+    // Quita los bloques <think>...</think>. Si solo llegó el cierre (el servidor cortó la apertura),
+    // se queda con lo que viene después de </think>.
+    private String quitarRazonamiento(String texto) {
+        if (texto == null) {
+            return null;
+        }
+        String limpio = BLOQUE_THINK.matcher(texto).replaceAll("");
+        int fin = limpio.lastIndexOf(FIN_THINK);
+        if (fin >= 0) {
+            limpio = limpio.substring(fin + FIN_THINK.length());
+        }
+        return limpio;
     }
 
     // Arma un anuncio de ejemplo usando la oferta que vino en el prompt.

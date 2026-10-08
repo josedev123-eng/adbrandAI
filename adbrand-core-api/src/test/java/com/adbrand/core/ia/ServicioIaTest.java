@@ -54,4 +54,27 @@ class ServicioIaTest {
         assertThatThrownBy(() -> servicio(false).generarTexto("reglas", "pedido"))
                 .isInstanceOf(IaNoDisponibleException.class);
     }
+
+    @Test
+    void quitaElRazonamientoThinkDeQwen() {
+        when(cliente.completar("reglas", "pedido"))
+                .thenReturn("<think>\nEl usuario quiere un anuncio...\n</think>\n\nAnuncio listo");
+
+        assertThat(servicio(false).generarTexto("reglas", "pedido")).isEqualTo("Anuncio listo");
+    }
+
+    @Test
+    void siSoloLlegaElCierreThinkSeQuedaConLoQueSigue() {
+        when(cliente.completar("reglas", "pedido")).thenReturn("pensando...\n</think>\nAnuncio listo");
+
+        assertThat(servicio(false).generarTexto("reglas", "pedido")).isEqualTo("Anuncio listo");
+    }
+
+    @Test
+    void siLaIaSoloPiensaYNoRespondeLanzaIaNoDisponible() {
+        when(cliente.completar(anyString(), anyString())).thenReturn("<think>solo pienso</think>");
+
+        assertThatThrownBy(() -> servicio(false).generarTexto("reglas", "pedido"))
+                .isInstanceOf(IaNoDisponibleException.class);
+    }
 }
