@@ -6,6 +6,108 @@ from .models import Rol, UsuarioAdmin
 URL = "/api/usuarios/administradores/"
 
 
+class DesactivarAdminTests(APITestCase):
+    """HU-03: solo un superadministrador activo desactiva cuentas, y no la suya."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superadmin_rol = Rol.objects.create(nombre="SUPERADMIN")
+        cls.moderador_rol = Rol.objects.create(nombre="MODERADOR")
+        cls.superadmin = UsuarioAdmin.objects.create(
+            nombres="Super", apellidos="Admin", correo="super@adbrand.pe",
+            contrasena="password123", rol=cls.superadmin_rol, estado=UsuarioAdmin.ACTIVO,
+        )
+        cls.moderador = UsuarioAdmin.objects.create(
+            nombres="Ana", apellidos="Moderadora", correo="ana@adbrand.pe",
+            contrasena="password123", rol=cls.moderador_rol, estado=UsuarioAdmin.ACTIVO,
+        )
+        cls.objetivo = UsuarioAdmin.objects.create(
+            nombres="Juan", apellidos="Perez", correo="juan@adbrand.pe",
+            contrasena="password123", rol=cls.moderador_rol, estado=UsuarioAdmin.ACTIVO,
+        )
+
+    def _como(self, admin):
+        return {"HTTP_X_ADMIN_ID": admin.id} if admin else {}
+
+    def _desactivar(self, admin_objetivo, como=None, confirmar=True):
+        url = f"/api/usuarios/administradores/{admin_objetivo.id}/desactivar/"
+        return self.client.patch(url, {"confirmar": confirmar}, format="json", **(como or {}))
+
+    def test_el_superadmin_desactiva_una_cuenta(self):
+        respuesta = self._desactivar(self.objetivo, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["estado"], "INACTIVO")
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.estado, UsuarioAdmin.INACTIVO)
+
+    def test_un_moderador_recibe_403(self):
+        respuesta = self._desactivar(self.objetivo, self._como(self.moderador))
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.estado, UsuarioAdmin.ACTIVO)
+
+    def test_sin_header_recibe_401_o_403(self):
+        respuesta = self._desactivar(self.objetivo)
+
+        self.assertIn(respuesta.status_code, [401, 403])
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.estado, UsuarioAdmin.ACTIVO)
+
+    def test_no_puede_desactivarse_a_si_mismo(self):
+        respuesta = self._desactivar(self.superadmin, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.superadmin.refresh_from_db()
+        self.assertEqual(self.superadmin.estado, UsuarioAdmin.ACTIVO)
+
+    def test_una_cuenta_inactiva_no_puede_desactivar(self):
+        self.moderador.estado = UsuarioAdmin.INACTIVO
+        self.moderador.save()
+
+        respuesta = self._desactivar(self.objetivo, self._como(self.moderador))
+
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_roles_responde_200_sin_header(self):
+        respuesta = self.client.get("/api/usuarios/roles/")
+
+        self.assertEqual(respuesta.status_code, 200)
+
+    def test_listado_de_administradores_no_trae_la_contrasena(self):
+        respuesta = self.client.get("/api/usuarios/administradores/")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(len(respuesta.data), 3)
+        for fila in respuesta.data:
+            self.assertNotIn("contrasena", fila)
+            self.assertIn("estado", fila)
+
+    def test_no_desactivar_sin_confirmacion(self):
+        respuesta = self._desactivar(self.objetivo, self._como(self.superadmin), confirmar=False)
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("confirmar", respuesta.data["detail"].lower())
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.estado, UsuarioAdmin.ACTIVO)
+
+    def test_no_desactivar_admin_ya_inactivo(self):
+        self.objetivo.estado = UsuarioAdmin.INACTIVO
+        self.objetivo.save()
+
+        respuesta = self._desactivar(self.objetivo, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("ya está desactivado", respuesta.data["detail"].lower())
+
+    def test_desactivar_admin_inexistente_da_404(self):
+        url = "/api/usuarios/administradores/99999/desactivar/"
+        respuesta = self.client.patch(url, {"confirmar": True}, format="json", **self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 404)
+
+
 class CrearAdministradorTests(APITestCase):
     """HU-01: crear cuentas de administrador con un rol asignado."""
 

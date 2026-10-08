@@ -94,6 +94,9 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": "localhost",
         "PORT": "5432",
+        "OPTIONS": {
+            "options": "-c client_encoding=UTF8",
+        },
     }
 }
 

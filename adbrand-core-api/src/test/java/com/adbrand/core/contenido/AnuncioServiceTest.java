@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import java.util.List;
+import java.util.Optional;
 import org.mockito.ArgumentCaptor;
 
 // Tarea 4 de la HU 10: probar distintas ofertas y tonos sin llamar a la IA real.
@@ -146,6 +148,73 @@ class AnuncioServiceTest {
         servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM));
 
         assertThat(contenidoGuardado().getMotivoRevision()).hasSize(500).endsWith("...");
+    }
+
+    // HU 12: regenerar crea una alternativa nueva reutilizando los parámetros originales.
+    @Test
+    void regenerar_creaNuevaAlternativaConMismosParametros() {
+        perfilConTono(Tono.CERCANO);
+        when(ia.generarTexto(anyString(), anyString())).thenReturn("Versión regenerada");
+        Contenido original = contenidoDe(10L, "2 panetones por S/ 35", RedSocial.INSTAGRAM);
+        when(contenidos.findById(10L)).thenReturn(Optional.of(original));
+
+        AnuncioGeneradoResponse alternativa = servicio.regenerar(1L, 10L);
+
+        assertThat(alternativa.texto()).isEqualTo("Versión regenerada");
+        assertThat(alternativa.redSocial()).isEqualTo(original.getRedSocial());
+        assertThat(alternativa.tono()).isEqualTo(Tono.CERCANO);
+        assertThat(alternativa.estado()).isEqualTo(EstadoContenido.APROBADO);
+
+        Contenido guardado = contenidoGuardado();
+        assertThat(guardado).isNotSameAs(original);
+        assertThat(guardado.getOferta()).isEqualTo(original.getOferta());
+        assertThat(guardado.getRedSocial()).isEqualTo(original.getRedSocial());
+        assertThat(guardado.getUsuarioId()).isEqualTo(1L);
+        assertThat(guardado.getTipo()).isEqualTo(Contenido.TIPO_ANUNCIO);
+    }
+
+    // HU 12: cada regeneración guarda una alternativa distinta de las anteriores.
+    @Test
+    void multiplesRegeneraciones_creanAlternativasDistintas() {
+        perfilConTono(Tono.PROFESIONAL);
+        when(ia.generarTexto(anyString(), anyString()))
+                .thenReturn("Versión 1", "Versión 2", "Versión 3");
+        Contenido original = contenidoDe(20L, "10% de descuento en tortas", RedSocial.FACEBOOK);
+        when(contenidos.findById(20L)).thenReturn(Optional.of(original));
+
+        AnuncioGeneradoResponse primera = servicio.regenerar(1L, 20L);
+        AnuncioGeneradoResponse segunda = servicio.regenerar(1L, 20L);
+        AnuncioGeneradoResponse tercera = servicio.regenerar(1L, 20L);
+
+        assertThat(primera.texto()).isEqualTo("Versión 1");
+        assertThat(segunda.texto()).isEqualTo("Versión 2");
+        assertThat(tercera.texto()).isEqualTo("Versión 3");
+        assertThat(primera.texto()).isNotEqualTo(segunda.texto());
+        assertThat(segunda.texto()).isNotEqualTo(tercera.texto());
+
+        ArgumentCaptor<Contenido> captor = ArgumentCaptor.forClass(Contenido.class);
+        verify(contenidos, times(3)).save(captor.capture());
+        List<Contenido> guardados = captor.getAllValues();
+        assertThat(guardados.get(0)).isNotSameAs(guardados.get(1));
+        assertThat(guardados.get(1)).isNotSameAs(guardados.get(2));
+        for (Contenido guardado : guardados) {
+            assertThat(guardado.getOferta()).isEqualTo(original.getOferta());
+            assertThat(guardado.getRedSocial()).isEqualTo(original.getRedSocial());
+            assertThat(guardado.getUsuarioId()).isEqualTo(1L);
+        }
+    }
+
+    private Contenido contenidoDe(Long id, String oferta, RedSocial red) {
+        Contenido contenido = new Contenido();
+        contenido.setUsuarioId(1L);
+        contenido.setTipo(Contenido.TIPO_ANUNCIO);
+        contenido.setRedSocial(red);
+        contenido.setTono(Tono.CERCANO);
+        contenido.setOferta(oferta);
+        contenido.setTexto("Versión original");
+        contenido.setEstado(EstadoContenido.APROBADO);
+        org.springframework.test.util.ReflectionTestUtils.setField(contenido, "id", id);
+        return contenido;
     }
 
     private Contenido contenidoGuardado() {
