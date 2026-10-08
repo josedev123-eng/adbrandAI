@@ -22,12 +22,15 @@ export function usePerfilNegocio() {
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [existe, setExiste] = useState(false)
+  // Copia de lo que está guardado en la base, para el resumen. No cambia mientras se edita el formulario.
+  const [guardado, setGuardado] = useState(null)
 
   // Criterio 2: al entrar, si ya hay un perfil guardado se carga en el formulario.
   useEffect(() => {
     obtenerPerfil()
-      .then((guardado) => {
-        setPerfil({ ...guardado, descripcion: guardado.descripcion ?? '' })
+      .then((perfilGuardado) => {
+        setPerfil({ ...perfilGuardado, descripcion: perfilGuardado.descripcion ?? '' })
+        setGuardado(perfilGuardado)
         setExiste(true)
       })
       .catch((error) => {
@@ -52,8 +55,9 @@ export function usePerfilNegocio() {
 
     setGuardando(true)
     try {
-      const guardado = await guardarPerfil(perfil)
-      setPerfil({ ...guardado, descripcion: guardado.descripcion ?? '' })
+      const perfilGuardado = await guardarPerfil(perfil)
+      setPerfil({ ...perfilGuardado, descripcion: perfilGuardado.descripcion ?? '' })
+      setGuardado(perfilGuardado)
       setExiste(true)
       setMensaje({ tipo: 'exito', texto: 'Perfil guardado. La IA usará estos datos en tus anuncios.' })
     } catch (error) {
@@ -68,5 +72,5 @@ export function usePerfilNegocio() {
     }
   }
 
-  return { perfil, errores, mensaje, cargando, guardando, existe, cambiarCampo, guardar }
+  return { perfil, guardado, errores, mensaje, cargando, guardando, existe, cambiarCampo, guardar }
 }
