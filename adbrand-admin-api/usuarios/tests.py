@@ -179,3 +179,100 @@ class CrearAdministradorTests(APITestCase):
         self.assertEqual(respuesta.status_code, 400)
         self.assertIn("correo", respuesta.data)
         self.assertIn("contrasena", respuesta.data)
+
+
+class CambiarRolTests(APITestCase):
+    """HU-02: solo un superadministrador activo cambia el rol de otra cuenta."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superadmin_rol = Rol.objects.create(nombre="SUPERADMIN")
+        cls.moderador_rol = Rol.objects.create(nombre="MODERADOR")
+        cls.finanzas_rol = Rol.objects.create(nombre="FINANZAS")
+        cls.superadmin = UsuarioAdmin.objects.create(
+            nombres="Super", apellidos="Admin", correo="super@adbrand.pe",
+            contrasena="password123", rol=cls.superadmin_rol, estado=UsuarioAdmin.ACTIVO,
+        )
+        cls.moderador = UsuarioAdmin.objects.create(
+            nombres="Ana", apellidos="Moderadora", correo="ana@adbrand.pe",
+            contrasena="password123", rol=cls.moderador_rol, estado=UsuarioAdmin.ACTIVO,
+        )
+        cls.objetivo = UsuarioAdmin.objects.create(
+            nombres="Juan", apellidos="Perez", correo="juan@adbrand.pe",
+            contrasena="password123", rol=cls.moderador_rol, estado=UsuarioAdmin.ACTIVO,
+        )
+
+    def _como(self, admin):
+        return {"HTTP_X_ADMIN_ID": admin.id} if admin else {}
+
+    def _cambiar_rol(self, admin_objetivo, rol_id, como=None):
+        url = f"/api/usuarios/administradores/{admin_objetivo.id}/rol/"
+        return self.client.patch(url, {"rol_id": rol_id}, format="json", **(como or {}))
+
+    def test_el_superadmin_cambia_el_rol_de_otra_cuenta(self):
+        respuesta = self._cambiar_rol(self.objetivo, self.finanzas_rol.id, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["rol"]["nombre"], "FINANZAS")
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.rol_id, self.finanzas_rol.id)
+
+    def test_la_respuesta_no_trae_la_contrasena(self):
+        respuesta = self._cambiar_rol(self.objetivo, self.finanzas_rol.id, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.data["id"], self.objetivo.id)
+        self.assertNotIn("contrasena", respuesta.data)
+
+    def test_un_moderador_no_puede_cambiar_roles(self):
+        respuesta = self._cambiar_rol(self.objetivo, self.finanzas_rol.id, self._como(self.moderador))
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.rol_id, self.moderador_rol.id)
+
+    def test_sin_header_no_cambia_el_rol(self):
+        respuesta = self._cambiar_rol(self.objetivo, self.finanzas_rol.id)
+
+        self.assertIn(respuesta.status_code, [401, 403])
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.rol_id, self.moderador_rol.id)
+
+    def test_el_superadmin_no_cambia_su_propio_rol(self):
+        respuesta = self._cambiar_rol(self.superadmin, self.moderador_rol.id, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.superadmin.refresh_from_db()
+        self.assertEqual(self.superadmin.rol_id, self.superadmin_rol.id)
+
+    def test_un_superadmin_inactivo_no_cambia_roles(self):
+        self.superadmin.estado = UsuarioAdmin.INACTIVO
+        self.superadmin.save()
+
+        respuesta = self._cambiar_rol(self.objetivo, self.finanzas_rol.id, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.rol_id, self.moderador_rol.id)
+
+    def test_un_rol_que_no_existe_responde_400(self):
+        respuesta = self._cambiar_rol(self.objetivo, 999, self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("rol_id", respuesta.data)
+        self.objetivo.refresh_from_db()
+        self.assertEqual(self.objetivo.rol_id, self.moderador_rol.id)
+
+    def test_sin_rol_responde_400(self):
+        url = f"/api/usuarios/administradores/{self.objetivo.id}/rol/"
+        respuesta = self.client.patch(url, {}, format="json", **self._como(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("rol_id", respuesta.data)
+
+    def test_un_administrador_que_no_existe_responde_404(self):
+        url = "/api/usuarios/administradores/99999/rol/"
+        respuesta = self.client.patch(
+            url, {"rol_id": self.finanzas_rol.id}, format="json", **self._como(self.superadmin)
+        )
+
+        self.assertEqual(respuesta.status_code, 404)
