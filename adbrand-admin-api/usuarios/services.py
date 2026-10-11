@@ -26,3 +26,13 @@ def desactivar_administrador(admin_id):
     admin.save(update_fields=["estado"])
 
     return admin
+
+
+def cambiar_rol(admin_id, rol):
+    """HU 02: cambia el rol de un administrador; sus permisos dependen del rol."""
+    admin = get_object_or_404(UsuarioAdmin, pk=admin_id)
+
+    admin.rol = rol
+    admin.save(update_fields=["rol"])
+
+    return admin

@@ -43,3 +43,13 @@ class DesactivarAdministradorSerializer(serializers.Serializer):
     """Serializador para desactivar un administrador (HU 03)."""
 
     confirmar = serializers.BooleanField(default=False)
+
+
+class CambiarRolSerializer(serializers.Serializer):
+    """Serializador para cambiar el rol de un administrador (HU 02)."""
+
+    rol_id = serializers.PrimaryKeyRelatedField(
+        queryset=Rol.objects.all(),
+        source="rol",
+        error_messages={"does_not_exist": "El rol seleccionado no existe."},
+    )

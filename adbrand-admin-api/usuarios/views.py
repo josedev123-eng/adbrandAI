@@ -7,7 +7,7 @@ from . import services
 from .authentication import AdminAuthentication
 from .models import Rol, UsuarioAdmin
 from .permissions import IsAdminActivo
-from .serializers import AdministradorSerializer, CrearAdministradorSerializer, DesactivarAdministradorSerializer, RolSerializer
+from .serializers import AdministradorSerializer, CambiarRolSerializer, CrearAdministradorSerializer, DesactivarAdministradorSerializer, RolSerializer
 
 
 class RolesView(APIView):
@@ -68,5 +68,19 @@ class DesactivarAdministradorView(APIView):
             admin = services.desactivar_administrador(admin_id)
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(AdministradorSerializer(admin).data)
+
+
+class CambiarRolAdministradorView(APIView):
+    """PATCH /api/usuarios/administradores/<id>/rol/ : cambia el rol de un administrador (HU 02)."""
+    authentication_classes = [AdminAuthentication]
+    permission_classes = [IsAdminActivo]
+
+    def patch(self, request, admin_id):
+        serializer = CambiarRolSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        admin = services.cambiar_rol(admin_id, serializer.validated_data["rol"])
 
         return Response(AdministradorSerializer(admin).data)
