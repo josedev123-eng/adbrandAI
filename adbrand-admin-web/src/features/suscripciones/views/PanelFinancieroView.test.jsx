@@ -2,17 +2,20 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { obtenerSuscripcionesActivas } from '../models/suscripcionesApi'
+import { obtenerIngresosMensuales, obtenerSuscripcionesActivas } from '../models/suscripcionesApi'
 import PanelFinancieroView from './PanelFinancieroView'
 
 vi.mock('../models/suscripcionesApi', async (importOriginal) => ({
   ...(await importOriginal()),
   obtenerSuscripcionesActivas: vi.fn(),
+  obtenerIngresosMensuales: vi.fn(),
 }))
 
 describe('Panel financiero (HU-05)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // El panel también pide los ingresos (HU-06); aquí no importan.
+    obtenerIngresosMensuales.mockResolvedValue([])
   })
 
   it('muestra el número de suscripciones activas', async () => {
@@ -38,7 +41,8 @@ describe('Panel financiero (HU-05)', () => {
     render(<PanelFinancieroView />)
 
     expect(await screen.findByText(/No se pudo cargar el panel/)).toBeInTheDocument()
-    expect(screen.getByText('—')).toBeInTheDocument()
+    // Una raya por cada indicador: suscripciones activas e ingresos del periodo.
+    expect(screen.getAllByText('—')).toHaveLength(2)
   })
 
   it('el botón Actualizar vuelve a pedir el total', async () => {
