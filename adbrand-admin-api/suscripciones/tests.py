@@ -96,6 +96,8 @@ class SuscripcionesConDeudaTests(APITestCase):
         self.assertEqual(respuesta.status_code, 400)
 
 
+from datetime import date
+
 from suscripciones.models import Pago
 
 URL_ACTIVAS = "/api/suscripciones/activas/"
@@ -250,3 +252,95 @@ class IngresosMensualesTests(APITestCase):
         self.pagar("20.00", meses_atras=0)
 
         self.assertEqual(self.ingresos()[nombre_del_mes(0)], "20.00")
+
+
+class IngresosPorRangoTests(APITestCase):
+    """HU-07: filtrar los ingresos por un rango de meses para comparar periodos."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.suscripcion = crear_suscripcion(Suscripcion.ACTIVA, vence_en_dias=25)
+        # Un pago por mes en un año fijo, para que el rango no dependa de la fecha de hoy.
+        for mes, monto in [(1, "10.00"), (2, "20.00"), (3, "30.00"), (5, "50.00")]:
+            Pago.objects.create(
+                suscripcion=cls.suscripcion, monto=Decimal(monto),
+                fecha_pago=date(2025, mes, 15), metodo=Pago.YAPE,
+            )
+
+    def rango(self, desde, hasta):
+        return self.client.get(f"{URL_INGRESOS}?desde={desde}&hasta={hasta}")
+
+    def test_devuelve_solo_los_meses_del_rango_con_los_dos_extremos(self):
+        respuesta = self.rango("2025-02", "2025-04")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(
+            [dict(fila) for fila in respuesta.data],
+            [
+                {"mes": "2025-02", "total": "20.00"},
+                {"mes": "2025-03", "total": "30.00"},
+                {"mes": "2025-04", "total": "0.00"},
+            ],
+        )
+
+    def test_un_rango_de_un_solo_mes_devuelve_ese_mes(self):
+        respuesta = self.rango("2025-05", "2025-05")
+
+        self.assertEqual([dict(fila) for fila in respuesta.data], [{"mes": "2025-05", "total": "50.00"}])
+
+    def test_un_rango_que_cruza_de_anio_sigue_el_orden_de_los_meses(self):
+        respuesta = self.rango("2024-11", "2025-02")
+
+        self.assertEqual([fila["mes"] for fila in respuesta.data], ["2024-11", "2024-12", "2025-01", "2025-02"])
+        self.assertEqual([fila["total"] for fila in respuesta.data], ["0.00", "0.00", "10.00", "20.00"])
+
+    def test_dos_periodos_distintos_dan_totales_distintos(self):
+        primer_trimestre = self.rango("2025-01", "2025-03")
+        segundo_trimestre = self.rango("2025-04", "2025-06")
+
+        self.assertEqual(sum(Decimal(fila["total"]) for fila in primer_trimestre.data), Decimal("60.00"))
+        self.assertEqual(sum(Decimal(fila["total"]) for fila in segundo_trimestre.data), Decimal("50.00"))
+
+    def test_un_rango_de_24_meses_es_valido(self):
+        respuesta = self.rango("2024-01", "2025-12")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(len(respuesta.data), 24)
+
+    def test_un_rango_de_mas_de_24_meses_responde_400(self):
+        respuesta = self.rango("2024-01", "2026-01")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("hasta", respuesta.data)
+
+    def test_desde_mayor_que_hasta_responde_400(self):
+        respuesta = self.rango("2025-06", "2025-01")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("desde", respuesta.data)
+
+    def test_un_formato_invalido_responde_400(self):
+        for desde in ["2025", "2025-13", "2025-01-15", "enero", "01-2025"]:
+            with self.subTest(desde=desde):
+                respuesta = self.rango(desde, "2025-06")
+
+                self.assertEqual(respuesta.status_code, 400)
+                self.assertIn("desde", respuesta.data)
+
+    def test_solo_uno_de_los_dos_meses_responde_400(self):
+        solo_desde = self.client.get(f"{URL_INGRESOS}?desde=2025-01")
+        solo_hasta = self.client.get(f"{URL_INGRESOS}?hasta=2025-06")
+
+        self.assertEqual(solo_desde.status_code, 400)
+        self.assertIn("hasta", solo_desde.data)
+        self.assertEqual(solo_hasta.status_code, 400)
+        self.assertIn("desde", solo_hasta.data)
+
+    def test_sin_rango_siguen_saliendo_los_ultimos_seis_meses(self):
+        respuesta = self.client.get(URL_INGRESOS)
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(
+            [fila["mes"] for fila in respuesta.data],
+            [nombre_del_mes(atras) for atras in (5, 4, 3, 2, 1, 0)],
+        )
