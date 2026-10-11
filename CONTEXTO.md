@@ -55,6 +55,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 2 | Modificar los permisos (el rol) de un administrador | Django `usuarios` + admin-web `features/admin` (entrada en el menú `Lista de administradores`; botón Editar permisos en cada fila) |
 | 3 | Desactivar cuenta de administrador | Django `usuarios` + admin-web `features/admin` |
 | 4 | Registro de auditoría de las acciones de cada administrador | Django `auditoria` + admin-web `features/auditoria` (entrada en el menú `Auditoría`; filtros por administrador y fechas) |
+| 5 | Número de suscripciones activas | Django `suscripciones` + admin-web `features/suscripciones` (entrada en el menú `Panel financiero`; tarjeta Suscripciones activas) |
 | 8 | Suscripciones vencidas y pendientes de pago | Django `suscripciones` + admin-web `features/suscripciones` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
@@ -66,7 +67,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 
 Pendiente conocido:
 - Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
-- Pendientes de Karim (aún no existen): HU 5 (suscripciones activas), HU 6 (ingresos por mes) y HU 7 (filtro por fechas). Ver "Notas para las siguientes historias".
+- Pendientes de Karim (aún no existen): HU 6 (ingresos por mes) y HU 7 (filtro por fechas). Ver "Notas para las siguientes historias".
 
 ### Endpoints que ya existen
 
@@ -83,6 +84,7 @@ Django (`http://localhost:8000/api`):
 - `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción; sin login aún, se usa la constante `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js` (HU 3).
 - `PATCH /usuarios/administradores/<id>/rol/` con `{"rol_id": n}`: cambia el rol de un administrador; solo el superadmin y nunca a sí mismo, con el mismo header `X-Admin-Id`. Responde 403 si no es superadmin o es su propia cuenta, 400 si el rol no existe y 404 si el administrador no existe (HU 2).
 - `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
+- `GET /suscripciones/activas/`: responde `{"total": n}` con las suscripciones en estado `ACTIVA` cuya `fecha_vencimiento` es hoy o posterior; una ACTIVA con la fecha pasada no cuenta, igual que en la HU 8 (HU 5).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
 - `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion` y `moderador_id`; acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
@@ -105,10 +107,10 @@ Django (`http://localhost:8000/api`):
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/contenido-dudoso.sql` y se cargan a mano sobre la base local.
 
-### Notas para las siguientes historias (HU 5, 6 y 7)
+### Notas para las siguientes historias (HU 6 y 7)
 
 - Autenticación de administradores: no hay login todavía. Las acciones protegidas usan el header `X-Admin-Id` con `AdminAuthentication` (`usuarios/authentication.py`) e `IsAdminActivo` (`usuarios/permissions.py`), solo en la vista que lo necesita (`authentication_classes` y `permission_classes`), igual que `DesactivarAdministradorView`. No ponerlo global en `settings.py`. La web lo manda con `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js`.
-- HU 5, 6 y 7: usan la tabla `suscripcion` (V7) y la app Django `suscripciones` (modelo `Suscripcion` con `cliente`, `plan`, `monto`, `estado` ACTIVA/VENCIDA/PENDIENTE_PAGO/CANCELADA, `fecha_inicio`, `fecha_vencimiento`). Agregar las vistas nuevas en esa misma app, sin cambiar `con-deuda/` ni sus pruebas. Si la HU 6 necesita pagos reales (no solo el monto de la suscripción), crear una tabla nueva con migración, no editar V7.
+- HU 6 y 7: van en el `Panel financiero` que creó la HU 5 (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`). Usan la tabla `suscripcion` (V7) y la app Django `suscripciones` (modelo `Suscripcion` con `cliente`, `plan`, `monto`, `estado` ACTIVA/VENCIDA/PENDIENTE_PAGO/CANCELADA, `fecha_inicio`, `fecha_vencimiento`). Agregar las vistas nuevas en esa misma app, sin cambiar `con-deuda/` ni sus pruebas. Si la HU 6 necesita pagos reales (no solo el monto de la suscripción), crear una tabla nueva con migración, no editar V7.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
