@@ -26,3 +26,12 @@ class SuscripcionesConDeudaView(APIView):
             return Response({"detail": str(e)}, status=400)
 
         return Response(SuscripcionSerializer(suscripciones, many=True).data)
+
+
+class SuscripcionesActivasView(APIView):
+    """GET /api/suscripciones/activas/ : número de suscripciones activas hoy (HU 05)."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"total": services.total_suscripciones_activas()})

@@ -31,3 +31,14 @@ def suscripciones_con_deuda(estado=None):
         raise ValueError("Estado inválido. Use VENCIDA o PENDIENTE_PAGO")
 
     return consulta.order_by("fecha_vencimiento", "id")
+
+
+def total_suscripciones_activas():
+    """HU 05: cuántas suscripciones están en uso hoy.
+
+    Activa = estado ACTIVA con fecha_vencimiento de hoy en adelante. Una ACTIVA cuya
+    fecha ya pasó cuenta como vencida (la misma regla de la HU 08), así que no suma.
+    """
+    hoy = timezone.localdate()
+
+    return Suscripcion.objects.filter(estado=Suscripcion.ACTIVA, fecha_vencimiento__gte=hoy).count()
