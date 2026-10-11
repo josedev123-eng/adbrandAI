@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
+from auditoria.services import registrar_accion
+
 from . import services
 from .serializers import ContenidoBandejaSerializer, ContenidoDetalleSerializer, ModerarContenidoSerializer
 
@@ -42,5 +44,7 @@ class ModerarContenidoView(APIView):
             )
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        registrar_accion(contenido.moderador_id, f"{serializer.validated_data['accion']}_CONTENIDO", "contenido", contenido.id, contenido.oferta)
 
         return Response(ContenidoDetalleSerializer(contenido).data)

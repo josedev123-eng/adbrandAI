@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
+from auditoria.services import registrar_accion
+
 from . import services
 from .authentication import AdminAuthentication
 from .models import Rol, UsuarioAdmin
@@ -69,6 +71,8 @@ class DesactivarAdministradorView(APIView):
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        registrar_accion(request.user.id, "DESACTIVAR_ADMIN", "usuario_admin", admin.id, f"Desactivó la cuenta de {admin.correo}")
+
         return Response(AdministradorSerializer(admin).data)
 
 
@@ -97,5 +101,7 @@ class CambiarRolAdministradorView(APIView):
         serializer.is_valid(raise_exception=True)
 
         admin = services.cambiar_rol(admin_id, serializer.validated_data["rol"])
+
+        registrar_accion(request.user.id, "CAMBIAR_ROL", "usuario_admin", admin.id, f"Cambió el rol de {admin.correo} a {admin.rol.nombre}")
 
         return Response(AdministradorSerializer(admin).data)
