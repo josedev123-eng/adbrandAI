@@ -1,0 +1,40 @@
+/* PanelFinancieroView.css (HU-05) */
+.pagina.pagina-panel { max-width: 1000px; }
+
+.panel-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.panel-indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.tarjeta.panel-indicador h2 {
+  font-family: var(--f-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.panel-numero {
+  font-family: var(--f-display);
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--primary);
+  margin: 0;
+}
+
+.panel-nota {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

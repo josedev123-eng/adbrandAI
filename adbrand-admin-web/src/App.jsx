@@ -3,6 +3,7 @@ import AdministradoresView from './features/admin/views/AdministradoresView'
 import CrearAdministradorView from './features/admin/views/CrearAdministradorView'
 import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
+import PanelFinancieroView from './features/suscripciones/views/PanelFinancieroView'
 import MenuAdmin from './shared/components/MenuAdmin'
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
       {pantalla === 'administradores' && <CrearAdministradorView />}
       {pantalla === 'lista-administradores' && <AdministradoresView />}
       {pantalla === 'auditoria' && <AuditoriaView />}
+      {pantalla === 'panel-financiero' && <PanelFinancieroView />}
     </>
   )
 }

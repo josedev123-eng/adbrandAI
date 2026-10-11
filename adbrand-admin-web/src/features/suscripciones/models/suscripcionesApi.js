@@ -19,3 +19,8 @@ export function listarSuscripcionesPorEstado(estado) {
   if (!estado) return listarSuscripciones()
   return apiRequest(`/suscripciones/con-deuda/?estado=${estado}`)
 }
+
+// HU-05: responde { total } con las suscripciones activas y vigentes hoy.
+export function obtenerSuscripcionesActivas() {
+  return apiRequest('/suscripciones/activas/')
+}

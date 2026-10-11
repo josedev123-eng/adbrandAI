@@ -6,6 +6,7 @@ const OPCIONES = [
   { id: 'administradores', nombre: 'Administradores' },
   { id: 'lista-administradores', nombre: 'Lista de administradores' },
   { id: 'auditoria', nombre: 'Auditoría' },
+  { id: 'panel-financiero', nombre: 'Panel financiero' },
 ]
 
 export default function MenuAdmin({ actual, alCambiar }) {
