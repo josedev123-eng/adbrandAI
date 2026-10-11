@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 
 import os
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,4 +143,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://localhost:5174"]
+# La web manda X-Admin-Id en desactivar (HU 03) y cambiar rol (HU 02); sin esto el navegador bloquea la petición.
+CORS_ALLOW_HEADERS = (*default_headers, "x-admin-id")
 TEST_RUNNER = "core.test_runner.PruebasConTablasFlyway"
