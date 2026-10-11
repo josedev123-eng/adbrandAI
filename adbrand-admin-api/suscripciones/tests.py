@@ -96,6 +96,8 @@ class SuscripcionesConDeudaTests(APITestCase):
         self.assertEqual(respuesta.status_code, 400)
 
 
+from suscripciones.models import Pago
+
 URL_ACTIVAS = "/api/suscripciones/activas/"
 
 
@@ -156,3 +158,95 @@ class SuscripcionesActivasTests(APITestCase):
         respuesta = self.client.get(URL_ACTIVAS)
 
         self.assertEqual(respuesta.data, {"total": 1})
+
+
+URL_INGRESOS = "/api/suscripciones/ingresos-mensuales/"
+
+
+def primer_dia_del_mes(meses_atras):
+    """Primer día del mes que está `meses_atras` meses antes del actual."""
+    hoy = timezone.localdate()
+    total = hoy.year * 12 + (hoy.month - 1) - meses_atras
+    return hoy.replace(year=total // 12, month=total % 12 + 1, day=1)
+
+
+def nombre_del_mes(meses_atras):
+    return primer_dia_del_mes(meses_atras).strftime("%Y-%m")
+
+
+class IngresosMensualesTests(APITestCase):
+    """HU-06: cuánto se cobró en cada uno de los últimos 6 meses."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.suscripcion = crear_suscripcion(Suscripcion.ACTIVA, vence_en_dias=25)
+
+    def pagar(self, monto, meses_atras, dia=1, metodo=Pago.YAPE):
+        fecha = primer_dia_del_mes(meses_atras) + timedelta(days=dia - 1)
+        return Pago.objects.create(
+            suscripcion=self.suscripcion, monto=Decimal(monto), fecha_pago=fecha, metodo=metodo,
+        )
+
+    def ingresos(self):
+        respuesta = self.client.get(URL_INGRESOS)
+
+        self.assertEqual(respuesta.status_code, 200)
+        return {fila["mes"]: fila["total"] for fila in respuesta.data}
+
+    def test_devuelve_los_ultimos_seis_meses_en_orden_contando_el_actual(self):
+        respuesta = self.client.get(URL_INGRESOS)
+
+        self.assertEqual(respuesta.status_code, 200)
+        meses = [fila["mes"] for fila in respuesta.data]
+        self.assertEqual(meses, [nombre_del_mes(atras) for atras in (5, 4, 3, 2, 1, 0)])
+
+    def test_sin_pagos_todos_los_meses_salen_en_cero(self):
+        self.assertEqual(set(self.ingresos().values()), {"0.00"})
+
+    def test_suma_los_pagos_de_cada_mes(self):
+        self.pagar("49.90", meses_atras=2, dia=3)
+        self.pagar("99.90", meses_atras=2, dia=15, metodo=Pago.TARJETA)
+        self.pagar("49.90", meses_atras=0)
+
+        ingresos = self.ingresos()
+
+        self.assertEqual(ingresos[nombre_del_mes(2)], "149.80")
+        self.assertEqual(ingresos[nombre_del_mes(0)], "49.90")
+
+    def test_un_mes_sin_pagos_entre_dos_con_pagos_sale_en_cero(self):
+        self.pagar("49.90", meses_atras=3)
+        self.pagar("49.90", meses_atras=1)
+
+        ingresos = self.ingresos()
+
+        self.assertEqual(ingresos[nombre_del_mes(3)], "49.90")
+        self.assertEqual(ingresos[nombre_del_mes(2)], "0.00")
+        self.assertEqual(ingresos[nombre_del_mes(1)], "49.90")
+
+    def test_cuenta_el_primer_y_el_ultimo_dia_del_mes_en_ese_mes(self):
+        self.pagar("10.00", meses_atras=1, dia=1)
+        ultimo_dia = primer_dia_del_mes(0) - timedelta(days=1)
+        Pago.objects.create(
+            suscripcion=self.suscripcion, monto=Decimal("20.00"), fecha_pago=ultimo_dia, metodo=Pago.YAPE,
+        )
+
+        ingresos = self.ingresos()
+
+        self.assertEqual(ingresos[nombre_del_mes(1)], "30.00")
+        self.assertEqual(ingresos[nombre_del_mes(0)], "0.00")
+
+    def test_un_pago_de_hace_mas_de_seis_meses_no_aparece(self):
+        self.pagar("500.00", meses_atras=6)
+        self.pagar("49.90", meses_atras=5)
+
+        ingresos = self.ingresos()
+
+        self.assertEqual(len(ingresos), 6)
+        self.assertNotIn(nombre_del_mes(6), ingresos)
+        self.assertEqual(ingresos[nombre_del_mes(5)], "49.90")
+
+    def test_el_ingreso_es_el_pago_y_no_el_monto_de_la_suscripcion(self):
+        # La suscripción cuesta 49.90 pero este mes solo se cobró un pago de 20.00.
+        self.pagar("20.00", meses_atras=0)
+
+        self.assertEqual(self.ingresos()[nombre_del_mes(0)], "20.00")
