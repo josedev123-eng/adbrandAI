@@ -26,8 +26,12 @@ export function obtenerSuscripcionesActivas() {
 }
 
 // HU-06: responde [{ mes: 'AAAA-MM', total: '150.00' }, ...] del mes más antiguo al más reciente.
-export function obtenerIngresosMensuales() {
-  return apiRequest('/suscripciones/ingresos-mensuales/')
+// HU-07: con { desde, hasta } en formato AAAA-MM pide ese rango; sin ellos, los últimos 6 meses.
+export function obtenerIngresosMensuales({ desde, hasta } = {}) {
+  if (!desde || !hasta) return apiRequest('/suscripciones/ingresos-mensuales/')
+
+  const parametros = new URLSearchParams({ desde, hasta })
+  return apiRequest(`/suscripciones/ingresos-mensuales/?${parametros}`)
 }
 
 const FORMATO_MES = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' })

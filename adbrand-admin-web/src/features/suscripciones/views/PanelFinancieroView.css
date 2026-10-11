@@ -39,6 +39,26 @@
   color: var(--muted);
 }
 
+/* HU-07: selector del rango de meses */
+.panel-rango {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.panel-rango-botones {
+  display: flex;
+  gap: 10px;
+}
+
+.panel-rango-error { margin: -8px 0 16px; }
+
+@media (max-width: 760px) {
+  .panel-rango { grid-template-columns: 1fr; }
+}
+
 /* HU-06: barras de ingresos por mes, hechas solo con CSS */
 .panel-vacio {
   text-align: center;
