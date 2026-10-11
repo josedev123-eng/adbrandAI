@@ -57,6 +57,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 4 | Registro de auditoría de las acciones de cada administrador | Django `auditoria` + admin-web `features/auditoria` (entrada en el menú `Auditoría`; filtros por administrador y fechas) |
 | 5 | Número de suscripciones activas | Django `suscripciones` + admin-web `features/suscripciones` (entrada en el menú `Panel financiero`; tarjeta Suscripciones activas) |
 | 6 | Ingresos generados por mes | Django `suscripciones` (modelo `Pago`) + admin-web `features/suscripciones` (en el `Panel financiero`: tarjeta Ingresos del periodo y barras por mes) |
+| 7 | Filtrar el panel financiero por rango de meses | Django `suscripciones` + admin-web `features/suscripciones` (en el `Panel financiero`: campos Desde y Hasta, botones Aplicar rango y Últimos 6 meses) |
 | 8 | Suscripciones vencidas y pendientes de pago | Django `suscripciones` + admin-web `features/suscripciones` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
@@ -68,7 +69,6 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 
 Pendiente conocido:
 - Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
-- Pendientes de Karim (aún no existen): HU 7 (filtro por fechas). Ver "Notas para las siguientes historias".
 
 ### Endpoints que ya existen
 
@@ -87,6 +87,7 @@ Django (`http://localhost:8000/api`):
 - `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
 - `GET /suscripciones/activas/`: responde `{"total": n}` con las suscripciones en estado `ACTIVA` cuya `fecha_vencimiento` es hoy o posterior; una ACTIVA con la fecha pasada no cuenta, igual que en la HU 8 (HU 5).
 - `GET /suscripciones/ingresos-mensuales/`: responde `[{"mes": "2026-09", "total": "150.00"}, ...]` con lo cobrado en los últimos 6 meses contando el actual, del más antiguo al más reciente. Suma `pago.monto` por mes de `fecha_pago`; un mes sin pagos sale con `"0.00"`. El ingreso es el pago recibido, no el monto de la suscripción (HU 6).
+- `GET /suscripciones/ingresos-mensuales/?desde=AAAA-MM&hasta=AAAA-MM`: el mismo listado para ese rango de meses, los dos incluidos. Responde 400 si el formato es inválido, si falta uno de los dos, si `desde` es mayor que `hasta` o si el rango pasa de 24 meses (HU 7).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
 - `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion` y `moderador_id`; acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
@@ -110,10 +111,10 @@ Django (`http://localhost:8000/api`):
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión y `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses).
 
-### Notas para las siguientes historias (HU 7)
+### Notas para las siguientes historias
 
 - Autenticación de administradores: no hay login todavía. Las acciones protegidas usan el header `X-Admin-Id` con `AdminAuthentication` (`usuarios/authentication.py`) e `IsAdminActivo` (`usuarios/permissions.py`), solo en la vista que lo necesita (`authentication_classes` y `permission_classes`), igual que `DesactivarAdministradorView`. No ponerlo global en `settings.py`. La web lo manda con `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js`.
-- HU 7: va en el `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) y agrega el rango de meses a `ingresos-mensuales/`, en la app Django `suscripciones`. No cambiar `con-deuda/` ni sus pruebas.
+- El `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) reúne las HU 5, 6 y 7. Un indicador nuevo del dueño de la aplicación va ahí, con su endpoint en la app Django `suscripciones`.
 - Las HU 25 a 28 (pagos del usuario, en Spring) deben escribir en la tabla `pago` (V10), que es de donde el panel saca los ingresos. Si necesitan más columnas, se agregan con una migración nueva; no se edita V10.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
