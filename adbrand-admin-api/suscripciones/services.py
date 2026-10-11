@@ -1,7 +1,11 @@
-from django.db.models import Q
+from datetime import date
+from decimal import Decimal
+
+from django.db.models import Q, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
-from .models import Suscripcion
+from .models import Pago, Suscripcion
 
 ESTADOS_CON_DEUDA = ("VENCIDA", "PENDIENTE_PAGO")
 ESTADOS_ACEPTADOS = ("VENCIDA", "PENDIENTE_PAGO")
@@ -42,3 +46,39 @@ def total_suscripciones_activas():
     hoy = timezone.localdate()
 
     return Suscripcion.objects.filter(estado=Suscripcion.ACTIVA, fecha_vencimiento__gte=hoy).count()
+
+
+MESES_POR_DEFECTO = 6
+
+
+def _mes_desplazado(mes, cantidad):
+    """Primer día del mes que está `cantidad` meses después (o antes, si es negativa)."""
+    total = mes.year * 12 + (mes.month - 1) + cantidad
+    return date(total // 12, total % 12 + 1, 1)
+
+
+def ingresos_mensuales():
+    """HU 06: lo cobrado en cada uno de los últimos 6 meses, contando el actual.
+
+    El ingreso es el pago recibido (tabla pago), no el monto de la suscripción.
+    Devuelve una fila por mes, del más antiguo al más reciente; un mes sin pagos sale con 0.00.
+    """
+    mes_actual = timezone.localdate().replace(day=1)
+    primer_mes = _mes_desplazado(mes_actual, -(MESES_POR_DEFECTO - 1))
+    mes_siguiente = _mes_desplazado(mes_actual, 1)
+
+    cobrado = (
+        Pago.objects.filter(fecha_pago__gte=primer_mes, fecha_pago__lt=mes_siguiente)
+        .annotate(mes=TruncMonth("fecha_pago"))
+        .values("mes")
+        .annotate(total=Sum("monto"))
+    )
+    total_por_mes = {fila["mes"]: fila["total"] for fila in cobrado}
+
+    ingresos = []
+    mes = primer_mes
+    while mes < mes_siguiente:
+        ingresos.append({"mes": mes.strftime("%Y-%m"), "total": total_por_mes.get(mes, Decimal("0.00"))})
+        mes = _mes_desplazado(mes, 1)
+
+    return ingresos

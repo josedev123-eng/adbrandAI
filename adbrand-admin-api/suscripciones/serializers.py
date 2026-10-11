@@ -19,3 +19,10 @@ class SuscripcionSerializer(serializers.ModelSerializer):
             "fecha_vencimiento",
             "fecha_creacion",
         ]
+
+
+class IngresoMensualSerializer(serializers.Serializer):
+    """Una fila de ingresos: el mes como AAAA-MM y lo cobrado con dos decimales (HU 06)."""
+
+    mes = serializers.CharField()
+    total = serializers.DecimalField(max_digits=12, decimal_places=2)

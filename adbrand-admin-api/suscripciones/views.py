@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import services
-from .serializers import SuscripcionSerializer
+from .serializers import IngresoMensualSerializer, SuscripcionSerializer
 
 
 class SuscripcionesConDeudaView(APIView):
@@ -35,3 +35,14 @@ class SuscripcionesActivasView(APIView):
 
     def get(self, request):
         return Response({"total": services.total_suscripciones_activas()})
+
+
+class IngresosMensualesView(APIView):
+    """GET /api/suscripciones/ingresos-mensuales/ : ingresos de los últimos 6 meses (HU 06)."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        ingresos = services.ingresos_mensuales()
+
+        return Response(IngresoMensualSerializer(ingresos, many=True).data)
