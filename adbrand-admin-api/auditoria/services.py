@@ -31,3 +31,20 @@ def registrar_accion(admin_id, accion, entidad, entidad_id=None, detalle=None):
     except Exception:
         logger.warning("No se pudo registrar la acción %s del administrador %s", accion, admin_id, exc_info=True)
         return None
+
+
+def historial(admin_id=None, desde=None, hasta=None):
+    """HU 04: las acciones registradas, de la más reciente a la más antigua.
+
+    Los tres filtros son opcionales: por administrador y por rango de fechas (ambos días incluidos).
+    """
+    consulta = AuditoriaAdmin.objects.select_related("admin")
+
+    if admin_id is not None:
+        consulta = consulta.filter(admin_id=admin_id)
+    if desde is not None:
+        consulta = consulta.filter(fecha__date__gte=desde)
+    if hasta is not None:
+        consulta = consulta.filter(fecha__date__lte=hasta)
+
+    return consulta.order_by("-fecha", "-id")
