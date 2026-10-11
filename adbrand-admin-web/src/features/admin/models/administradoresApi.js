@@ -24,3 +24,12 @@ export function desactivarAdministrador(id, adminId = ADMIN_DE_PRUEBA) {
     headers: { 'X-Admin-Id': String(adminId) },
   })
 }
+
+// HU-02: los permisos de un administrador dependen de su rol.
+export function cambiarRolAdministrador(id, rolId, adminId = ADMIN_DE_PRUEBA) {
+  return apiRequest(`/usuarios/administradores/${id}/rol/`, {
+    method: 'PATCH',
+    body: { rol_id: rolId },
+    headers: { 'X-Admin-Id': String(adminId) },
+  })
+}

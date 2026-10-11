@@ -4,6 +4,7 @@ import './MenuAdmin.css'
 const OPCIONES = [
   { id: 'revision', nombre: 'Revisión de contenido' },
   { id: 'administradores', nombre: 'Administradores' },
+  { id: 'lista-administradores', nombre: 'Lista de administradores' },
 ]
 
 export default function MenuAdmin({ actual, alCambiar }) {
