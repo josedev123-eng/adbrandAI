@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AdministradoresView from './features/admin/views/AdministradoresView'
 import CrearAdministradorView from './features/admin/views/CrearAdministradorView'
+import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
 import MenuAdmin from './shared/components/MenuAdmin'
 
@@ -13,6 +14,7 @@ function App() {
       {pantalla === 'revision' && <BandejaRevisionView />}
       {pantalla === 'administradores' && <CrearAdministradorView />}
       {pantalla === 'lista-administradores' && <AdministradoresView />}
+      {pantalla === 'auditoria' && <AuditoriaView />}
     </>
   )
 }

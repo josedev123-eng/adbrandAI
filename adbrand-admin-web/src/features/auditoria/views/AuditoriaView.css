@@ -1,0 +1,87 @@
+/* AuditoriaView.css (HU-04) */
+.pagina.pagina-auditoria { max-width: 1040px; }
+
+.pagina-auditoria .tarjeta { overflow-x: auto; }
+
+.auditoria-filtros {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.auditoria-filtros-botones {
+  display: flex;
+  gap: 10px;
+}
+
+.auditoria-error-filtros { margin: 12px 0 0; }
+
+.auditoria-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.auditoria-titulo h2 { margin-bottom: 0; }
+
+.auditoria-contador {
+  font-family: var(--f-mono);
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.auditoria-vacia {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px;
+  margin: 0;
+}
+
+.tabla-auditoria {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla-auditoria th,
+.tabla-auditoria td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla-auditoria th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.auditoria-fecha { white-space: nowrap; color: var(--muted); }
+
+.auditoria-admin { display: block; font-weight: 600; }
+
+.auditoria-correo { color: var(--muted); }
+
+.auditoria-accion {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+@media (max-width: 760px) {
+  .auditoria-filtros { grid-template-columns: 1fr; }
+}
