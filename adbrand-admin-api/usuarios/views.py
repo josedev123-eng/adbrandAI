@@ -73,11 +73,26 @@ class DesactivarAdministradorView(APIView):
 
 
 class CambiarRolAdministradorView(APIView):
-    """PATCH /api/usuarios/administradores/<id>/rol/ : cambia el rol de un administrador (HU 02)."""
+    """PATCH /api/usuarios/administradores/<id>/rol/ : cambia el rol de un administrador (HU 02).
+
+    Solo un superadministrador activo puede usarlo, y nunca sobre su propia cuenta.
+    """
     authentication_classes = [AdminAuthentication]
     permission_classes = [IsAdminActivo]
 
     def patch(self, request, admin_id):
+        if getattr(request.user.rol, "nombre", None) != "SUPERADMIN":
+            return Response(
+                {"detail": "Solo un superadministrador puede modificar permisos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if request.user.id == admin_id:
+            return Response(
+                {"detail": "No puedes modificar tus propios permisos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = CambiarRolSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
