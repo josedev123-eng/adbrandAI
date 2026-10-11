@@ -58,7 +58,8 @@ src/
 ├── assets/
 └── features/          Cada módulo con views/, viewmodels/ y models/
     ├── auth/            Inicio de sesión del administrador
-    ├── admin/           HU 1, 2, 3, 4
+    ├── admin/           HU 1, 2, 3
+    ├── auditoria/       HU 4
     ├── suscripciones/   HU 5, 6, 7, 8
     ├── moderacion/      HU 14 a 16
     ├── tokens/          HU 17, 19, 20
