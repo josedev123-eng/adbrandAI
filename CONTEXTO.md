@@ -94,7 +94,7 @@ Django (`http://localhost:8000/api`):
 - `GET /auditoria/` con `?admin_id=`, `?desde=AAAA-MM-DD` y `?hasta=AAAA-MM-DD` (todos opcionales): historial de acciones, la más reciente primero, con el nombre y correo del administrador. Responde 400 si una fecha es inválida o `desde` es mayor que `hasta` (HU 4).
 - Qué se registra en la auditoría: desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
-### Migraciones Flyway aplicadas (la siguiente libre es V11)
+### Migraciones Flyway aplicadas (la siguiente libre es V12)
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -108,6 +108,7 @@ Django (`http://localhost:8000/api`):
 | V8 | `kit_marca` (logo, tipografías, paleta, voz) | 11 |
 | V9 | `auditoria_admin` (qué administrador hizo qué acción, sobre qué y cuándo) | 4 |
 | V10 | `pago` (monto, fecha y método TARJETA o YAPE de cada pago de una suscripción) | 6 |
+| V11 | `auditoria_admin.fecha` con zona horaria (TIMESTAMPTZ) | 4 |
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión y `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses).
 
@@ -214,7 +215,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar V1 a V10 (ya están subidas). Lo nuevo empieza en V11.
+- No crear tablas fuera de Flyway ni editar V1 a V11 (ya están subidas). Lo nuevo empieza en V12.
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.
