@@ -4,13 +4,36 @@ import { crearAdministrador, listarRoles } from '../models/administradoresApi'
 
 const FORMULARIO_VACIO = { nombres: '', apellidos: '', correo: '', contrasena: '', rol_id: '' }
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Las mismas reglas que valida Django en CrearAdministradorSerializer.
+const NOMBRE_VALIDO = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+([ '-][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$/
 
-function validar(formulario) {
+function validarNombre(valor, campo) {
+  const texto = valor.trim()
+  if (!texto) return `Ingresa los ${campo}.`
+  if (texto.length < 2) return 'Debe tener al menos 2 letras.'
+  if (!NOMBRE_VALIDO.test(texto)) return 'Usa solo letras y espacios, sin números ni símbolos.'
+  return undefined
+}
+
+// Devuelve el primer requisito que falta, o undefined si la contraseña es fuerte.
+export function validarContrasena(contrasena) {
+  if (contrasena.length < 8) return 'Mínimo 8 caracteres.'
+  if (/\s/.test(contrasena)) return 'La contraseña no puede tener espacios.'
+  if (!/[A-Z]/.test(contrasena)) return 'Debe tener al menos una letra mayúscula.'
+  if (!/[a-z]/.test(contrasena)) return 'Debe tener al menos una letra minúscula.'
+  if (!/[0-9]/.test(contrasena)) return 'Debe tener al menos un número.'
+  return undefined
+}
+
+export function validar(formulario) {
   const errores = {}
-  if (!formulario.nombres.trim()) errores.nombres = 'Ingresa los nombres.'
-  if (!formulario.apellidos.trim()) errores.apellidos = 'Ingresa los apellidos.'
+  const errorNombres = validarNombre(formulario.nombres, 'nombres')
+  const errorApellidos = validarNombre(formulario.apellidos, 'apellidos')
+  const errorContrasena = validarContrasena(formulario.contrasena)
+  if (errorNombres) errores.nombres = errorNombres
+  if (errorApellidos) errores.apellidos = errorApellidos
   if (!CORREO_VALIDO.test(formulario.correo)) errores.correo = 'Ingresa un correo válido.'
-  if (formulario.contrasena.length < 8) errores.contrasena = 'Mínimo 8 caracteres.'
+  if (errorContrasena) errores.contrasena = errorContrasena
   if (!formulario.rol_id) errores.rol_id = 'Selecciona un rol.'
   return errores
 }
@@ -41,7 +64,12 @@ export function useCrearAdministrador() {
 
     setEnviando(true)
     try {
-      const creado = await crearAdministrador({ ...formulario, rol_id: Number(formulario.rol_id) })
+      const creado = await crearAdministrador({
+        ...formulario,
+        nombres: formulario.nombres.trim(),
+        apellidos: formulario.apellidos.trim(),
+        rol_id: Number(formulario.rol_id),
+      })
       setMensaje({ tipo: 'exito', texto: `Cuenta creada para ${creado.correo} con rol ${creado.rol.nombre}.` })
       setFormulario(FORMULARIO_VACIO)
     } catch (error) {

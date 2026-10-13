@@ -120,7 +120,7 @@ class CrearAdministradorTests(APITestCase):
             "nombres": "Karim",
             "apellidos": "Sovero",
             "correo": "karim@adbrand.pe",
-            "contrasena": "secreta123",
+            "contrasena": "Secreta123",
             "rol_id": self.moderador.id,
         }
         datos.update(cambios)
@@ -137,8 +137,8 @@ class CrearAdministradorTests(APITestCase):
         respuesta = self.client.post(URL, self.datos_validos(), format="json")
 
         guardado = UsuarioAdmin.objects.get()
-        self.assertNotEqual(guardado.contrasena, "secreta123")
-        self.assertTrue(check_password("secreta123", guardado.contrasena))
+        self.assertNotEqual(guardado.contrasena, "Secreta123")
+        self.assertTrue(check_password("Secreta123", guardado.contrasena))
         self.assertNotIn("contrasena", respuesta.data)
 
     def test_no_permite_correo_repetido(self):
@@ -179,6 +179,41 @@ class CrearAdministradorTests(APITestCase):
         self.assertEqual(respuesta.status_code, 400)
         self.assertIn("correo", respuesta.data)
         self.assertIn("contrasena", respuesta.data)
+
+    def test_rechaza_contrasenas_debiles(self):
+        debiles = {
+            "12345678": "mayúscula",
+            "secreta123": "mayúscula",
+            "SECRETA123": "minúscula",
+            "Secretaaa": "número",
+            "Secreta 123": "espacios",
+        }
+        for contrasena, motivo in debiles.items():
+            with self.subTest(contrasena=contrasena):
+                respuesta = self.client.post(URL, self.datos_validos(contrasena=contrasena), format="json")
+
+                self.assertEqual(respuesta.status_code, 400)
+                self.assertIn(motivo, str(respuesta.data["contrasena"][0]))
+        self.assertFalse(UsuarioAdmin.objects.exists())
+
+    def test_rechaza_nombres_con_numeros_o_simbolos(self):
+        for nombre in ["Juan123", "@@@", "A", "Ana  María"]:
+            with self.subTest(nombre=nombre):
+                respuesta = self.client.post(
+                    URL, self.datos_validos(nombres=nombre, apellidos=nombre), format="json"
+                )
+
+                self.assertEqual(respuesta.status_code, 400)
+                self.assertIn("nombres", respuesta.data)
+                self.assertIn("apellidos", respuesta.data)
+        self.assertFalse(UsuarioAdmin.objects.exists())
+
+    def test_acepta_nombres_con_tildes_y_espacios(self):
+        respuesta = self.client.post(
+            URL, self.datos_validos(nombres="María José", apellidos="De la Cruz Ñañez"), format="json"
+        )
+
+        self.assertEqual(respuesta.status_code, 201)
 
 
 class CambiarRolTests(APITestCase):
