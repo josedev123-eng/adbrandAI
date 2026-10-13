@@ -3,11 +3,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 
+from auditoria.services import registrar_accion
+
 from . import services
 from .authentication import AdminAuthentication
 from .models import Rol, UsuarioAdmin
 from .permissions import IsAdminActivo
-from .serializers import AdministradorSerializer, CrearAdministradorSerializer, DesactivarAdministradorSerializer, RolSerializer
+from .serializers import AdministradorSerializer, CambiarRolSerializer, CrearAdministradorSerializer, DesactivarAdministradorSerializer, RolSerializer
 
 
 class RolesView(APIView):
@@ -68,5 +70,38 @@ class DesactivarAdministradorView(APIView):
             admin = services.desactivar_administrador(admin_id)
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        registrar_accion(request.user.id, "DESACTIVAR_ADMIN", "usuario_admin", admin.id, f"Desactivó la cuenta de {admin.correo}")
+
+        return Response(AdministradorSerializer(admin).data)
+
+
+class CambiarRolAdministradorView(APIView):
+    """PATCH /api/usuarios/administradores/<id>/rol/ : cambia el rol de un administrador (HU 02).
+
+    Solo un superadministrador activo puede usarlo, y nunca sobre su propia cuenta.
+    """
+    authentication_classes = [AdminAuthentication]
+    permission_classes = [IsAdminActivo]
+
+    def patch(self, request, admin_id):
+        if getattr(request.user.rol, "nombre", None) != "SUPERADMIN":
+            return Response(
+                {"detail": "Solo un superadministrador puede modificar permisos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if request.user.id == admin_id:
+            return Response(
+                {"detail": "No puedes modificar tus propios permisos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = CambiarRolSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        admin = services.cambiar_rol(admin_id, serializer.validated_data["rol"])
+
+        registrar_accion(request.user.id, "CAMBIAR_ROL", "usuario_admin", admin.id, f"Cambió el rol de {admin.correo} a {admin.rol.nombre}")
 
         return Response(AdministradorSerializer(admin).data)

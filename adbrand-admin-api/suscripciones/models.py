@@ -31,3 +31,28 @@ class Suscripcion(models.Model):
 
     def __str__(self):
         return f"{self.cliente} ({self.estado})"
+
+
+class Pago(models.Model):
+    """Pago recibido por una suscripción. La tabla la crea Flyway (V10)."""
+
+    TARJETA = "TARJETA"
+    YAPE = "YAPE"
+
+    METODOS = [
+        (TARJETA, "Tarjeta"),
+        (YAPE, "Yape"),
+    ]
+
+    suscripcion = models.ForeignKey(Suscripcion, on_delete=models.PROTECT, db_column="suscripcion_id")
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_pago = models.DateField()
+    metodo = models.CharField(max_length=20, choices=METODOS)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False  # la tabla la crea Flyway (V10)
+        db_table = "pago"
+
+    def __str__(self):
+        return f"{self.monto} el {self.fecha_pago}"

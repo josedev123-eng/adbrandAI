@@ -1,0 +1,19 @@
+/* EditarPermisosModal.css (HU-02) */
+
+/* La lista con sus dos acciones necesita más ancho que el formulario solo. */
+.pagina.pagina-administradores {
+  max-width: 1040px;
+}
+
+.pagina-administradores .tarjeta {
+  overflow-x: auto;
+}
+
+.boton-editar-permisos {
+  margin-right: 8px;
+}
+
+.permisos-rol-actual {
+  color: var(--muted);
+  font-size: 0.85rem;
+}

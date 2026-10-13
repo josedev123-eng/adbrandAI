@@ -52,7 +52,12 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | HU | Qué hace | Dónde está |
 |---|---|---|
 | 1 | Crear administradores con rol | Django `usuarios` + admin-web `features/admin` |
+| 2 | Modificar los permisos (el rol) de un administrador | Django `usuarios` + admin-web `features/admin` (entrada en el menú `Lista de administradores`; botón Editar permisos en cada fila) |
 | 3 | Desactivar cuenta de administrador | Django `usuarios` + admin-web `features/admin` |
+| 4 | Registro de auditoría de las acciones de cada administrador | Django `auditoria` + admin-web `features/auditoria` (entrada en el menú `Auditoría`; filtros por administrador y fechas) |
+| 5 | Número de suscripciones activas | Django `suscripciones` + admin-web `features/suscripciones` (entrada en el menú `Panel financiero`; tarjeta Suscripciones activas) |
+| 6 | Ingresos generados por mes | Django `suscripciones` (modelo `Pago`) + admin-web `features/suscripciones` (en el `Panel financiero`: tarjeta Ingresos del periodo y barras por mes) |
+| 7 | Filtrar el panel financiero por rango de meses | Django `suscripciones` + admin-web `features/suscripciones` (en el `Panel financiero`: campos Desde y Hasta, botones Aplicar rango y Últimos 6 meses) |
 | 8 | Suscripciones vencidas y pendientes de pago | Django `suscripciones` + admin-web `features/suscripciones` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
@@ -64,7 +69,6 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 
 Pendiente conocido:
 - Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
-- Pendientes de Karim (aún no existen): HU 2 (modificar permisos de un administrador), HU 4 (auditoría), HU 5 (suscripciones activas), HU 6 (ingresos por mes) y HU 7 (filtro por fechas). Ver "Notas para las siguientes historias".
 
 ### Endpoints que ya existen
 
@@ -79,12 +83,18 @@ Django (`http://localhost:8000/api`):
 - `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
 - `GET /usuarios/administradores/`: lista los administradores con su estado (HU 3).
 - `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción; sin login aún, se usa la constante `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js` (HU 3).
+- `PATCH /usuarios/administradores/<id>/rol/` con `{"rol_id": n}`: cambia el rol de un administrador; solo el superadmin y nunca a sí mismo, con el mismo header `X-Admin-Id`. Responde 403 si no es superadmin o es su propia cuenta, 400 si el rol no existe y 404 si el administrador no existe (HU 2).
 - `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
+- `GET /suscripciones/activas/`: responde `{"total": n}` con las suscripciones en estado `ACTIVA` cuya `fecha_vencimiento` es hoy o posterior; una ACTIVA con la fecha pasada no cuenta, igual que en la HU 8 (HU 5).
+- `GET /suscripciones/ingresos-mensuales/`: responde `[{"mes": "2026-09", "total": "150.00"}, ...]` con lo cobrado en los últimos 6 meses contando el actual, del más antiguo al más reciente. Suma `pago.monto` por mes de `fecha_pago`; un mes sin pagos sale con `"0.00"`. El ingreso es el pago recibido, no el monto de la suscripción (HU 6).
+- `GET /suscripciones/ingresos-mensuales/?desde=AAAA-MM&hasta=AAAA-MM`: el mismo listado para ese rango de meses, los dos incluidos. Responde 400 si el formato es inválido, si falta uno de los dos, si `desde` es mayor que `hasta` o si el rango pasa de 24 meses (HU 7).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
 - `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion` y `moderador_id`; acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
+- `GET /auditoria/` con `?admin_id=`, `?desde=AAAA-MM-DD` y `?hasta=AAAA-MM-DD` (todos opcionales): historial de acciones, la más reciente primero, con el nombre y correo del administrador. Responde 400 si una fecha es inválida o `desde` es mayor que `hasta` (HU 4).
+- Qué se registra en la auditoría: desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
-### Migraciones Flyway aplicadas (la siguiente libre es V9)
+### Migraciones Flyway aplicadas (la siguiente libre es V12)
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -96,15 +106,17 @@ Django (`http://localhost:8000/api`):
 | V6 | `usuario_admin.estado` (ACTIVO/INACTIVO) | 3 |
 | V7 | `suscripcion` (estado, fechas, monto y plan de cada cliente) | 8 |
 | V8 | `kit_marca` (logo, tipografías, paleta, voz) | 11 |
+| V9 | `auditoria_admin` (qué administrador hizo qué acción, sobre qué y cuándo) | 4 |
+| V10 | `pago` (monto, fecha y método TARJETA o YAPE de cada pago de una suscripción) | 6 |
+| V11 | `auditoria_admin.fecha` con zona horaria (TIMESTAMPTZ) | 4 |
 
-Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/contenido-dudoso.sql` y se cargan a mano sobre la base local.
+Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión y `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses).
 
-### Notas para las siguientes historias (HU 2, 4, 5, 6 y 7)
+### Notas para las siguientes historias
 
 - Autenticación de administradores: no hay login todavía. Las acciones protegidas usan el header `X-Admin-Id` con `AdminAuthentication` (`usuarios/authentication.py`) e `IsAdminActivo` (`usuarios/permissions.py`), solo en la vista que lo necesita (`authentication_classes` y `permission_classes`), igual que `DesactivarAdministradorView`. No ponerlo global en `settings.py`. La web lo manda con `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js`.
-- HU 2: los roles ya existen en la tabla `rol` (V1) y cada admin tiene `rol_id` en `usuario_admin`. Cambiar permisos = cambiar el rol de un admin, solo el SUPERADMIN.
-- HU 4: la app Django `auditoria` existe pero está vacía. Su tabla se crea con una migración nueva (V9 o la siguiente libre).
-- HU 5, 6 y 7: usan la tabla `suscripcion` (V7) y la app Django `suscripciones` (modelo `Suscripcion` con `cliente`, `plan`, `monto`, `estado` ACTIVA/VENCIDA/PENDIENTE_PAGO/CANCELADA, `fecha_inicio`, `fecha_vencimiento`). Agregar las vistas nuevas en esa misma app, sin cambiar `con-deuda/` ni sus pruebas. Si la HU 6 necesita pagos reales (no solo el monto de la suscripción), crear una tabla nueva con migración, no editar V7.
+- El `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) reúne las HU 5, 6 y 7. Un indicador nuevo del dueño de la aplicación va ahí, con su endpoint en la app Django `suscripciones`.
+- Las HU 25 a 28 (pagos del usuario, en Spring) deben escribir en la tabla `pago` (V10), que es de donde el panel saca los ingresos. Si necesitan más columnas, se agregan con una migración nueva; no se edita V10.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
@@ -203,7 +215,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar V1 a V8 (ya están subidas). Lo nuevo empieza en V9.
+- No crear tablas fuera de Flyway ni editar V1 a V11 (ya están subidas). Lo nuevo empieza en V12.
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.

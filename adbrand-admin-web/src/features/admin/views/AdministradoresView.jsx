@@ -1,5 +1,7 @@
 // View: lista de administradores con botón desactivar y formulario de creación (HU-01, HU-03).
 import { useAdministradores } from '../viewmodels/useAdministradores'
+import { useEditarPermisos } from '../viewmodels/useEditarPermisos'
+import EditarPermisosModal from './EditarPermisosModal'
 import './AdministradoresView.css'
 
 function Campo({ etiqueta, error, children }) {
@@ -37,7 +39,22 @@ export default function AdministradoresView() {
     abrirConfirmacionDesactivar,
     cerrarConfirmacionDesactivar,
     confirmarDesactivar,
+    recargarAdministradores,
   } = useAdministradores()
+
+  // HU-02: edición de permisos (rol) de un administrador.
+  const {
+    adminAEditar,
+    rolId,
+    errorPermisos,
+    mensajePermisos,
+    guardando,
+    puedeEditar,
+    abrirEdicion,
+    cerrarEdicion,
+    cambiarRol,
+    guardarPermisos,
+  } = useEditarPermisos(recargarAdministradores)
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -45,13 +62,14 @@ export default function AdministradoresView() {
   }
 
   return (
-    <main className="pagina">
+    <main className="pagina pagina-administradores">
       <header className="pagina-cabecera">
         <h1>Administradores</h1>
         <p>Solo el superadmin puede crear cuentas y asignar roles.</p>
       </header>
 
       {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      {mensajePermisos && <div className={`aviso aviso-${mensajePermisos.tipo}`}>{mensajePermisos.texto}</div>}
 
       {/* Formulario de creación (HU-01) */}
       <section className="tarjeta">
@@ -140,6 +158,16 @@ export default function AdministradoresView() {
                 <td><BadgeEstado estado={admin.estado} /></td>
                 <td>{new Date(admin.fecha_creacion).toLocaleDateString('es-PE')}</td>
                 <td className="acciones">
+                  {/* Editar permisos (HU-02) */}
+                  <button
+                    type="button"
+                    className="boton-secundario boton-pequeno boton-editar-permisos"
+                    onClick={() => abrirEdicion(admin)}
+                    disabled={!puedeEditar(admin)}
+                    title={puedeEditar(admin) ? undefined : 'No puedes modificar tus propios permisos.'}
+                  >
+                    Editar permisos
+                  </button>
                   {admin.estado === 'ACTIVO' && (
                     <button
                       type="button"
@@ -182,6 +210,20 @@ export default function AdministradoresView() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal para editar permisos (HU-02) */}
+      {adminAEditar && (
+        <EditarPermisosModal
+          admin={adminAEditar}
+          roles={roles}
+          rolId={rolId}
+          error={errorPermisos}
+          guardando={guardando}
+          alCambiarRol={cambiarRol}
+          alGuardar={guardarPermisos}
+          alCerrar={cerrarEdicion}
+        />
       )}
     </main>
   )

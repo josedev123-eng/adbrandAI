@@ -1,0 +1,120 @@
+/* PanelFinancieroView.css (HU-05) */
+.pagina.pagina-panel { max-width: 1000px; }
+
+.panel-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.panel-indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.tarjeta.panel-indicador h2 {
+  font-family: var(--f-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.panel-numero {
+  font-family: var(--f-display);
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--primary);
+  margin: 0;
+}
+
+.panel-nota {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* HU-07: selector del rango de meses */
+.panel-rango {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.panel-rango-botones {
+  display: flex;
+  gap: 10px;
+}
+
+.panel-rango-error { margin: -8px 0 16px; }
+
+@media (max-width: 760px) {
+  .panel-rango { grid-template-columns: 1fr; }
+}
+
+/* HU-06: barras de ingresos por mes, hechas solo con CSS */
+.panel-vacio {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px;
+  margin: 0;
+}
+
+.panel-ingresos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-ingreso {
+  display: grid;
+  grid-template-columns: 160px 1fr 110px;
+  align-items: center;
+  gap: 16px;
+}
+
+.panel-ingreso-mes {
+  display: block;
+  font-size: 0.9rem;
+}
+
+/* Solo la primera letra en mayúscula: "Mayo de 2026". */
+.panel-ingreso-mes::first-letter {
+  text-transform: uppercase;
+}
+
+.panel-ingreso-barra {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.panel-ingreso-relleno {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.panel-ingreso-monto {
+  font-family: var(--f-mono);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .panel-ingreso { grid-template-columns: 1fr auto; }
+  .panel-ingreso-barra { grid-column: 1 / -1; grid-row: 2; }
+}

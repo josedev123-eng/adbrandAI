@@ -107,6 +107,12 @@ export function useAdministradores() {
     }
   }
 
+  // HU-02: vuelve a pedir la lista después de cambiar el rol de un administrador.
+  async function recargarAdministradores() {
+    const adminsActualizados = await listarAdministradores()
+    setAdministradores(adminsActualizados)
+  }
+
   return {
     formulario,
     roles,
@@ -122,5 +128,6 @@ export function useAdministradores() {
     abrirConfirmacionDesactivar,
     cerrarConfirmacionDesactivar,
     confirmarDesactivar,
+    recargarAdministradores,
   }
 }
