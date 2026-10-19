@@ -47,15 +47,15 @@ describe('useDetalleContenido (HU-15)', () => {
     await waitFor(() => expect(result.current.contenido).toEqual(MOCK_CONTENIDO))
 
     await act(async () => {
-      await result.current.aprobar(42)
+      await result.current.aprobar()
     })
 
-    expect(moderarContenido).toHaveBeenCalledWith(123, 'APROBAR', 42)
+    expect(moderarContenido).toHaveBeenCalledWith(123, 'APROBAR')
     expect(result.current.contenido).toEqual(aprobado)
     expect(result.current.moderando).toBe(false)
   })
 
-  it('rechazar llama a moderarContenido con RECHAZAR, el moderador y el motivo', async () => {
+  it('rechazar llama a moderarContenido con RECHAZAR y el motivo', async () => {
     const rechazado = { ...MOCK_CONTENIDO, estado: 'RECHAZADO', moderador_id: 99 }
     moderarContenido.mockResolvedValue(rechazado)
 
@@ -64,10 +64,10 @@ describe('useDetalleContenido (HU-15)', () => {
     await waitFor(() => expect(result.current.contenido).toEqual(MOCK_CONTENIDO))
 
     await act(async () => {
-      await result.current.rechazar(99, 'No cumple las reglas de la IA')
+      await result.current.rechazar('No cumple las reglas de la IA')
     })
 
-    expect(moderarContenido).toHaveBeenCalledWith(123, 'RECHAZAR', 99, 'No cumple las reglas de la IA')
+    expect(moderarContenido).toHaveBeenCalledWith(123, 'RECHAZAR', 'No cumple las reglas de la IA')
     expect(result.current.contenido).toEqual(rechazado)
     expect(result.current.moderando).toBe(false)
   })
@@ -78,7 +78,7 @@ describe('useDetalleContenido (HU-15)', () => {
     await waitFor(() => expect(result.current.contenido).toEqual(MOCK_CONTENIDO))
 
     await act(async () => {
-      await result.current.rechazar(99)
+      await result.current.rechazar()
     })
 
     expect(result.current.error).toBe('El motivo de rechazo es obligatorio.')
@@ -95,7 +95,7 @@ describe('useDetalleContenido (HU-15)', () => {
 
     let pendiente
     await act(async () => {
-      pendiente = result.current.aprobar(42)
+      pendiente = result.current.aprobar()
       await Promise.resolve()
     })
 
@@ -120,7 +120,7 @@ describe('useDetalleContenido (HU-15)', () => {
     let fallo = null
     await act(async () => {
       try {
-        await result.current.aprobar(42)
+        await result.current.aprobar()
       } catch (e) {
         fallo = e
       }

@@ -1,5 +1,6 @@
 // View: detalle completo de un contenido dudoso y el motivo de la observación (HU-14, criterio 2).
 // Botones para aprobar o rechazar el contenido (HU-15) con confirmación y motivo.
+// Quién modera sale de la sesión (login de administradores), ya no se escribe a mano.
 import { formatearFecha, NOMBRES_ESTADO, NOMBRES_RED, NOMBRES_TONO } from '../models/moderacionApi'
 import { useDetalleContenido } from '../viewmodels/useDetalleContenido'
 import { useState } from 'react'
@@ -17,33 +18,27 @@ function Dato({ etiqueta, children }) {
 
 export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
   const { contenido, error, cargando, aprobar, rechazar, moderando } = useDetalleContenido(id, onActualizado)
-  const [moderadorId, setModeradorId] = useState('')
   const [mostrarRechazo, setMostrarRechazo] = useState(false)
   const [motivoRechazo, setMotivoRechazo] = useState('')
 
-  const hayModerador = moderadorId.trim() !== ''
-
   const manejarAprobar = async (e) => {
     e.preventDefault()
-    if (!hayModerador) return
     try {
-      await aprobar(Number(moderadorId))
+      await aprobar()
     } catch {
       // El error ya se muestra en el viewmodel
     }
   }
 
   const abrirRechazo = () => {
-    if (!hayModerador) return
     setMostrarRechazo(true)
     setMotivoRechazo('')
   }
 
   const manejarRechazarConfirmado = async (e) => {
     e.preventDefault()
-    if (!hayModerador) return
     try {
-      await rechazar(Number(moderadorId), motivoRechazo)
+      await rechazar(motivoRechazo)
       setMostrarRechazo(false)
     } catch {
       // El error ya se muestra en el viewmodel
@@ -96,28 +91,12 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
 
           {contenido.estado === 'DUDOSO' && !mostrarRechazo && (
             <div className="detalle-moderar">
-              <div className="moderar-campos">
-                <label htmlFor="moderadorId">
-                  Tu ID de administrador:
-                  <input
-                    id="moderadorId"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={moderadorId}
-                    onChange={(e) => setModeradorId(e.target.value)}
-                    placeholder="Ej: 42"
-                    required
-                    disabled={moderando}
-                  />
-                </label>
-              </div>
               <div className="moderar-botones">
                 <button
                   type="button"
                   className="boton-primario"
                   onClick={manejarAprobar}
-                  disabled={moderando || !hayModerador}
+                  disabled={moderando}
                 >
                   {moderando ? 'Aprobando...' : '✓ Aprobar'}
                 </button>
@@ -125,7 +104,7 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
                   type="button"
                   className="boton-peligro"
                   onClick={abrirRechazo}
-                  disabled={moderando || !hayModerador}
+                  disabled={moderando}
                 >
                   ✗ Rechazar
                 </button>
@@ -135,22 +114,6 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
 
           {mostrarRechazo && (
             <div className="detalle-moderar rechazo-form">
-              <div className="moderar-campos">
-                <label htmlFor="moderadorIdRechazo">
-                  Tu ID de administrador:
-                  <input
-                    id="moderadorIdRechazo"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={moderadorId}
-                    onChange={(e) => setModeradorId(e.target.value)}
-                    placeholder="Ej: 42"
-                    required
-                    disabled={moderando}
-                  />
-                </label>
-              </div>
               <div className="moderar-campos">
                 <label htmlFor="motivoRechazo">
                   Motivo de rechazo (obligatorio):
@@ -170,7 +133,7 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
                   type="button"
                   className="boton-peligro"
                   onClick={manejarRechazarConfirmado}
-                  disabled={moderando || !hayModerador || !motivoRechazo.trim()}
+                  disabled={moderando || !motivoRechazo.trim()}
                 >
                   {moderando ? 'Rechazando...' : 'Confirmar rechazo'}
                 </button>

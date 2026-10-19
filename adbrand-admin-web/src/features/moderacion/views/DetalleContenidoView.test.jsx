@@ -33,8 +33,8 @@ describe('DetalleContenidoView (HU-15)', () => {
   it('muestra el formulario de moderación cuando el estado es DUDOSO', async () => {
     render(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    expect(await screen.findByText('Tu ID de administrador:')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '✓ Aprobar' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '✓ Aprobar' })).toBeInTheDocument()
+    expect(screen.queryByText('Tu ID de administrador:')).toBeNull()
     expect(screen.getByRole('button', { name: '✗ Rechazar' })).toBeInTheDocument()
   })
 
@@ -47,7 +47,7 @@ describe('DetalleContenidoView (HU-15)', () => {
 
     rerender(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    expect(screen.queryByText('Tu ID de administrador:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '✓ Aprobar' })).not.toBeInTheDocument()
   })
 
   it('no muestra formulario si el contenido ya está RECHAZADO', async () => {
@@ -59,45 +59,39 @@ describe('DetalleContenidoView (HU-15)', () => {
 
     rerender(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    expect(screen.queryByText('Tu ID de administrador:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '✓ Aprobar' })).not.toBeInTheDocument()
   })
 
-  it('llama a moderarContenido con APROBAR al hacer submit con moderador_id', async () => {
+  it('llama a moderarContenido con APROBAR (el moderador sale de la sesión)', async () => {
     render(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    fireEvent.change(await screen.findByLabelText('Tu ID de administrador:'), { target: { value: '42' } })
-    fireEvent.click(screen.getByRole('button', { name: '✓ Aprobar' }))
+    fireEvent.click(await screen.findByRole('button', { name: '✓ Aprobar' }))
 
     await waitFor(() => {
-      expect(moderarContenido).toHaveBeenCalledWith(123, 'APROBAR', 42)
+      expect(moderarContenido).toHaveBeenCalledWith(123, 'APROBAR')
     })
   })
 
-  it('llama a moderarContenido con RECHAZAR, moderador y motivo al confirmar el rechazo', async () => {
+  it('llama a moderarContenido con RECHAZAR y el motivo al confirmar el rechazo', async () => {
     render(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    fireEvent.change(await screen.findByLabelText('Tu ID de administrador:'), { target: { value: '99' } })
-    fireEvent.click(screen.getByRole('button', { name: '✗ Rechazar' }))
+    fireEvent.click(await screen.findByRole('button', { name: '✗ Rechazar' }))
     fireEvent.change(screen.getByPlaceholderText('Explica por qué se rechaza el contenido...'), {
       target: { value: 'Publicidad engañosa' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar rechazo' }))
 
     await waitFor(() => {
-      expect(moderarContenido).toHaveBeenCalledWith(123, 'RECHAZAR', 99, 'Publicidad engañosa')
+      expect(moderarContenido).toHaveBeenCalledWith(123, 'RECHAZAR', 'Publicidad engañosa')
     })
   })
 
-  it('deshabilita botones mientras no hay moderador_id', async () => {
+  it('ya no pide el ID del moderador y los botones están habilitados', async () => {
     render(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    await screen.findByText('Tu ID de administrador:')
+    await screen.findByRole('button', { name: '✓ Aprobar' })
 
-    expect(screen.getByRole('button', { name: '✓ Aprobar' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '✗ Rechazar' })).toBeDisabled()
-
-    fireEvent.change(screen.getByLabelText('Tu ID de administrador:'), { target: { value: '1' } })
-
+    expect(screen.queryByText('Tu ID de administrador:')).toBeNull()
     expect(screen.getByRole('button', { name: '✓ Aprobar' })).not.toBeDisabled()
     expect(screen.getByRole('button', { name: '✗ Rechazar' })).not.toBeDisabled()
   })
@@ -108,8 +102,7 @@ describe('DetalleContenidoView (HU-15)', () => {
 
     render(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    fireEvent.change(await screen.findByLabelText('Tu ID de administrador:'), { target: { value: '42' } })
-    fireEvent.click(screen.getByRole('button', { name: '✓ Aprobar' }))
+    fireEvent.click(await screen.findByRole('button', { name: '✓ Aprobar' }))
 
     expect(screen.getByRole('button', { name: 'Aprobando...' })).toBeDisabled()
     expect(screen.getByRole('button', { name: '✗ Rechazar' })).toBeDisabled()
@@ -126,8 +119,7 @@ describe('DetalleContenidoView (HU-15)', () => {
 
     render(<DetalleContenidoView id={123} alVolver={vi.fn()} />)
 
-    fireEvent.change(await screen.findByLabelText('Tu ID de administrador:'), { target: { value: '42' } })
-    fireEvent.click(screen.getByRole('button', { name: '✓ Aprobar' }))
+    fireEvent.click(await screen.findByRole('button', { name: '✓ Aprobar' }))
 
     await waitFor(() => {
       expect(screen.getByText('Solo se pueden moderar contenidos en estado DUDOSO')).toBeInTheDocument()

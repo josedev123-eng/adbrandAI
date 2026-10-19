@@ -142,4 +142,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = ["http://localhost:5174"]
+# El header Authorization (token del login) ya viene permitido por defecto en django-cors-headers.
 TEST_RUNNER = "core.test_runner.PruebasConTablasFlyway"
+# HU 18: dirección de Spring Boot para revisar si el backend y la IA están activos.
+CORE_API_URL = os.getenv("CORE_API_URL", "http://localhost:8080")

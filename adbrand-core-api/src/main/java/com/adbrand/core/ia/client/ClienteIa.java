@@ -22,18 +22,22 @@ public class ClienteIa {
     }
 
     public String completar(String sistema, String usuario) {
+        RespuestaChatIa respuesta = completarConUso(sistema, usuario);
+        return respuesta == null ? null : respuesta.textoGenerado();
+    }
+
+    // HU 17: devuelve la respuesta completa para leer también los tokens usados (usage).
+    public RespuestaChatIa completarConUso(String sistema, String usuario) {
         SolicitudChatIa solicitud = new SolicitudChatIa(
                 ia.model(),
                 List.of(new MensajeIa("system", sistema), new MensajeIa("user", usuario)),
                 false);
 
-        RespuestaChatIa respuesta = restClientIa.post()
+        return restClientIa.post()
                 .uri(ia.chatPath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(solicitud)
                 .retrieve()
                 .body(RespuestaChatIa.class);
-
-        return respuesta == null ? null : respuesta.textoGenerado();
     }
 }

@@ -16,13 +16,13 @@ export function useDetalleContenido(id, onActualizado) {
       )
   }, [id])
 
-  async function aprobar(moderadorId) {
+  async function aprobar() {
     if (!window.confirm('¿Confirmas aprobar este contenido?')) return null
 
     setModerando(true)
     setError(null)
     try {
-      const actualizado = await moderarContenido(id, 'APROBAR', moderadorId)
+      const actualizado = await moderarContenido(id, 'APROBAR')
       setContenido(actualizado)
       onActualizado?.()
       return actualizado
@@ -34,7 +34,7 @@ export function useDetalleContenido(id, onActualizado) {
     }
   }
 
-  async function rechazar(moderadorId, motivoRechazo = '') {
+  async function rechazar(motivoRechazo = '') {
     if (!window.confirm('¿Confirmas rechazar este contenido?')) return null
     if (!motivoRechazo.trim()) {
       setError('El motivo de rechazo es obligatorio.')
@@ -44,7 +44,7 @@ export function useDetalleContenido(id, onActualizado) {
     setModerando(true)
     setError(null)
     try {
-      const actualizado = await moderarContenido(id, 'RECHAZAR', moderadorId, motivoRechazo)
+      const actualizado = await moderarContenido(id, 'RECHAZAR', motivoRechazo)
       setContenido(actualizado)
       onActualizado?.()
       return actualizado

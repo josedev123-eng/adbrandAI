@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.adbrand.core.config.IaProperties;
 import com.adbrand.core.ia.client.ClienteIa;
 import com.adbrand.core.ia.service.IaNoDisponibleException;
+import com.adbrand.core.ia.service.RegistroConsumoIa;
 import com.adbrand.core.ia.service.ServicioIa;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.ResourceAccessException;
@@ -21,7 +22,8 @@ class ServicioIaTest {
     private final ClienteIa cliente = mock(ClienteIa.class);
 
     private ServicioIa servicio(boolean mock) {
-        return new ServicioIa(cliente, new IaProperties("http://ia", "", "modelo", "/chat", 5, mock));
+        return new ServicioIa(cliente, new IaProperties("http://ia", "", "modelo", "/chat", 5, mock),
+                mock(RegistroConsumoIa.class));
     }
 
     @Test
@@ -50,6 +52,29 @@ class ServicioIaTest {
     @Test
     void siLaIaRespondeVacioLanzaIaNoDisponible() {
         when(cliente.completar(anyString(), anyString())).thenReturn("   ");
+
+        assertThatThrownBy(() -> servicio(false).generarTexto("reglas", "pedido"))
+                .isInstanceOf(IaNoDisponibleException.class);
+    }
+
+    @Test
+    void quitaElRazonamientoThinkDeQwen() {
+        when(cliente.completar("reglas", "pedido"))
+                .thenReturn("<think>\nEl usuario quiere un anuncio...\n</think>\n\nAnuncio listo");
+
+        assertThat(servicio(false).generarTexto("reglas", "pedido")).isEqualTo("Anuncio listo");
+    }
+
+    @Test
+    void siSoloLlegaElCierreThinkSeQuedaConLoQueSigue() {
+        when(cliente.completar("reglas", "pedido")).thenReturn("pensando...\n</think>\nAnuncio listo");
+
+        assertThat(servicio(false).generarTexto("reglas", "pedido")).isEqualTo("Anuncio listo");
+    }
+
+    @Test
+    void siLaIaSoloPiensaYNoRespondeLanzaIaNoDisponible() {
+        when(cliente.completar(anyString(), anyString())).thenReturn("<think>solo pienso</think>");
 
         assertThatThrownBy(() -> servicio(false).generarTexto("reglas", "pedido"))
                 .isInstanceOf(IaNoDisponibleException.class);

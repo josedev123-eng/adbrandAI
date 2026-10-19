@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,6 +19,7 @@ import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
 import com.adbrand.core.contenido.service.AnuncioService;
 import com.adbrand.core.contenido.service.PlantillaPromptAnuncio;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.ia.service.IaNoDisponibleException;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
@@ -71,12 +73,12 @@ class AnuncioServiceTest {
             """)
     void elPromptLlevaLaOfertaYElTonoDelPerfil(Tono tono, String oferta, RedSocial red, String instruccion) {
         perfilConTono(tono);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("Texto del anuncio");
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Texto del anuncio");
 
         AnuncioGeneradoResponse anuncio = servicio.generar(1L, new GenerarAnuncioRequest(oferta, red));
 
         ArgumentCaptor<String> promptUsuario = ArgumentCaptor.forClass(String.class);
-        verify(ia).generarTexto(anyString(), promptUsuario.capture());
+        verify(ia).generarTexto(anyString(), promptUsuario.capture(), any(), any());
         assertThat(promptUsuario.getValue())
                 .contains("Oferta a anunciar: " + oferta)
                 .contains(instruccion);
@@ -92,13 +94,13 @@ class AnuncioServiceTest {
 
         assertThatThrownBy(() -> servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM)))
                 .isInstanceOf(RecursoNoEncontradoException.class);
-        verify(ia, never()).generarTexto(anyString(), anyString());
+        verify(ia, never()).generarTexto(anyString(), anyString(), any(), any());
     }
 
     @Test
     void siLaIaFallaElErrorLlegaAlController() {
         perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenThrow(new IaNoDisponibleException("caída", null));
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenThrow(new IaNoDisponibleException("caída", null));
 
         assertThatThrownBy(() -> servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM)))
                 .isInstanceOf(IaNoDisponibleException.class);
@@ -108,7 +110,7 @@ class AnuncioServiceTest {
     @Test
     void elAnuncioQuePasaElFiltroSeGuardaAprobado() {
         perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("2 panetones por S/ 35");
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("2 panetones por S/ 35");
 
         servicio.generar(1L, new GenerarAnuncioRequest("2 panetones por S/ 35", RedSocial.INSTAGRAM));
 
@@ -125,7 +127,7 @@ class AnuncioServiceTest {
     @Test
     void elAnuncioQueIncumpleSeGuardaDudosoConSuMotivo() {
         perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("Cigarrillos importados a S/ 10");
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Cigarrillos importados a S/ 10");
         when(filtro.revisar("Cigarrillos importados a S/ 10")).thenReturn(
                 new ResultadoRevision(false, List.of("\"cigarrillos\": Publicidad de tabaco.")));
 
@@ -142,7 +144,7 @@ class AnuncioServiceTest {
     @Test
     void unMotivoMuyLargoSeRecortaA500Caracteres() {
         perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("texto");
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("texto");
         when(filtro.revisar("texto")).thenReturn(new ResultadoRevision(false, List.of("x".repeat(800))));
 
         servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM));
@@ -154,7 +156,7 @@ class AnuncioServiceTest {
     @Test
     void regenerar_creaNuevaAlternativaConMismosParametros() {
         perfilConTono(Tono.CERCANO);
-        when(ia.generarTexto(anyString(), anyString())).thenReturn("Versión regenerada");
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Versión regenerada");
         Contenido original = contenidoDe(10L, "2 panetones por S/ 35", RedSocial.INSTAGRAM);
         when(contenidos.findById(10L)).thenReturn(Optional.of(original));
 
@@ -177,7 +179,7 @@ class AnuncioServiceTest {
     @Test
     void multiplesRegeneraciones_creanAlternativasDistintas() {
         perfilConTono(Tono.PROFESIONAL);
-        when(ia.generarTexto(anyString(), anyString()))
+        when(ia.generarTexto(anyString(), anyString(), any(), any()))
                 .thenReturn("Versión 1", "Versión 2", "Versión 3");
         Contenido original = contenidoDe(20L, "10% de descuento en tortas", RedSocial.FACEBOOK);
         when(contenidos.findById(20L)).thenReturn(Optional.of(original));
@@ -221,5 +223,19 @@ class AnuncioServiceTest {
         ArgumentCaptor<Contenido> captor = ArgumentCaptor.forClass(Contenido.class);
         verify(contenidos).save(captor.capture());
         return captor.getValue();
+    }
+
+    // HU 17: los tokens de generar y de regenerar se anotan a la empresa que los pidió.
+    @Test
+    void losTokensDelAnuncioYDeLaRegeneracionSeAnotanALaEmpresa() {
+        perfilConTono(Tono.CERCANO);
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Texto del anuncio");
+        when(contenidos.findById(10L)).thenReturn(Optional.of(contenidoDe(10L, "Promo", RedSocial.INSTAGRAM)));
+
+        servicio.generar(1L, new GenerarAnuncioRequest("Promo", RedSocial.INSTAGRAM));
+        servicio.regenerar(1L, 10L);
+
+        verify(ia).generarTexto(anyString(), anyString(), eq(1L), eq(OrigenConsumo.ANUNCIO));
+        verify(ia).generarTexto(anyString(), anyString(), eq(1L), eq(OrigenConsumo.REGENERAR_ANUNCIO));
     }
 }

@@ -5,6 +5,7 @@ import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
 import com.adbrand.core.brandkit.dto.KitMarcaPrompt;
 import com.adbrand.core.brandkit.entity.KitMarca;
 import com.adbrand.core.brandkit.repository.KitMarcaRepository;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
 import com.adbrand.core.negocio.service.PerfilNegocioService;
@@ -37,7 +38,8 @@ public class KitMarcaService {
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
 
         KitMarcaPrompt prompt = plantilla.construir(perfil, datos);
-        String respuestaJson = ia.generarTexto(prompt.sistema(), prompt.usuario());
+        // HU 17: los tokens usados se suman a la empresa que pidió el kit.
+        String respuestaJson = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.KIT_MARCA);
 
         // Parsear JSON de la IA
         KitMarca kit = parsearYGuardar(usuarioId, datos, respuestaJson);
@@ -73,12 +75,11 @@ public class KitMarcaService {
 
     @Transactional(readOnly = true)
     public KitMarcaGeneradoResponse obtener(Long usuarioId, Long kitId) {
+        // HU 32: el kit de otra empresa responde 404 igual que uno que no existe (antes daba 500).
         KitMarca kit = kits.findById(kitId)
+                .filter(encontrado -> encontrado.getUsuarioId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "KIT_MARCA_NO_ENCONTRADO", "Kit de Marca no encontrado: " + kitId));
-        if (!kit.getUsuarioId().equals(usuarioId)) {
-            throw new IllegalArgumentException("El Kit de Marca no pertenece al usuario");
-        }
         return KitMarcaGeneradoResponse.desde(kit, false);
     }
 

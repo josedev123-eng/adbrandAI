@@ -1,16 +1,10 @@
-// View: lista de administradores con botón desactivar y formulario de creación (HU-01, HU-03).
+// View: lista de administradores con desactivar (HU-03) y editar permisos (HU-02).
+// El formulario para crear cuentas está solo en CrearAdministradorView (HU-01).
+import { useSesion } from '../../../app/context/useSesion'
 import { useAdministradores } from '../viewmodels/useAdministradores'
+import { useEditarPermisos } from '../viewmodels/useEditarPermisos'
+import EditarPermisosModal from './EditarPermisosModal'
 import './AdministradoresView.css'
-
-function Campo({ etiqueta, error, children }) {
-  return (
-    <label className={error ? 'campo campo-con-error' : 'campo'}>
-      <span>{etiqueta}</span>
-      {children}
-      {error && <small className="campo-error">{error}</small>}
-    </label>
-  )
-}
 
 function BadgeEstado({ estado }) {
   const esActivo = estado === 'ACTIVO'
@@ -22,93 +16,43 @@ function BadgeEstado({ estado }) {
 }
 
 export default function AdministradoresView() {
+  const { admin: adminConectado } = useSesion()
   const {
-    formulario,
     roles,
     administradores,
-    errores,
     mensaje,
-    enviando,
     desactivandoId,
     mostrarConfirmacion,
     adminADesactivar,
-    cambiarCampo,
-    enviar,
     abrirConfirmacionDesactivar,
     cerrarConfirmacionDesactivar,
     confirmarDesactivar,
+    recargarAdministradores,
   } = useAdministradores()
 
-  function alEnviar(evento) {
-    evento.preventDefault()
-    enviar()
-  }
+  // HU-02: edición de permisos (rol) de un administrador.
+  const {
+    adminAEditar,
+    rolId,
+    errorPermisos,
+    mensajePermisos,
+    guardando,
+    puedeEditar,
+    abrirEdicion,
+    cerrarEdicion,
+    cambiarRol,
+    guardarPermisos,
+  } = useEditarPermisos(recargarAdministradores, adminConectado.id)
 
   return (
-    <main className="pagina">
+    <main className="pagina pagina-administradores">
       <header className="pagina-cabecera">
-        <h1>Administradores</h1>
-        <p>Solo el superadmin puede crear cuentas y asignar roles.</p>
+        <h1>Lista de administradores</h1>
+        <p>Revisa las cuentas, cambia sus permisos o desactívalas. Para crear una cuenta ve a Administradores.</p>
       </header>
 
       {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
-
-      {/* Formulario de creación (HU-01) */}
-      <section className="tarjeta">
-        <h2>Registrar administrador</h2>
-
-        <form className="formulario" onSubmit={alEnviar} noValidate>
-          <div className="fila">
-            <Campo etiqueta="Nombres" error={errores.nombres}>
-              <input
-                value={formulario.nombres}
-                placeholder="María"
-                onChange={(e) => cambiarCampo('nombres', e.target.value)}
-              />
-            </Campo>
-            <Campo etiqueta="Apellidos" error={errores.apellidos}>
-              <input
-                value={formulario.apellidos}
-                placeholder="Torres"
-                onChange={(e) => cambiarCampo('apellidos', e.target.value)}
-              />
-            </Campo>
-          </div>
-
-          <Campo etiqueta="Correo" error={errores.correo}>
-            <input
-              type="email"
-              value={formulario.correo}
-              placeholder="maria.torres@adbrand.pe"
-              onChange={(e) => cambiarCampo('correo', e.target.value)}
-            />
-          </Campo>
-
-          <Campo etiqueta="Contraseña" error={errores.contrasena}>
-            <input
-              type="password"
-              value={formulario.contrasena}
-              placeholder="Mínimo 8 caracteres"
-              onChange={(e) => cambiarCampo('contrasena', e.target.value)}
-            />
-          </Campo>
-
-          <Campo etiqueta="Rol" error={errores.rol_id}>
-            <select value={formulario.rol_id} onChange={(e) => cambiarCampo('rol_id', e.target.value)}>
-              <option value="">Selecciona un rol</option>
-              {roles.map((rol) => (
-                <option key={rol.id} value={rol.id}>
-                  {rol.nombre}
-                </option>
-              ))}
-            </select>
-          </Campo>
-
-          <button className="boton-primario" type="submit" disabled={enviando}>
-            {enviando ? 'Guardando...' : 'Crear cuenta'}
-          </button>
-        </form>
-      </section>
+      {mensajePermisos && <div className={`aviso aviso-${mensajePermisos.tipo}`}>{mensajePermisos.texto}</div>}
 
       {/* Lista de administradores (HU-03) */}
       <section className="tarjeta">
@@ -140,6 +84,16 @@ export default function AdministradoresView() {
                 <td><BadgeEstado estado={admin.estado} /></td>
                 <td>{new Date(admin.fecha_creacion).toLocaleDateString('es-PE')}</td>
                 <td className="acciones">
+                  {/* Editar permisos (HU-02) */}
+                  <button
+                    type="button"
+                    className="boton-secundario boton-pequeno boton-editar-permisos"
+                    onClick={() => abrirEdicion(admin)}
+                    disabled={!puedeEditar(admin)}
+                    title={puedeEditar(admin) ? undefined : 'No puedes modificar tus propios permisos.'}
+                  >
+                    Editar permisos
+                  </button>
                   {admin.estado === 'ACTIVO' && (
                     <button
                       type="button"
@@ -182,6 +136,20 @@ export default function AdministradoresView() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal para editar permisos (HU-02) */}
+      {adminAEditar && (
+        <EditarPermisosModal
+          admin={adminAEditar}
+          roles={roles}
+          rolId={rolId}
+          error={errorPermisos}
+          guardando={guardando}
+          alCambiarRol={cambiarRol}
+          alGuardar={guardarPermisos}
+          alCerrar={cerrarEdicion}
+        />
       )}
     </main>
   )

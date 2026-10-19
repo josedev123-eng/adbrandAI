@@ -40,7 +40,7 @@ class AnuncioControllerTest {
                 new AnuncioGeneradoResponse(7L, "¡2x1 hoy!", RedSocial.INSTAGRAM, Tono.DIVERTIDO, false,
                         EstadoContenido.APROBADO, null));
 
-        mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post(URL).requestAttr("usuarioId", 1L).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"oferta\":\"2x1 en tortas\",\"redSocial\":\"INSTAGRAM\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.texto").value("¡2x1 hoy!"))
@@ -50,7 +50,7 @@ class AnuncioControllerTest {
 
     @Test
     void sinOfertaResponde400ConElCampo() throws Exception {
-        mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content("{\"oferta\":\"  \"}"))
+        mvc.perform(post(URL).requestAttr("usuarioId", 1L).contentType(MediaType.APPLICATION_JSON).content("{\"oferta\":\"  \"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("DATOS_INVALIDOS"))
                 .andExpect(jsonPath("$.campos.oferta").value("Escribe la oferta que quieres anunciar."))
@@ -60,7 +60,7 @@ class AnuncioControllerTest {
     @Test
     void ofertaDeMasDe300CaracteresResponde400() throws Exception {
         String larga = "a".repeat(301);
-        mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post(URL).requestAttr("usuarioId", 1L).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"oferta\":\"" + larga + "\",\"redSocial\":\"FACEBOOK\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.oferta").value("Máximo 300 caracteres."));
@@ -71,7 +71,7 @@ class AnuncioControllerTest {
         when(servicio.generar(eq(1L), any())).thenThrow(
                 new RecursoNoEncontradoException("PERFIL_NO_ENCONTRADO", "Todavía no registraste el perfil de tu negocio."));
 
-        mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post(URL).requestAttr("usuarioId", 1L).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"oferta\":\"Promo\",\"redSocial\":\"INSTAGRAM\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("PERFIL_NO_ENCONTRADO"));
@@ -81,7 +81,7 @@ class AnuncioControllerTest {
     void siLaIaFallaResponde503ConMensajeClaro() throws Exception {
         when(servicio.generar(eq(1L), any())).thenThrow(new IaNoDisponibleException("caída", null));
 
-        mvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post(URL).requestAttr("usuarioId", 1L).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"oferta\":\"Promo\",\"redSocial\":\"INSTAGRAM\"}"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.codigo").value("IA_NO_DISPONIBLE"))

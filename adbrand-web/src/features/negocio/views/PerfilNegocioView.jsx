@@ -13,8 +13,39 @@ function Campo({ etiqueta, error, ayuda, children }) {
   )
 }
 
+// Resumen de lo que ya está guardado en la base de datos.
+function ResumenNegocio({ guardado }) {
+  const tono = TONOS.find((t) => t.valor === guardado.tono)?.nombre ?? guardado.tono
+  return (
+    <section className="tarjeta resumen" aria-label="Tu negocio">
+      <span className="resumen-etiqueta">Tu negocio</span>
+      <h2 className="resumen-nombre">{guardado.nombreComercial}</h2>
+      <dl className="resumen-datos">
+        <div>
+          <dt>Rubro</dt>
+          <dd>{guardado.rubro}</dd>
+        </div>
+        <div>
+          <dt>Tono</dt>
+          <dd>{tono}</dd>
+        </div>
+        <div className="resumen-ancho">
+          <dt>Público objetivo</dt>
+          <dd>{guardado.publicoObjetivo}</dd>
+        </div>
+        {guardado.descripcion && (
+          <div className="resumen-ancho">
+            <dt>Qué vende</dt>
+            <dd>{guardado.descripcion}</dd>
+          </div>
+        )}
+      </dl>
+    </section>
+  )
+}
+
 export default function PerfilNegocioView() {
-  const { perfil, errores, mensaje, cargando, guardando, existe, cambiarCampo, guardar } = usePerfilNegocio()
+  const { perfil, guardado, errores, mensaje, cargando, guardando, existe, cambiarCampo, guardar } = usePerfilNegocio()
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -33,6 +64,10 @@ export default function PerfilNegocioView() {
       </header>
 
       {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+
+      {guardado && <ResumenNegocio guardado={guardado} />}
+
+      {existe && <h2 className="subtitulo">Editar datos</h2>}
 
       <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
         <div className="fila">

@@ -36,7 +36,8 @@ USUARIO          adbrand-web (React + Vite, puerto 5173)       ─┐           
 | HU 17, 19, 20 | Administración | Django | `tokens` |
 | HU 18 | Administración | Django | `servidor` |
 | HU 9, 23 | Usuario | Spring Boot | `negocio` |
-| HU 10, 11, 12 | Usuario | Spring Boot | `contenido` (usa `ia` y `revision`) |
+| HU 10, 12 | Usuario | Spring Boot | `contenido` (usa `ia` y `revision`) |
+| HU 11 | Usuario | Spring Boot | `brandkit` (usa `ia`) |
 | HU 21, 22, 24 | Usuario | Spring Boot | `auth` |
 | HU 25 a 28 | Usuario | Spring Boot | `pago` |
 | HU 29 a 32 | Usuario | Spring Boot | `brandkit` |
@@ -51,8 +52,12 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | HU | Qué hace | Dónde está |
 |---|---|---|
 | 1 | Crear administradores con rol | Django `usuarios` + admin-web `features/admin` |
-| 2 | (parte de 1/3) | Django `usuarios` |
+| 2 | Modificar los permisos (el rol) de un administrador | Django `usuarios` + admin-web `features/admin` (entrada en el menú `Lista de administradores`; botón Editar permisos en cada fila) |
 | 3 | Desactivar cuenta de administrador | Django `usuarios` + admin-web `features/admin` |
+| 4 | Registro de auditoría de las acciones de cada administrador | Django `auditoria` + admin-web `features/auditoria` (entrada en el menú `Auditoría`; filtros por administrador y fechas) |
+| 5 | Número de suscripciones activas | Django `suscripciones` + admin-web `features/suscripciones` (entrada en el menú `Panel financiero`; tarjeta Suscripciones activas) |
+| 6 | Ingresos generados por mes | Django `suscripciones` (modelo `Pago`) + admin-web `features/suscripciones` (en el `Panel financiero`: tarjeta Ingresos del periodo y barras por mes) |
+| 7 | Filtrar el panel financiero por rango de meses | Django `suscripciones` + admin-web `features/suscripciones` (en el `Panel financiero`: campos Desde y Hasta, botones Aplicar rango y Últimos 6 meses) |
 | 8 | Suscripciones vencidas y pendientes de pago | Django `suscripciones` + admin-web `features/suscripciones` |
 | 9 | Perfil del negocio | Spring `negocio` + web `features/negocio` |
 | 10 | Generar anuncio con IA | Spring `contenido` e `ia` + web `features/contenido` |
@@ -61,10 +66,27 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 13 | Filtro automático del contenido | Spring `revision` + estado en `contenido` |
 | 14 | Bandeja de revisión manual | Django `moderacion` + admin-web `features/moderacion` |
 | 15 | Aprobar o rechazar contenido | Django `moderacion` + admin-web `features/moderacion` |
+| 16 | Historial de contenidos aprobados y rechazados | Django `moderacion` (vista `vista_historial_contenido`, V34) + admin-web `features/moderacion` (entrada en el menú `Historial de contenidos`; filtros Estado, Desde y Hasta; clic en la fila para ver el texto) |
+| 17 | Consumo de tokens de IA por empresa en el mes actual | Spring `ia` (guarda cada consumo) + Django `tokens` + admin-web `features/tokens` (entrada en el menú `Consumo de IA`; se actualiza sola cada 30 segundos) |
+| 18 | Estado del servidor (backend, base de datos e IA) | Spring `estado` (`GET /api/estado`) + Django `servidor` (verifica y guarda en `verificacion_servidor`, V33) + admin-web `features/servidor` (entrada en el menú `Estado del servidor`; se verifica sola cada 15 segundos) |
+| 19 | Alerta cuando una empresa llega al porcentaje de aviso de su límite mensual de tokens | Django `tokens` (límite en `limite_tokens`, V31) + admin-web `features/tokens` (aviso arriba de la tabla de `Consumo de IA` y columna % del límite) |
+| 20 | Historial de consumo de tokens por periodo | Django `tokens` (vista `vista_consumo_token_mensual`, V32) + admin-web `features/tokens` (entrada en el menú `Historial de IA`; campos Desde y Hasta, por defecto los últimos 6 meses) |
+| 21 | Registro de la cuenta de la PYME | Spring `auth` + web `features/auth` (pantalla `Crear una cuenta`) |
+| 22 | Inicio de sesión del usuario PYME con JWT | Spring `auth` (`FiltroJwt`) + web `features/auth` y `app/context` (`SesionProvider`, `useSesion`); botón Cerrar sesión en el menú |
+| 23 | Datos de la empresa (RUC, razón social, teléfono, dirección) | Spring `cuenta` + web `features/cuenta` (entrada en el menú `Mi cuenta`) |
+| 24 | Recuperar la contraseña con un código de 6 dígitos por correo | Spring `auth` y `notificacion` + web `features/auth` (enlace ¿Olvidaste tu contraseña? en el inicio de sesión) |
+| 32 | Editar a mano colores, tipografías y logotipo del kit de marca | Spring `brandkit` (`EdicionKitMarcaService`) + web `features/brandkit` (lista Tus kits guardados y botón Editar en el kit) |
+
+Inicio de sesión del usuario PYME (HU 21, 22 y 24):
+- La web guarda el token en `localStorage` con la clave `adbrand-token` y lo manda en cada petición como `Authorization: Bearer <token>` (`apiClient.js`). Si Spring responde 401, la web borra el token y vuelve al inicio de sesión.
+- `FiltroJwt` (`auth/config`) revisa el token y deja el id del usuario en el atributo `usuarioId`. Los controllers lo reciben con `@RequestAttribute("usuarioId") Long usuarioId`; ya no existe el usuario fijo `USUARIO_DE_PRUEBA`.
+- Rutas públicas (sin token): `/api/auth/**` menos `GET /api/auth/sesion`, `GET /api/planes`, `GET /api/estado` y las peticiones `OPTIONS`. Las demás responden 401 `{"codigo":"NO_AUTENTICADO","mensaje":"Inicia sesión para continuar."}`.
+- Las contraseñas se guardan solo con BCrypt (`spring-security-crypto`): mínimo 8 caracteres, una mayúscula, una minúscula y un número, sin espacios. El token se firma con `jwt.secreto`, que sale de `JWT_SECRET` en el `.env`.
+- `ServicioCorreo` (`notificacion/service`) envía los correos. Con `MAIL_MOCK=true` no envía nada y escribe el correo en la consola de Spring como `[CORREO SIMULADO]`, así se puede leer el código de recuperación sin servidor de correo.
 
 Pendiente conocido:
-- Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
-- Faltan la clave y el modelo reales del servidor de IA. Por ahora se trabaja con `AI_MOCK=true`.
+- La web de administración ya pide login (ver "Inicio de sesión de administradores"); el criterio "solo el superadmin crea cuentas" de la HU 1 queda completo con las HU 2 y 3.
+- Con `AI_MOCK=true` generar un kit (HU 11) falla, porque el modo simulado devuelve un anuncio y no el JSON del kit. Para probar la HU 32 se carga `adbrand-docs/datos-prueba/kit-marca.sql`.
 
 ### Endpoints que ya existen
 
@@ -73,18 +95,60 @@ Spring Boot (`http://localhost:8080/api`):
 - `POST /contenido/anuncios`: genera el anuncio, lo pasa por el filtro y lo guarda (HU 10 y 13). Responde `{id, texto, redSocial, tono, simulado, estado, motivoRevision}`.
 - `POST /contenido/anuncios/{id}/regenerar`: regenera contenido con los mismos parámetros (HU 12). Responde igual que generar.
 - `POST /kit-marca/generar`: genera Kit de Marca (logo, tipografías, paleta, voz) (HU 11).
-- `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11).
+- `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11). El kit de otra empresa responde 404 `KIT_MARCA_NO_ENCONTRADO`.
+- `PUT /kit-marca/{id}` con `{colores: [{hex, nombre}], tipografiaPrimaria, tipografiaSecundaria, logoConcepto}`: guarda los cambios en el kit y una versión en el historial. Colores en formato `#RRGGBB` (HU 32).
+- `GET /kit-marca/{id}/versiones`: historial de ediciones del kit, la más reciente primero (HU 32).
+- `POST /auth/registro`: crea la cuenta con `{nombre, nombreEmpresa, correo, contrasena}`; 201, o 409 `CORREO_REPETIDO` (HU 21).
+- `POST /auth/login` con `{correo, contrasena}`: responde `{token, usuario}`; 401 `CREDENCIALES_INVALIDAS` o 403 `CUENTA_INACTIVA` (HU 22).
+- `GET /auth/sesion`: el usuario del token, para recuperar la sesión al recargar la página (HU 22).
+- `POST /auth/recuperar/solicitar` con `{correo}`: envía un código de 6 dígitos que vence en 15 minutos; responde 200 con el mismo mensaje exista o no el correo (HU 24).
+- `POST /auth/recuperar/cambiar` con `{correo, codigo, contrasenaNueva}`: cambia la contraseña; 400 `CODIGO_INVALIDO` si el código está mal, venció o ya se usó (HU 24).
+- `GET /cuenta/empresa` y `PUT /cuenta/empresa` con `{ruc, razonSocial, telefono, direccion}`: datos de la empresa del token, sin id en la URL; 409 `RUC_REPETIDO` (HU 23).
+- `GET /estado`: responde `{"backend": "ACTIVO", "ia": {"estado": "ACTIVO" o "CAIDO", "tiempo_ms", "detalle"}}` (HU 18). La IA se revisa con una petición liviana a `AI_BASE_URL` (no llama al chat ni manda la clave; 5 s de espera); con `AI_MOCK=true` sale ACTIVO con "Modo simulado". La usa Django y queda como ruta pública para que `/api/estado` no pida token.
 
 Django (`http://localhost:8000/api`):
-- `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
+- `POST /usuarios/login/` con `{"correo", "contrasena"}`: responde `{token, admin}`; 401 si los datos están mal y 403 si la cuenta está desactivada (login de administradores).
+- `GET /usuarios/sesion/`: devuelve el administrador dueño del token; la web lo usa al recargar la página.
+- `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1). Crear una cuenta queda en la auditoría como `CREAR_ADMIN`.
 - `GET /usuarios/administradores/`: lista los administradores con su estado (HU 3).
-- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción; sin login aún, se usa la constante `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js` (HU 3).
+- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo. Quién lo hace sale del token de sesión (HU 3).
+- `PATCH /usuarios/administradores/<id>/rol/` con `{"rol_id": n}`: cambia el rol de un administrador; solo el superadmin y nunca a sí mismo; quién lo hace sale del token. Responde 403 si no es superadmin o es su propia cuenta, 400 si el rol no existe y 404 si el administrador no existe (HU 2).
 - `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
+- `GET /suscripciones/activas/`: responde `{"total": n}` con las suscripciones en estado `ACTIVA` cuya `fecha_vencimiento` es hoy o posterior; una ACTIVA con la fecha pasada no cuenta, igual que en la HU 8 (HU 5).
+- `GET /suscripciones/ingresos-mensuales/`: responde `[{"mes": "2026-09", "total": "150.00"}, ...]` con lo cobrado en los últimos 6 meses contando el actual, del más antiguo al más reciente. Suma `pago.monto` por mes de `fecha_pago`; un mes sin pagos sale con `"0.00"`. El ingreso es el pago recibido, no el monto de la suscripción (HU 6).
+- `GET /suscripciones/ingresos-mensuales/?desde=AAAA-MM&hasta=AAAA-MM`: el mismo listado para ese rango de meses, los dos incluidos. Responde 400 si el formato es inválido, si falta uno de los dos, si `desde` es mayor que `hasta` o si el rango pasa de 24 meses (HU 7).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
-- `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion` y `moderador_id`; acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
+- `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion`; el moderador sale del token de sesión. Acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
+- `GET /moderacion/historial/` con `?estado=APROBADO|RECHAZADO`, `?desde=AAAA-MM-DD`, `?hasta=AAAA-MM-DD` y `?pagina=n` (todos opcionales): responde `{"total", "pagina", "paginas", "resultados": [{id, empresa, tipo, red_social, oferta, texto, estado, motivo, moderador, fecha_decision}]}`, del más reciente al más antiguo, 20 por página. `moderador` es el nombre del administrador o "Filtro automático" (HU 13). Las fechas filtran por `fecha_decision` con los dos días incluidos. Responde 400 si el estado no es válido, la fecha no es AAAA-MM-DD o el inicio es posterior al fin. Solo SUPERADMIN y MODERADOR (HU 16).
+- `GET /auditoria/` con `?admin_id=`, `?desde=AAAA-MM-DD` y `?hasta=AAAA-MM-DD` (todos opcionales): historial de acciones, la más reciente primero, con el nombre y correo del administrador. Responde 400 si una fecha es inválida o `desde` es mayor que `hasta` (HU 4).
+- `GET /tokens/consumo-actual/`: responde `{"mes": "2026-10", "total": n, "empresas": [{usuario_id, empresa, tokens, generaciones, ultima_generacion}]}` con los tokens de IA del mes actual (hora de Lima), de la empresa que más gasta a la que menos. La empresa es el `usuario_id`; el nombre sale de `perfil_negocio` o es "Empresa #id". Solo SUPERADMIN y TECNICO (HU 17).
+  - HU 19: cada empresa trae además `limite`, `porcentaje_aviso`, `porcentaje` (1 decimal) y `alerta`, y la raíz trae `alertas: [{usuario_id, empresa, tokens, limite, porcentaje}]` con solo las empresas en alerta, de mayor a menor porcentaje. El límite es la fila propia de la empresa en `limite_tokens` o, si no tiene, la fila por defecto (`usuario_id` NULL). Hay alerta cuando `tokens * 100 >= limite * porcentaje_aviso` (en enteros: el 80 % exacto avisa). Sin ningún límite: `limite` y `porcentaje` en null y nunca hay alerta.
+- `GET /tokens/historial/?desde=AAAA-MM&hasta=AAAA-MM` (los dos obligatorios; `&usuario_id=` opcional): responde `{"desde", "hasta", "total", "meses": [{mes, tokens, generaciones}]}` con todos los meses del periodo, también los que están en 0, del más antiguo al más reciente. Responde 400 si falta una fecha, si el formato no es AAAA-MM, si el inicio es posterior al fin ("La fecha de inicio no puede ser posterior a la fecha de fin") o si pasa de 24 meses. Solo SUPERADMIN y TECNICO (HU 20). La web hace la misma revisión del periodo antes de llamar.
+- `GET /servidor/estado/`: verifica en ese momento la base de datos (`SELECT 1`), el backend (llama a `CORE_API_URL/api/estado`, 3 s de espera) y la IA (la informa Spring). Si Spring no responde, backend e IA quedan CAIDO. Guarda las 3 verificaciones en `verificacion_servidor` y, si la base falla, igual responde. Responde `{"verificado_en": "hora de Lima", "servicios": [{servicio, nombre, estado, tiempo_ms, detalle}]}`. Solo SUPERADMIN y TECNICO (HU 18).
+- Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
-### Migraciones Flyway aplicadas (la siguiente libre es V9)
+### Inicio de sesión de administradores
+
+- La web de administración pide correo y contraseña (`features/auth`). `POST /api/usuarios/login/` devuelve un token firmado con `django.core.signing` que dura 8 horas; la web lo guarda (`shared/services/sesionToken.js`) y `apiClient.js` lo manda en cada pedido como `Authorization: Bearer <token>`. Si Django responde 401, la web vuelve al login con un aviso.
+- Al recargar la página la web llama `GET /api/usuarios/sesion/` para saber quién está conectado y su rol (`app/context/SesionProvider.jsx`, `useSesion()`).
+- Toda vista de Django hereda de `usuarios.vistas.VistaAdmin`: exige el token, que la cuenta esté ACTIVA y uno de los `roles_permitidos` de la vista. Quién hace la acción se toma de `request.user`; nunca se manda en el cuerpo.
+- El menú de la web muestra solo las pantallas del rol (`app/routes/pantallasPorRol.js`), pero quien decide es Django.
+
+| Rol | Puede usar |
+|---|---|
+| SUPERADMIN | Todo |
+| MODERADOR | Moderación (bandeja, detalle, aprobar y rechazar) |
+| FINANZAS | Suscripciones (deudas, activas e ingresos) |
+| TECNICO | Consumo de IA (`/api/tokens/`, HU 17) y su sesión |
+
+Respuestas: sin token, 403 "Inicia sesión para continuar."; rol que no corresponde, 403 "Tu rol no tiene acceso a esta sección."; token falso o vencido, "Tu sesión venció o no es válida. Vuelve a iniciar sesión.".
+
+Primer superadministrador: en `adbrand-admin-api` correr `python manage.py crear_superadmin` (pide nombres, apellidos, correo y contraseña fuerte).
+
+### Migraciones Flyway aplicadas
+
+Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose V30 a V39. Por eso cada uno pone `spring.flyway.out-of-order=true` en su `adbrand-core-api/.env`, así Flyway aplica una versión menor que llega después de una mayor. V12 es del login de administradores.
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -96,8 +160,43 @@ Django (`http://localhost:8000/api`):
 | V6 | `usuario_admin.estado` (ACTIVO/INACTIVO) | 3 |
 | V7 | `suscripcion` (estado, fechas, monto y plan de cada cliente) | 8 |
 | V8 | `kit_marca` (logo, tipografías, paleta, voz) | 11 |
+| V9 | `auditoria_admin` (qué administrador hizo qué acción, sobre qué y cuándo) | 4 |
+| V10 | `pago` (monto, fecha y método TARJETA o YAPE de cada pago de una suscripción) | 6 |
+| V11 | `auditoria_admin.fecha` con zona horaria (TIMESTAMPTZ) | 4 |
+| V12 | rol `TECNICO` (consumo de tokens de IA y estado del servidor) | 17 |
+| V13 | `usuario` (cuenta del usuario PYME: nombre, empresa, correo único, hash BCrypt, estado ACTIVO/INACTIVO) | 21 |
+| V14 | `usuario.ultimo_acceso` | 22 |
+| V15 | `codigo_recuperacion` (hash del código, vencimiento y si ya se usó) | 24 |
+| V16 | `usuario.ruc` (único), `razon_social`, `telefono` y `direccion` | 23 |
+| V17 | `kit_marca_version` (cada edición del kit de marca) | 32 |
+| V30 | `consumo_token` (tokens de entrada, salida y total de cada generación con IA, por `usuario_id` y `origen`; `simulado` si se estimaron) | 17 |
+| V31 | `limite_tokens` (límite mensual y porcentaje de aviso; `usuario_id` NULL es el de por defecto: 100 000 tokens y aviso al 80 %; una fila por empresa) | 19 |
+| V32 | vista `vista_consumo_token_mensual` (tokens y generaciones por mes, con la hora de Lima, y por `usuario_id`; solo lectura) | 20 |
+| V33 | `verificacion_servidor` (servicio BACKEND, BASE_DATOS o IA; estado ACTIVO o CAIDO; tiempo_ms, detalle y fecha de cada verificación) | 18 |
+| V34 | vista `vista_historial_contenido` (contenidos APROBADO o RECHAZADO con el nombre del moderador o "Filtro automático", el motivo y la fecha de la decisión; solo lectura) | 16 |
 
-Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/contenido-dudoso.sql` y se cargan a mano sobre la base local.
+Si la base local ya tenía una versión mayor cuando llegaron V13 a V17 o V30 a V34, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
+
+Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
+
+### Resumen del Sprint 2 de Jose (`rama-jose`)
+
+| HU | Qué quedó | Migración |
+|---|---|---|
+| 17 (tarea técnica) | Login de administradores con token, menú según el rol y Django revisando el rol en cada endpoint | V12 (rol TECNICO) |
+| 17 | Consumo de tokens de IA por empresa en el mes actual (Spring guarda cada consumo; panel `Consumo de IA`) | V30 |
+| 19 | Alerta cuando una empresa llega al porcentaje de aviso de su límite mensual | V31 |
+| 20 | Historial de consumo de tokens por periodo (`Historial de IA`) | V32 |
+| 18 | Estado del backend, la base de datos y la IA (`Estado del servidor`) | V33 |
+| 16 | Historial de contenidos aprobados y rechazados (`Historial de contenidos`) | V34 |
+
+Pruebas al cerrar el sprint: Spring 59, Django 170 y admin-web 102, todas en verde.
+
+### Notas para las siguientes historias
+
+- Autenticación de administradores: ver la sección "Inicio de sesión de administradores". Toda vista nueva de la web de administración hereda de `VistaAdmin` y declara sus `roles_permitidos`.
+- El `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) reúne las HU 5, 6 y 7. Un indicador nuevo del dueño de la aplicación va ahí, con su endpoint en la app Django `suscripciones`.
+- Las HU 25 a 28 (pagos del usuario, en Spring) deben escribir en la tabla `pago` (V10), que es de donde el panel saca los ingresos. Si necesitan más columnas, se agregan con una migración nueva; no se edita V10.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
@@ -135,19 +234,22 @@ Spring Boot genera el anuncio, lo revisa con las reglas de `regla_revision` y lo
 
 - Servidor del instituto: `http://192.168.17.11:3000` (solo funciona dentro de la red de Tecsup). Formato compatible con OpenAI, ruta `/api/chat/completions`.
 - Nunca escribir la URL ni la clave en el código. Van en el archivo `.env` de `adbrand-core-api`: `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, `AI_TIMEOUT_SECONDS`, `AI_CHAT_PATH`, `AI_MOCK`.
-- Con `AI_MOCK=true` se devuelve una respuesta de prueba para poder trabajar fuera del instituto.
+- Modelo del instituto: `AI_MODEL=Qwen/Qwen3.6-35B-A3B-FP8` (nombre exacto, con `Qwen/`). Cada uno saca su propia clave y la pone solo en su `.env`.
+- Con `AI_MOCK=true` se devuelve una respuesta de prueba para poder trabajar fuera del instituto (en casa). En Tecsup, `AI_MOCK=false`.
 - Todo el código de IA vive en `adbrand-core-api/.../core/ia/`. Ningún otro módulo llama al servidor de IA directamente; usan `ServicioIa`.
+- Qwen3 a veces escribe su razonamiento entre `<think>` y `</think>` antes de la respuesta. `ServicioIa` lo quita antes de devolver el texto, así que los módulos reciben solo la respuesta final.
+- HU 17: toda generación que pide una empresa usa `ServicioIa.generarTexto(sistema, usuario, usuarioId, origen)`, que además guarda los tokens en `consumo_token` (V30). Un módulo nuevo que use la IA agrega su valor a `OrigenConsumo` y al CHECK de la tabla con una migración nueva. Con `AI_MOCK=true` o si el servidor no manda `usage`, los tokens se estiman (4 caracteres = 1 token) y se marcan `simulado`.
 
 ## Configuración local y cómo arrancar
 
 Los archivos `.env` NO se suben a GitHub (están en `.gitignore`). Cada uno crea los suyos:
-- `adbrand-core-api/.env`: `DB_PASSWORD` y las variables `AI_*`.
-- `adbrand-admin-api/.env`: `DB_PASSWORD`.
+- `adbrand-core-api/.env`: `DB_PASSWORD`, las variables `AI_*`, `JWT_SECRET` (texto largo al azar, mínimo 32 caracteres) y `MAIL_MOCK=true`. Para enviar correos de verdad: `MAIL_MOCK=false` con `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` y `MAIL_FROM`.
+- `adbrand-admin-api/.env`: `DB_PASSWORD`. Opcional: `CORE_API_URL` (dirección de Spring para el panel del estado del servidor, por defecto `http://localhost:8080`).
 
 | Parte | Carpeta | Comando |
 |---|---|---|
-| Spring Boot | `adbrand-core-api` | `mvnw.cmd spring-boot:run` |
-| Django | `adbrand-admin-api` | `python manage.py runserver 8000` |
+| Spring Boot | `adbrand-core-api` | `.\mvnw spring-boot:run` |
+| Django | `adbrand-admin-api` | `venv\Scripts\activate` y luego `python manage.py runserver 8000` |
 | Web del usuario | `adbrand-web` | `npm install` (la primera vez) y `npm run dev` |
 | Web de administración | `adbrand-admin-web` | `npm install` (la primera vez) y `npm run dev` |
 
@@ -157,18 +259,21 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 
 | Parte | Herramientas | Comando |
 |---|---|---|
-| Spring Boot | JUnit 6, AssertJ, Mockito, `@WebMvcTest` | `mvnw.cmd test -Dtest="NombreDeLaPrueba"` |
+| Spring Boot | JUnit 6, AssertJ, Mockito, `@WebMvcTest` | `.\mvnw test` (o `.\mvnw test -Dtest="NombreDeLaPrueba"`) |
 | Django | `APITestCase` de DRF | `python manage.py test <app>` |
 | Web de administración | Vitest y Testing Library | `npm test` |
 | Las dos webs | ESLint | `npm run lint` |
 
-- En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA.
+- En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA. Las pruebas de `auth`, `cuenta` y `EditarKitMarcaTest` usan `@SpringBootTest` con `@Transactional` para pasar por `FiltroJwt` con tokens reales: usan la base local y todo se deshace al terminar cada prueba.
 - En Django, el runner `core/test_runner.py` crea las tablas de Flyway en la base temporal de pruebas, así que las pruebas no necesitan Spring.
+- La vista `vista_consumo_token_mensual` (V32) se lee con el modelo `ConsumoMensual` (clave compuesta `mes` + `usuario_id`). En la base de prueba Django la crea como una tabla común, así que las pruebas la llenan directo.
+- La vista `vista_historial_contenido` (V34) se lee con el modelo `HistorialContenido`. Sus pruebas usan `usar_vista_de_flyway("V34__...sql")` de `core/pruebas.py`, que cambia la tabla de prueba por la vista real con el mismo SQL de la migración.
+- Como los endpoints de Django piden token, las pruebas usan `core/pruebas.py`: `crear_admin("ROL")` crea un administrador activo, `con_sesion(admin)` da el header para un pedido e `iniciar_sesion(self.client, admin)` lo deja puesto para todos los pedidos.
 - En React, las pruebas reemplazan el `models/...Api.js` con datos de prueba (`vi.mock`), así no necesitan el backend encendido.
 
 ## Convenciones
 
-- Errores de Spring Boot: `{"codigo": "...", "mensaje": "...", "campos": {"campo": "mensaje"}}` (ver `shared/error/ManejadorDeErrores`). Códigos usados: `DATOS_INVALIDOS` (400), `PERFIL_NO_ENCONTRADO` (404), `IA_NO_DISPONIBLE` (503).
+- Errores de Spring Boot: `{"codigo": "...", "mensaje": "...", "campos": {"campo": "mensaje"}}` (ver `shared/error/ManejadorDeErrores`). Códigos usados: `DATOS_INVALIDOS` (400), `CODIGO_INVALIDO` (400), `NO_AUTENTICADO` y `CREDENCIALES_INVALIDAS` (401), `CUENTA_INACTIVA` (403), `PERFIL_NO_ENCONTRADO` y `KIT_MARCA_NO_ENCONTRADO` (404), `CORREO_REPETIDO` y `RUC_REPETIDO` (409), `IA_NO_DISPONIBLE` (503).
 - Errores de Django: por ahora el formato de DRF, `{"campo": ["mensaje"]}`, y 404 con `{"detail": "..."}`.
 - Código (clases, métodos, variables) en español; textos de pantalla en español.
 - Cada commit con el formato `HU-<número>: descripción corta`, por ejemplo `HU-14: bandeja de contenidos dudosos`.
@@ -194,7 +299,8 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar V1, V2 o V3.
+- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17 y V30 a V34). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
+- No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.
 - No tocar módulos de otra historia que no sea la pedida.

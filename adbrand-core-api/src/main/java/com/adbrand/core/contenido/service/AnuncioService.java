@@ -6,6 +6,7 @@ import com.adbrand.core.contenido.dto.PromptAnuncio;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
 import com.adbrand.core.negocio.service.PerfilNegocioService;
@@ -37,7 +38,8 @@ public class AnuncioService {
         // HU 10, criterio 1: sin perfil registrado no se puede generar (responde 404 PERFIL_NO_ENCONTRADO).
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
         PromptAnuncio prompt = plantilla.construir(perfil, datos.oferta(), datos.redSocial());
-        String texto = ia.generarTexto(prompt.sistema(), prompt.usuario());
+        // HU 17: los tokens usados se suman a la empresa que pidió el anuncio.
+        String texto = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.ANUNCIO);
 
         // HU 13, criterio 1: todo texto generado pasa por el filtro antes de poder usarse.
         ResultadoRevision revision = filtro.revisar(texto);
@@ -74,7 +76,7 @@ public class AnuncioService {
         // Reutilizar los parámetros originales: redSocial, tono, oferta
         // Pero usar el perfil actual (puede haber cambiado el tono)
         PromptAnuncio prompt = plantilla.construir(perfil, original.getOferta(), original.getRedSocial());
-        String texto = ia.generarTexto(prompt.sistema(), prompt.usuario());
+        String texto = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.REGENERAR_ANUNCIO);
 
         // Pasar por el filtro nuevamente
         ResultadoRevision revision = filtro.revisar(texto);

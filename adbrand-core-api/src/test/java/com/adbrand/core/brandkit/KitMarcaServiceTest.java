@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import com.adbrand.core.brandkit.entity.KitMarca;
 import com.adbrand.core.brandkit.repository.KitMarcaRepository;
 import com.adbrand.core.brandkit.service.KitMarcaService;
 import com.adbrand.core.brandkit.service.PlantillaPromptKitMarca;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.ia.service.IaNoDisponibleException;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
@@ -65,11 +67,11 @@ class KitMarcaServiceTest {
     @Test
     void generaYGuardaElKitCorrectamente() {
         perfilDelUsuario();
-        when(ia.generarTexto(anyString(), anyString())).thenReturn(JSON_IA);
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn(JSON_IA);
 
         KitMarcaGeneradoResponse kit = servicio.generar(1L, datos());
 
-        verify(ia).generarTexto(anyString(), anyString());
+        verify(ia).generarTexto(anyString(), anyString(), any(), any());
 
         ArgumentCaptor<KitMarca> captor = ArgumentCaptor.forClass(KitMarca.class);
         verify(kits).save(captor.capture());
@@ -98,7 +100,7 @@ class KitMarcaServiceTest {
     @Test
     void siLaIaFallaElErrorLlegaComoIaNoDisponible503() {
         perfilDelUsuario();
-        when(ia.generarTexto(anyString(), anyString())).thenThrow(new IaNoDisponibleException("caída", null));
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenThrow(new IaNoDisponibleException("caída", null));
 
         assertThatThrownBy(() -> servicio.generar(1L, datos()))
                 .isInstanceOf(IaNoDisponibleException.class);
@@ -115,5 +117,16 @@ class KitMarcaServiceTest {
         }
         ResponseStatus estado = manejo.getAnnotation(ResponseStatus.class);
         assertThat(estado.value()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    // HU 17: los tokens del kit se anotan a la empresa que lo pidió.
+    @Test
+    void losTokensDelKitSeAnotanALaEmpresa() {
+        perfilDelUsuario();
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn(JSON_IA);
+
+        servicio.generar(1L, datos());
+
+        verify(ia).generarTexto(anyString(), anyString(), eq(1L), eq(OrigenConsumo.KIT_MARCA));
     }
 }

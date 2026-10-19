@@ -38,3 +38,8 @@ body {
 h1, h2 { font-family: var(--f-display); line-height: 1.2; margin: 0; }
 
 button, input, select { font: inherit; color: inherit; }
+
+/* Login de administradores: mensajes mientras se revisa la sesión o si el rol no tiene pantallas */
+.cargando-sesion { padding: 48px 16px; text-align: center; color: var(--muted); }
+.sin-pantallas { max-width: 560px; margin: 0 auto; padding: 48px 16px; }
+.sin-pantallas p { color: var(--muted); }

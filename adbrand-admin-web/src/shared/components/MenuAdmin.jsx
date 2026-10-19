@@ -1,19 +1,14 @@
-// Menú superior de la web de administración. Solo dibuja; App decide qué pantalla se muestra.
+// Menú superior de la web de administración. Solo dibuja; App decide qué opciones y qué pantalla se muestran.
 import './MenuAdmin.css'
 
-const OPCIONES = [
-  { id: 'revision', nombre: 'Revisión de contenido' },
-  { id: 'administradores', nombre: 'Administradores' },
-]
-
-export default function MenuAdmin({ actual, alCambiar }) {
+export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRol, alSalir }) {
   return (
     <nav className="menu-admin">
       <span className="menu-marca">
         AdBrand<b>.AI</b> <small>Admin</small>
       </span>
       <div className="menu-opciones">
-        {OPCIONES.map((opcion) => (
+        {opciones.map((opcion) => (
           <button
             key={opcion.id}
             type="button"
@@ -24,6 +19,17 @@ export default function MenuAdmin({ actual, alCambiar }) {
           </button>
         ))}
       </div>
+      {admin && (
+        <div className="menu-cuenta">
+          <span className="menu-usuario">
+            {admin.nombres} {admin.apellidos}
+            <small>{nombreRol}</small>
+          </span>
+          <button type="button" className="menu-salir" onClick={alSalir}>
+            Cerrar sesión
+          </button>
+        </div>
+      )}
     </nav>
   )
 }
