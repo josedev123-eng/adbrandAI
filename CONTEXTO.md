@@ -66,9 +66,22 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 13 | Filtro automático del contenido | Spring `revision` + estado en `contenido` |
 | 14 | Bandeja de revisión manual | Django `moderacion` + admin-web `features/moderacion` |
 | 15 | Aprobar o rechazar contenido | Django `moderacion` + admin-web `features/moderacion` |
+| 21 | Registro de la cuenta de la PYME | Spring `auth` + web `features/auth` (pantalla `Crear una cuenta`) |
+| 22 | Inicio de sesión del usuario PYME con JWT | Spring `auth` (`FiltroJwt`) + web `features/auth` y `app/context` (`SesionProvider`, `useSesion`); botón Cerrar sesión en el menú |
+| 23 | Datos de la empresa (RUC, razón social, teléfono, dirección) | Spring `cuenta` + web `features/cuenta` (entrada en el menú `Mi cuenta`) |
+| 24 | Recuperar la contraseña con un código de 6 dígitos por correo | Spring `auth` y `notificacion` + web `features/auth` (enlace ¿Olvidaste tu contraseña? en el inicio de sesión) |
+| 32 | Editar a mano colores, tipografías y logotipo del kit de marca | Spring `brandkit` (`EdicionKitMarcaService`) + web `features/brandkit` (lista Tus kits guardados y botón Editar en el kit) |
+
+Inicio de sesión del usuario PYME (HU 21, 22 y 24):
+- La web guarda el token en `localStorage` con la clave `adbrand-token` y lo manda en cada petición como `Authorization: Bearer <token>` (`apiClient.js`). Si Spring responde 401, la web borra el token y vuelve al inicio de sesión.
+- `FiltroJwt` (`auth/config`) revisa el token y deja el id del usuario en el atributo `usuarioId`. Los controllers lo reciben con `@RequestAttribute("usuarioId") Long usuarioId`; ya no existe el usuario fijo `USUARIO_DE_PRUEBA`.
+- Rutas públicas (sin token): `/api/auth/**` menos `GET /api/auth/sesion`, `GET /api/planes` y las peticiones `OPTIONS`. Las demás responden 401 `{"codigo":"NO_AUTENTICADO","mensaje":"Inicia sesión para continuar."}`.
+- Las contraseñas se guardan solo con BCrypt (`spring-security-crypto`): mínimo 8 caracteres, una mayúscula, una minúscula y un número, sin espacios. El token se firma con `jwt.secreto`, que sale de `JWT_SECRET` en el `.env`.
+- `ServicioCorreo` (`notificacion/service`) envía los correos. Con `MAIL_MOCK=true` no envía nada y escribe el correo en la consola de Spring como `[CORREO SIMULADO]`, así se puede leer el código de recuperación sin servidor de correo.
 
 Pendiente conocido:
-- Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
+- La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
+- Con `AI_MOCK=true` generar un kit (HU 11) falla, porque el modo simulado devuelve un anuncio y no el JSON del kit. Para probar la HU 32 se carga `adbrand-docs/datos-prueba/kit-marca.sql`.
 
 ### Endpoints que ya existen
 
@@ -77,7 +90,15 @@ Spring Boot (`http://localhost:8080/api`):
 - `POST /contenido/anuncios`: genera el anuncio, lo pasa por el filtro y lo guarda (HU 10 y 13). Responde `{id, texto, redSocial, tono, simulado, estado, motivoRevision}`.
 - `POST /contenido/anuncios/{id}/regenerar`: regenera contenido con los mismos parámetros (HU 12). Responde igual que generar.
 - `POST /kit-marca/generar`: genera Kit de Marca (logo, tipografías, paleta, voz) (HU 11).
-- `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11).
+- `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11). El kit de otra empresa responde 404 `KIT_MARCA_NO_ENCONTRADO`.
+- `PUT /kit-marca/{id}` con `{colores: [{hex, nombre}], tipografiaPrimaria, tipografiaSecundaria, logoConcepto}`: guarda los cambios en el kit y una versión en el historial. Colores en formato `#RRGGBB` (HU 32).
+- `GET /kit-marca/{id}/versiones`: historial de ediciones del kit, la más reciente primero (HU 32).
+- `POST /auth/registro`: crea la cuenta con `{nombre, nombreEmpresa, correo, contrasena}`; 201, o 409 `CORREO_REPETIDO` (HU 21).
+- `POST /auth/login` con `{correo, contrasena}`: responde `{token, usuario}`; 401 `CREDENCIALES_INVALIDAS` o 403 `CUENTA_INACTIVA` (HU 22).
+- `GET /auth/sesion`: el usuario del token, para recuperar la sesión al recargar la página (HU 22).
+- `POST /auth/recuperar/solicitar` con `{correo}`: envía un código de 6 dígitos que vence en 15 minutos; responde 200 con el mismo mensaje exista o no el correo (HU 24).
+- `POST /auth/recuperar/cambiar` con `{correo, codigo, contrasenaNueva}`: cambia la contraseña; 400 `CODIGO_INVALIDO` si el código está mal, venció o ya se usó (HU 24).
+- `GET /cuenta/empresa` y `PUT /cuenta/empresa` con `{ruc, razonSocial, telefono, direccion}`: datos de la empresa del token, sin id en la URL; 409 `RUC_REPETIDO` (HU 23).
 
 Django (`http://localhost:8000/api`):
 - `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
@@ -94,7 +115,7 @@ Django (`http://localhost:8000/api`):
 - `GET /auditoria/` con `?admin_id=`, `?desde=AAAA-MM-DD` y `?hasta=AAAA-MM-DD` (todos opcionales): historial de acciones, la más reciente primero, con el nombre y correo del administrador. Responde 400 si una fecha es inválida o `desde` es mayor que `hasta` (HU 4).
 - Qué se registra en la auditoría: desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
-### Migraciones Flyway aplicadas (la siguiente libre es V12)
+### Migraciones Flyway aplicadas (V12 es del login de administradores; la siguiente libre es V18)
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -109,8 +130,15 @@ Django (`http://localhost:8000/api`):
 | V9 | `auditoria_admin` (qué administrador hizo qué acción, sobre qué y cuándo) | 4 |
 | V10 | `pago` (monto, fecha y método TARJETA o YAPE de cada pago de una suscripción) | 6 |
 | V11 | `auditoria_admin.fecha` con zona horaria (TIMESTAMPTZ) | 4 |
+| V13 | `usuario` (cuenta del usuario PYME: nombre, empresa, correo único, hash BCrypt, estado ACTIVO/INACTIVO) | 21 |
+| V14 | `usuario.ultimo_acceso` | 22 |
+| V15 | `codigo_recuperacion` (hash del código, vencimiento y si ya se usó) | 24 |
+| V16 | `usuario.ruc` (único), `razon_social`, `telefono` y `direccion` | 23 |
+| V17 | `kit_marca_version` (cada edición del kit de marca) | 32 |
 
-Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión y `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses).
+Si la base local ya tenía una versión mayor cuando llegaron V13 a V17, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
+
+Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
 
 ### Notas para las siguientes historias
 
@@ -162,7 +190,7 @@ Spring Boot genera el anuncio, lo revisa con las reglas de `regla_revision` y lo
 ## Configuración local y cómo arrancar
 
 Los archivos `.env` NO se suben a GitHub (están en `.gitignore`). Cada uno crea los suyos:
-- `adbrand-core-api/.env`: `DB_PASSWORD` y las variables `AI_*`.
+- `adbrand-core-api/.env`: `DB_PASSWORD`, las variables `AI_*`, `JWT_SECRET` (texto largo al azar, mínimo 32 caracteres) y `MAIL_MOCK=true`. Para enviar correos de verdad: `MAIL_MOCK=false` con `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` y `MAIL_FROM`.
 - `adbrand-admin-api/.env`: `DB_PASSWORD`.
 
 | Parte | Carpeta | Comando |
@@ -183,13 +211,13 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 | Web de administración | Vitest y Testing Library | `npm test` |
 | Las dos webs | ESLint | `npm run lint` |
 
-- En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA.
+- En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA. Las pruebas de `auth`, `cuenta` y `EditarKitMarcaTest` usan `@SpringBootTest` con `@Transactional` para pasar por `FiltroJwt` con tokens reales: usan la base local y todo se deshace al terminar cada prueba.
 - En Django, el runner `core/test_runner.py` crea las tablas de Flyway en la base temporal de pruebas, así que las pruebas no necesitan Spring.
 - En React, las pruebas reemplazan el `models/...Api.js` con datos de prueba (`vi.mock`), así no necesitan el backend encendido.
 
 ## Convenciones
 
-- Errores de Spring Boot: `{"codigo": "...", "mensaje": "...", "campos": {"campo": "mensaje"}}` (ver `shared/error/ManejadorDeErrores`). Códigos usados: `DATOS_INVALIDOS` (400), `PERFIL_NO_ENCONTRADO` (404), `IA_NO_DISPONIBLE` (503).
+- Errores de Spring Boot: `{"codigo": "...", "mensaje": "...", "campos": {"campo": "mensaje"}}` (ver `shared/error/ManejadorDeErrores`). Códigos usados: `DATOS_INVALIDOS` (400), `CODIGO_INVALIDO` (400), `NO_AUTENTICADO` y `CREDENCIALES_INVALIDAS` (401), `CUENTA_INACTIVA` (403), `PERFIL_NO_ENCONTRADO` y `KIT_MARCA_NO_ENCONTRADO` (404), `CORREO_REPETIDO` y `RUC_REPETIDO` (409), `IA_NO_DISPONIBLE` (503).
 - Errores de Django: por ahora el formato de DRF, `{"campo": ["mensaje"]}`, y 404 con `{"detail": "..."}`.
 - Código (clases, métodos, variables) en español; textos de pantalla en español.
 - Cada commit con el formato `HU-<número>: descripción corta`, por ejemplo `HU-14: bandeja de contenidos dudosos`.
@@ -215,7 +243,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar V1 a V11 (ya están subidas). Lo nuevo empieza en V12.
+- No crear tablas fuera de Flyway ni editar V1 a V17 (ya están subidas). Lo nuevo empieza en V18.
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.
