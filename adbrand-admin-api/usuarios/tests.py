@@ -1,7 +1,12 @@
-from django.contrib.auth.hashers import check_password
+from io import StringIO
+from unittest.mock import patch
+
+from django.contrib.auth.hashers import check_password, make_password
+from django.core.management import CommandError, call_command
 from rest_framework.test import APITestCase
 
 from .models import Rol, UsuarioAdmin
+from .sesion import crear_token
 
 URL = "/api/usuarios/administradores/"
 
@@ -311,3 +316,143 @@ class CambiarRolTests(APITestCase):
         )
 
         self.assertEqual(respuesta.status_code, 404)
+
+class LoginTests(APITestCase):
+    """Sprint 2: inicio de sesión de administradores con token."""
+
+    URL = "/api/usuarios/login/"
+
+    @classmethod
+    def setUpTestData(cls):
+        rol = Rol.objects.create(nombre="MODERADOR")
+        cls.activo = UsuarioAdmin.objects.create(
+            nombres="Ana", apellidos="Torres", correo="ana@adbrand.pe",
+            contrasena=make_password("Secreta123"), rol=rol, estado=UsuarioAdmin.ACTIVO,
+        )
+        cls.inactivo = UsuarioAdmin.objects.create(
+            nombres="Luis", apellidos="Paz", correo="luis@adbrand.pe",
+            contrasena=make_password("Secreta123"), rol=rol, estado=UsuarioAdmin.INACTIVO,
+        )
+
+    def _login(self, correo, contrasena):
+        return self.client.post(self.URL, {"correo": correo, "contrasena": contrasena}, format="json")
+
+    def test_con_datos_correctos_devuelve_token_y_rol(self):
+        respuesta = self._login("ana@adbrand.pe", "Secreta123")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.data["token"])
+        self.assertEqual(respuesta.data["admin"]["id"], self.activo.id)
+        self.assertEqual(respuesta.data["admin"]["rol"]["nombre"], "MODERADOR")
+        self.assertNotIn("contrasena", respuesta.data["admin"])
+
+    def test_el_correo_no_distingue_mayusculas(self):
+        respuesta = self._login("  ANA@adbrand.pe ", "Secreta123")
+        self.assertEqual(respuesta.status_code, 200)
+
+    def test_contrasena_incorrecta_o_correo_inexistente_dan_el_mismo_mensaje(self):
+        mala = self._login("ana@adbrand.pe", "Otra1234")
+        no_existe = self._login("nadie@adbrand.pe", "Secreta123")
+
+        self.assertEqual(mala.status_code, 401)
+        self.assertEqual(no_existe.status_code, 401)
+        self.assertEqual(mala.data["detail"], no_existe.data["detail"])
+        self.assertNotIn("token", mala.data)
+
+    def test_cuenta_desactivada_no_puede_iniciar_sesion(self):
+        # HU 03, criterio 1
+        respuesta = self._login("luis@adbrand.pe", "Secreta123")
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertIn("desactivada", respuesta.data["detail"])
+        self.assertNotIn("token", respuesta.data)
+
+    def test_faltan_datos(self):
+        respuesta = self.client.post(self.URL, {"correo": "ana@adbrand.pe"}, format="json")
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("contrasena", respuesta.data)
+
+
+class SesionTests(APITestCase):
+    """Sprint 2: el token identifica al administrador en los demás pedidos."""
+
+    URL = "/api/usuarios/sesion/"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superadmin_rol = Rol.objects.create(nombre="SUPERADMIN")
+        cls.moderador_rol = Rol.objects.create(nombre="MODERADOR")
+        cls.superadmin = UsuarioAdmin.objects.create(
+            nombres="Sofia", apellidos="Arias", correo="sofia@adbrand.pe",
+            contrasena=make_password("Secreta123"), rol=cls.superadmin_rol,
+        )
+        cls.objetivo = UsuarioAdmin.objects.create(
+            nombres="Juan", apellidos="Perez", correo="juan@adbrand.pe",
+            contrasena=make_password("Secreta123"), rol=cls.moderador_rol,
+        )
+
+    def _bearer(self, token):
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    def test_con_token_valido_devuelve_al_admin_conectado(self):
+        respuesta = self.client.get(self.URL, **self._bearer(crear_token(self.superadmin)))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["correo"], "sofia@adbrand.pe")
+        self.assertEqual(respuesta.data["rol"]["nombre"], "SUPERADMIN")
+
+    def test_sin_token_no_hay_sesion(self):
+        respuesta = self.client.get(self.URL)
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_token_alterado_es_rechazado(self):
+        token = crear_token(self.superadmin)
+        respuesta = self.client.get(self.URL, **self._bearer(token[:-3] + "abc"))
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertIn("sesión", respuesta.data["detail"])
+
+    def test_token_vencido_es_rechazado(self):
+        token = crear_token(self.superadmin)
+        with patch("usuarios.sesion.DURACION_SEGUNDOS", -1):
+            respuesta = self.client.get(self.URL, **self._bearer(token))
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_si_desactivan_la_cuenta_el_token_deja_de_servir(self):
+        token = crear_token(self.objetivo)
+        UsuarioAdmin.objects.filter(pk=self.objetivo.pk).update(estado=UsuarioAdmin.INACTIVO)
+
+        respuesta = self.client.get(self.URL, **self._bearer(token))
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_el_token_sirve_para_desactivar_cuentas(self):
+        url = f"/api/usuarios/administradores/{self.objetivo.id}/desactivar/"
+        respuesta = self.client.patch(
+            url, {"confirmar": True}, format="json", **self._bearer(crear_token(self.superadmin))
+        )
+        self.assertEqual(respuesta.status_code, 200)
+
+
+class CrearSuperadminComandoTests(APITestCase):
+    """Sprint 2: comando para crear el primer SUPERADMIN desde la consola."""
+
+    @classmethod
+    def setUpTestData(cls):
+        Rol.objects.create(nombre="SUPERADMIN")
+
+    def test_crea_el_superadmin_con_contrasena_cifrada(self):
+        call_command(
+            "crear_superadmin", nombres="Jose", apellidos="Rojas", correo="Jose@AdBrand.pe",
+            contrasena="Secreta123", stdout=StringIO(),
+        )
+        admin = UsuarioAdmin.objects.get(correo="jose@adbrand.pe")
+        self.assertEqual(admin.rol.nombre, "SUPERADMIN")
+        self.assertTrue(check_password("Secreta123", admin.contrasena))
+
+    def test_rechaza_contrasena_debil(self):
+        with self.assertRaises(CommandError):
+            call_command(
+                "crear_superadmin", nombres="Jose", apellidos="Rojas", correo="jose@adbrand.pe",
+                contrasena="secreta", stdout=StringIO(),
+            )
+        self.assertFalse(UsuarioAdmin.objects.exists())

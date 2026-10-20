@@ -9,7 +9,15 @@ from . import services
 from .authentication import AdminAuthentication
 from .models import Rol, UsuarioAdmin
 from .permissions import IsAdminActivo
-from .serializers import AdministradorSerializer, CambiarRolSerializer, CrearAdministradorSerializer, DesactivarAdministradorSerializer, RolSerializer
+from .serializers import (
+    AdministradorSerializer,
+    CambiarRolSerializer,
+    CrearAdministradorSerializer,
+    DesactivarAdministradorSerializer,
+    LoginSerializer,
+    RolSerializer,
+)
+from .sesion import crear_token
 
 
 class RolesView(APIView):
@@ -105,3 +113,43 @@ class CambiarRolAdministradorView(APIView):
         registrar_accion(request.user.id, "CAMBIAR_ROL", "usuario_admin", admin.id, f"Cambió el rol de {admin.correo} a {admin.rol.nombre}")
 
         return Response(AdministradorSerializer(admin).data)
+
+
+class LoginView(APIView):
+    """POST /api/usuarios/login/ : inicio de sesión de administradores (Sprint 2).
+
+    Si el correo y la contraseña son correctos devuelve el token y los datos del administrador.
+    """
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        datos = serializer.validated_data
+
+        try:
+            admin = services.iniciar_sesion(datos["correo"], datos["contrasena"])
+        except services.CuentaDesactivada:
+            # HU 03, criterio 1: un administrador desactivado ya no puede iniciar sesión.
+            return Response(
+                {"detail": "Tu cuenta está desactivada. Contacta al superadministrador."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if admin is None:
+            return Response({"detail": "Correo o contraseña incorrectos."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response({"token": crear_token(admin), "admin": AdministradorSerializer(admin).data})
+
+
+class SesionView(APIView):
+    """GET /api/usuarios/sesion/ : devuelve quién está conectado según su token (Sprint 2).
+
+    La web lo usa al recargar la página para saber si la sesión sigue activa y qué rol tiene.
+    """
+    authentication_classes = [AdminAuthentication]
+    permission_classes = [IsAdminActivo]
+
+    def get(self, request):
+        return Response(AdministradorSerializer(request.user).data)

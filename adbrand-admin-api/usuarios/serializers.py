@@ -81,3 +81,12 @@ class CambiarRolSerializer(serializers.Serializer):
         source="rol",
         error_messages={"does_not_exist": "El rol seleccionado no existe."},
     )
+
+class LoginSerializer(serializers.Serializer):
+    """Datos del formulario de inicio de sesión (Sprint 2)."""
+
+    correo = serializers.EmailField(max_length=150)
+    contrasena = serializers.CharField(max_length=128, write_only=True, trim_whitespace=False)
+
+    def validate_correo(self, valor):
+        return valor.strip().lower()
