@@ -28,3 +28,10 @@
 }
 
 .boton-enlace:hover { text-decoration: underline; }
+
+/* HU-24: el código de 6 dígitos se lee mejor con letra de ancho fijo y separado */
+.campo .campo-codigo {
+  font-family: var(--f-mono);
+  font-size: 1.2rem;
+  letter-spacing: 0.4em;
+}

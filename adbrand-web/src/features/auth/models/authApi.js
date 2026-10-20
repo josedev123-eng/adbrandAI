@@ -15,3 +15,13 @@ export function iniciarSesion(correo, contrasena) {
 export function obtenerSesion() {
   return apiRequest('/auth/sesion')
 }
+
+// HU-24: siempre responde 200 con el mismo mensaje, exista o no el correo.
+export function solicitarCodigo(correo) {
+  return apiRequest('/auth/recuperar/solicitar', { method: 'POST', body: { correo } })
+}
+
+// HU-24: 400 CODIGO_INVALIDO si el código está mal, venció o ya se usó.
+export function cambiarContrasena(datos) {
+  return apiRequest('/auth/recuperar/cambiar', { method: 'POST', body: datos })
+}

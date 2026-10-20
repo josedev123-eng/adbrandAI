@@ -4,6 +4,7 @@ import PerfilNegocioView from './features/negocio/views/PerfilNegocioView'
 import SolicitarKitMarcaView from './features/brandkit/views/SolicitarKitMarcaView'
 import RegistroView from './features/auth/views/RegistroView'
 import LoginView from './features/auth/views/LoginView'
+import RecuperarContrasenaView from './features/auth/views/RecuperarContrasenaView'
 import MenuUsuario from './shared/components/MenuUsuario'
 import { useSesion } from './app/context/useSesion'
 
@@ -12,6 +13,13 @@ function App() {
   const { usuario, cargando, salir } = useSesion()
   const [pantalla, setPantalla] = useState('anuncio')
   const [pantallaPublica, setPantallaPublica] = useState('login')
+  // HU-24: mensaje para el inicio de sesión, por ejemplo "Tu contraseña se cambió, inicia sesión".
+  const [avisoLogin, setAvisoLogin] = useState(null)
+
+  function irALogin(aviso = null) {
+    setAvisoLogin(aviso)
+    setPantallaPublica('login')
+  }
 
   if (cargando) {
     return (
@@ -24,8 +32,18 @@ function App() {
   if (!usuario) {
     return (
       <>
-        {pantallaPublica === 'login' && <LoginView irARegistro={() => setPantallaPublica('registro')} />}
-        {pantallaPublica === 'registro' && <RegistroView irALogin={() => setPantallaPublica('login')} />}
+        {pantallaPublica === 'login' && (
+          <LoginView
+            key={avisoLogin?.texto ?? 'sin-aviso'}
+            aviso={avisoLogin}
+            irARegistro={() => setPantallaPublica('registro')}
+            irARecuperar={() => setPantallaPublica('recuperar')}
+          />
+        )}
+        {pantallaPublica === 'registro' && <RegistroView irALogin={() => irALogin()} />}
+        {pantallaPublica === 'recuperar' && (
+          <RecuperarContrasenaView irALogin={() => irALogin()} alTerminar={(aviso) => irALogin(aviso)} />
+        )}
       </>
     )
   }
