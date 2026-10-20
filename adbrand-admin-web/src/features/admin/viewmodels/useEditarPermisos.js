@@ -1,8 +1,9 @@
 // ViewModel: edita los permisos (el rol) de un administrador existente (HU-02).
 import { useState } from 'react'
-import { ADMIN_DE_PRUEBA, cambiarRolAdministrador } from '../models/administradoresApi'
+import { cambiarRolAdministrador } from '../models/administradoresApi'
 
-export function useEditarPermisos(alGuardar) {
+// adminActualId: id del administrador conectado (viene de la sesión).
+export function useEditarPermisos(alGuardar, adminActualId) {
   const [adminAEditar, setAdminAEditar] = useState(null)
   const [rolId, setRolId] = useState('')
   const [errorPermisos, setErrorPermisos] = useState(null)
@@ -11,7 +12,7 @@ export function useEditarPermisos(alGuardar) {
 
   // Nadie modifica sus propios permisos: el servidor también lo rechaza con 403.
   function puedeEditar(admin) {
-    return admin.id !== ADMIN_DE_PRUEBA
+    return admin.id !== adminActualId
   }
 
   function abrirEdicion(admin) {

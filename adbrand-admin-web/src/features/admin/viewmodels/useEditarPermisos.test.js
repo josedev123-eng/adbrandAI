@@ -5,7 +5,6 @@ import { cambiarRolAdministrador } from '../models/administradoresApi'
 import { useEditarPermisos } from './useEditarPermisos'
 
 vi.mock('../models/administradoresApi', () => ({
-  ADMIN_DE_PRUEBA: 1,
   cambiarRolAdministrador: vi.fn(),
 }))
 
@@ -18,14 +17,14 @@ describe('useEditarPermisos (HU-02)', () => {
   })
 
   it('no deja editar los permisos de la propia cuenta', () => {
-    const { result } = renderHook(() => useEditarPermisos())
+    const { result } = renderHook(() => useEditarPermisos(undefined, 1))
 
     expect(result.current.puedeEditar(SUPERADMIN)).toBe(false)
     expect(result.current.puedeEditar(MODERADOR)).toBe(true)
   })
 
   it('al abrir la edición carga el rol actual del administrador', () => {
-    const { result } = renderHook(() => useEditarPermisos())
+    const { result } = renderHook(() => useEditarPermisos(undefined, 1))
 
     act(() => result.current.abrirEdicion(MODERADOR))
 
@@ -34,7 +33,7 @@ describe('useEditarPermisos (HU-02)', () => {
   })
 
   it('si el rol es el mismo muestra el error y no llama a la API', async () => {
-    const { result } = renderHook(() => useEditarPermisos())
+    const { result } = renderHook(() => useEditarPermisos(undefined, 1))
 
     act(() => result.current.abrirEdicion(MODERADOR))
     await act(async () => {
@@ -46,7 +45,7 @@ describe('useEditarPermisos (HU-02)', () => {
   })
 
   it('si no hay rol elegido muestra el error y no llama a la API', async () => {
-    const { result } = renderHook(() => useEditarPermisos())
+    const { result } = renderHook(() => useEditarPermisos(undefined, 1))
 
     act(() => result.current.abrirEdicion(MODERADOR))
     act(() => result.current.cambiarRol(''))

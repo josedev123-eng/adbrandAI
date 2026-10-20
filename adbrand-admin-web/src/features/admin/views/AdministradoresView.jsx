@@ -1,5 +1,6 @@
 // View: lista de administradores con desactivar (HU-03) y editar permisos (HU-02).
 // El formulario para crear cuentas está solo en CrearAdministradorView (HU-01).
+import { useSesion } from '../../../app/context/useSesion'
 import { useAdministradores } from '../viewmodels/useAdministradores'
 import { useEditarPermisos } from '../viewmodels/useEditarPermisos'
 import EditarPermisosModal from './EditarPermisosModal'
@@ -15,6 +16,7 @@ function BadgeEstado({ estado }) {
 }
 
 export default function AdministradoresView() {
+  const { admin: adminConectado } = useSesion()
   const {
     roles,
     administradores,
@@ -40,7 +42,7 @@ export default function AdministradoresView() {
     cerrarEdicion,
     cambiarRol,
     guardarPermisos,
-  } = useEditarPermisos(recargarAdministradores)
+  } = useEditarPermisos(recargarAdministradores, adminConectado.id)
 
   return (
     <main className="pagina pagina-administradores">

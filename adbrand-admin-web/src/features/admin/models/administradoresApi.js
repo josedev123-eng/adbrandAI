@@ -1,10 +1,6 @@
 // Model: llamadas a la API del módulo de administradores (HU-01, HU-03).
 import { apiRequest } from '../../../shared/services/apiClient'
 
-// Mientras no existe el inicio de sesión (HU 02), la web manda siempre el mismo
-// administrador. Cuando haya login, este valor se reemplaza por el de la sesión.
-export const ADMIN_DE_PRUEBA = 1
-
 export function listarRoles() {
   return apiRequest('/usuarios/roles/')
 }
@@ -17,19 +13,18 @@ export function listarAdministradores() {
   return apiRequest('/usuarios/administradores/')
 }
 
-export function desactivarAdministrador(id, adminId = ADMIN_DE_PRUEBA) {
+// Quién hace el cambio ya no se manda a mano: Django lo saca del token de sesión.
+export function desactivarAdministrador(id) {
   return apiRequest(`/usuarios/administradores/${id}/desactivar/`, {
     method: 'PATCH',
     body: { confirmar: true },
-    headers: { 'X-Admin-Id': String(adminId) },
   })
 }
 
 // HU-02: los permisos de un administrador dependen de su rol.
-export function cambiarRolAdministrador(id, rolId, adminId = ADMIN_DE_PRUEBA) {
+export function cambiarRolAdministrador(id, rolId) {
   return apiRequest(`/usuarios/administradores/${id}/rol/`, {
     method: 'PATCH',
     body: { rol_id: rolId },
-    headers: { 'X-Admin-Id': String(adminId) },
   })
 }

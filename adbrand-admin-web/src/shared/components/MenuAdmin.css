@@ -5,3 +5,8 @@
 .menu-opciones { display: flex; flex-wrap: wrap; gap: 4px; }
 .menu-opcion { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); cursor: pointer; }
 .menu-opcion-activa { background: var(--primary-soft); color: var(--primary); }
+.menu-cuenta { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.menu-usuario { display: flex; flex-direction: column; align-items: flex-end; font-size: 0.85rem; font-weight: 600; }
+.menu-usuario small { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.menu-salir { border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: 999px; font-weight: 600; color: var(--fg); cursor: pointer; }
+.menu-salir:hover { border-color: var(--bad); color: var(--bad); }
