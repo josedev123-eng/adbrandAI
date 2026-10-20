@@ -1,0 +1,44 @@
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.plan-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-nombre {
+  font-size: 1.3rem;
+  color: var(--primary);
+}
+
+.plan-precio {
+  margin: 0;
+  font-family: var(--f-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.plan-precio span {
+  font-family: var(--f-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.plan-descripcion {
+  margin: 0;
+  color: var(--muted);
+}
+
+.plan-tokens {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+}

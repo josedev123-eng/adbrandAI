@@ -5,6 +5,7 @@ const OPCIONES = [
   { id: 'perfil', nombre: 'Mi negocio' },
   { id: 'anuncio', nombre: 'Crear anuncio' },
   { id: 'kit', nombre: 'Kit de Marca' },
+  { id: 'planes', nombre: 'Planes' },
   { id: 'cuenta', nombre: 'Mi cuenta' },
 ]
 
