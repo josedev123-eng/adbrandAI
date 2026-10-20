@@ -42,4 +42,11 @@ public class ManejadorDeErrores {
         return new ErrorResponse("IA_NO_DISPONIBLE",
                 "El servicio de IA no responde en este momento. Intenta de nuevo en unos minutos.", Map.of());
     }
+
+    // HU 21: un dato único que ya existe, por ejemplo CORREO_REPETIDO.
+    @ExceptionHandler(ConflictoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse conflicto(ConflictoException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
 }
