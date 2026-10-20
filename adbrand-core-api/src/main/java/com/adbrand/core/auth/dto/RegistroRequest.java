@@ -24,4 +24,12 @@ public record RegistroRequest(
         @Size(min = ReglasContrasena.MINIMO, max = ReglasContrasena.MAXIMO, message = ReglasContrasena.MENSAJE_LARGO)
         @Pattern(regexp = ReglasContrasena.PATRON, message = ReglasContrasena.MENSAJE_PATRON)
         String contrasena) {
+
+    // Quita los espacios de los extremos antes de validar, así " ana@mail.com " cuenta como correo válido.
+    // La contraseña no se toca: un espacio en ella es un error que se debe mostrar.
+    public RegistroRequest {
+        nombre = nombre == null ? null : nombre.trim();
+        nombreEmpresa = nombreEmpresa == null ? null : nombreEmpresa.trim();
+        correo = correo == null ? null : correo.trim();
+    }
 }
