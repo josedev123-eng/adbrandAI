@@ -44,6 +44,10 @@ public class Usuario {
     @Column(name = "fecha_actualizacion", nullable = false)
     private LocalDateTime fechaActualizacion;
 
+    // HU 22: último inicio de sesión (V14).
+    @Column(name = "ultimo_acceso")
+    private LocalDateTime ultimoAcceso;
+
     @PrePersist
     void alCrear() {
         fechaCreacion = LocalDateTime.now();
@@ -73,4 +77,7 @@ public class Usuario {
     public void setEstado(EstadoUsuario estado) { this.estado = estado; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+
+    public LocalDateTime getUltimoAcceso() { return ultimoAcceso; }
+    public void setUltimoAcceso(LocalDateTime ultimoAcceso) { this.ultimoAcceso = ultimoAcceso; }
 }

@@ -49,4 +49,18 @@ public class ManejadorDeErrores {
     public ErrorResponse conflicto(ConflictoException ex) {
         return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
     }
+
+    // HU 22: credenciales incorrectas o sesión que ya no sirve.
+    @ExceptionHandler(NoAutenticadoException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse noAutenticado(NoAutenticadoException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
+
+    // HU 22: por ejemplo CUENTA_INACTIVA.
+    @ExceptionHandler(AccesoDenegadoException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse accesoDenegado(AccesoDenegadoException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
 }
