@@ -63,4 +63,11 @@ public class ManejadorDeErrores {
     public ErrorResponse accesoDenegado(AccesoDenegadoException ex) {
         return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
     }
+
+    // HU 24: por ejemplo CODIGO_INVALIDO.
+    @ExceptionHandler(SolicitudInvalidaException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse solicitudInvalida(SolicitudInvalidaException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
 }
