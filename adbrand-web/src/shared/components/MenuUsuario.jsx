@@ -5,6 +5,7 @@ const OPCIONES = [
   { id: 'perfil', nombre: 'Mi negocio' },
   { id: 'anuncio', nombre: 'Crear anuncio' },
   { id: 'kit', nombre: 'Kit de Marca' },
+  { id: 'cuenta', nombre: 'Mi cuenta' },
 ]
 
 // HU-22: "empresa" es el nombre de la empresa que inició sesión y "alSalir" cierra la sesión.

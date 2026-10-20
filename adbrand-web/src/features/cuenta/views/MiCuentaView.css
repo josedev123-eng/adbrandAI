@@ -1,0 +1,14 @@
+/* MiCuentaView.css: datos de la cuenta que no se editan aquí (HU-23).
+   El formulario usa las clases comunes .tarjeta, .formulario, .fila y .campo. */
+.cuenta-fija {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  border-left: 4px solid var(--primary);
+}
+
+.cuenta-fija div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cuenta-fija span { font-size: 0.78rem; color: var(--muted); }
+.cuenta-fija b { overflow-wrap: anywhere; }
+
+@media (max-width: 560px) { .cuenta-fija { grid-template-columns: 1fr; } }
