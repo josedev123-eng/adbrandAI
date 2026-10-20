@@ -68,7 +68,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 15 | Aprobar o rechazar contenido | Django `moderacion` + admin-web `features/moderacion` |
 
 Pendiente conocido:
-- Todavía no hay inicio de sesión. Spring usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración aún no pide login; el criterio "solo el superadmin crea cuentas" de la HU 1 se completa con la HU 2 y 3.
+- Spring todavía no tiene inicio de sesión: usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración ya pide login (ver "Inicio de sesión de administradores").
 
 ### Endpoints que ya existen
 
@@ -80,21 +80,41 @@ Spring Boot (`http://localhost:8080/api`):
 - `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11).
 
 Django (`http://localhost:8000/api`):
-- `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1).
+- `POST /usuarios/login/` con `{"correo", "contrasena"}`: responde `{token, admin}`; 401 si los datos están mal y 403 si la cuenta está desactivada (login de administradores).
+- `GET /usuarios/sesion/`: devuelve el administrador dueño del token; la web lo usa al recargar la página.
+- `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1). Crear una cuenta queda en la auditoría como `CREAR_ADMIN`.
 - `GET /usuarios/administradores/`: lista los administradores con su estado (HU 3).
-- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo, la web manda el header `X-Admin-Id` con el administrador que ejecuta la acción; sin login aún, se usa la constante `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js` (HU 3).
-- `PATCH /usuarios/administradores/<id>/rol/` con `{"rol_id": n}`: cambia el rol de un administrador; solo el superadmin y nunca a sí mismo, con el mismo header `X-Admin-Id`. Responde 403 si no es superadmin o es su propia cuenta, 400 si el rol no existe y 404 si el administrador no existe (HU 2).
+- `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo. Quién lo hace sale del token de sesión (HU 3).
+- `PATCH /usuarios/administradores/<id>/rol/` con `{"rol_id": n}`: cambia el rol de un administrador; solo el superadmin y nunca a sí mismo; quién lo hace sale del token. Responde 403 si no es superadmin o es su propia cuenta, 400 si el rol no existe y 404 si el administrador no existe (HU 2).
 - `GET /suscripciones/con-deuda/` con `?estado=VENCIDA` o `?estado=PENDIENTE_PAGO`: suscripciones vencidas y pendientes de pago, la más antigua primero (HU 8).
 - `GET /suscripciones/activas/`: responde `{"total": n}` con las suscripciones en estado `ACTIVA` cuya `fecha_vencimiento` es hoy o posterior; una ACTIVA con la fecha pasada no cuenta, igual que en la HU 8 (HU 5).
 - `GET /suscripciones/ingresos-mensuales/`: responde `[{"mes": "2026-09", "total": "150.00"}, ...]` con lo cobrado en los últimos 6 meses contando el actual, del más antiguo al más reciente. Suma `pago.monto` por mes de `fecha_pago`; un mes sin pagos sale con `"0.00"`. El ingreso es el pago recibido, no el monto de la suscripción (HU 6).
 - `GET /suscripciones/ingresos-mensuales/?desde=AAAA-MM&hasta=AAAA-MM`: el mismo listado para ese rango de meses, los dos incluidos. Responde 400 si el formato es inválido, si falta uno de los dos, si `desde` es mayor que `hasta` o si el rango pasa de 24 meses (HU 7).
 - `GET /moderacion/contenidos/dudosos/`: bandeja, solo estado `DUDOSO`, el más antiguo primero (HU 14).
 - `GET /moderacion/contenidos/<id>/`: detalle completo con motivo y negocio (HU 14).
-- `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion` y `moderador_id`; acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
+- `POST /moderacion/contenidos/<id>/moderar/`: aprueba o rechaza con `accion`; el moderador sale del token de sesión. Acepta `motivo_rechazo` opcional y lo guarda en `motivo_revision` (HU 15).
 - `GET /auditoria/` con `?admin_id=`, `?desde=AAAA-MM-DD` y `?hasta=AAAA-MM-DD` (todos opcionales): historial de acciones, la más reciente primero, con el nombre y correo del administrador. Responde 400 si una fecha es inválida o `desde` es mayor que `hasta` (HU 4).
-- Qué se registra en la auditoría: desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
+- Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
-### Migraciones Flyway aplicadas (la siguiente libre es V12)
+### Inicio de sesión de administradores
+
+- La web de administración pide correo y contraseña (`features/auth`). `POST /api/usuarios/login/` devuelve un token firmado con `django.core.signing` que dura 8 horas; la web lo guarda (`shared/services/sesionToken.js`) y `apiClient.js` lo manda en cada pedido como `Authorization: Bearer <token>`. Si Django responde 401, la web vuelve al login con un aviso.
+- Al recargar la página la web llama `GET /api/usuarios/sesion/` para saber quién está conectado y su rol (`app/context/SesionProvider.jsx`, `useSesion()`).
+- Toda vista de Django hereda de `usuarios.vistas.VistaAdmin`: exige el token, que la cuenta esté ACTIVA y uno de los `roles_permitidos` de la vista. Quién hace la acción se toma de `request.user`; nunca se manda en el cuerpo.
+- El menú de la web muestra solo las pantallas del rol (`app/routes/pantallasPorRol.js`), pero quien decide es Django.
+
+| Rol | Puede usar |
+|---|---|
+| SUPERADMIN | Todo |
+| MODERADOR | Moderación (bandeja, detalle, aprobar y rechazar) |
+| FINANZAS | Suscripciones (deudas, activas e ingresos) |
+| TECNICO | Solo `GET /api/usuarios/sesion/` por ahora; sus pantallas llegan con sus historias |
+
+Respuestas: sin token, 403 "Inicia sesión para continuar."; rol que no corresponde, 403 "Tu rol no tiene acceso a esta sección."; token falso o vencido, "Tu sesión venció o no es válida. Vuelve a iniciar sesión.".
+
+Primer superadministrador: en `adbrand-admin-api` correr `python manage.py crear_superadmin` (pide nombres, apellidos, correo y contraseña fuerte).
+
+### Migraciones Flyway aplicadas (la siguiente libre es V13)
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -109,12 +129,13 @@ Django (`http://localhost:8000/api`):
 | V9 | `auditoria_admin` (qué administrador hizo qué acción, sobre qué y cuándo) | 4 |
 | V10 | `pago` (monto, fecha y método TARJETA o YAPE de cada pago de una suscripción) | 6 |
 | V11 | `auditoria_admin.fecha` con zona horaria (TIMESTAMPTZ) | 4 |
+| V12 | rol `TECNICO` (consumo de tokens de IA y estado del servidor) | 17 |
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión y `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses).
 
 ### Notas para las siguientes historias
 
-- Autenticación de administradores: no hay login todavía. Las acciones protegidas usan el header `X-Admin-Id` con `AdminAuthentication` (`usuarios/authentication.py`) e `IsAdminActivo` (`usuarios/permissions.py`), solo en la vista que lo necesita (`authentication_classes` y `permission_classes`), igual que `DesactivarAdministradorView`. No ponerlo global en `settings.py`. La web lo manda con `ADMIN_DE_PRUEBA = 1` de `administradoresApi.js`.
+- Autenticación de administradores: ver la sección "Inicio de sesión de administradores". Toda vista nueva de la web de administración hereda de `VistaAdmin` y declara sus `roles_permitidos`.
 - El `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) reúne las HU 5, 6 y 7. Un indicador nuevo del dueño de la aplicación va ahí, con su endpoint en la app Django `suscripciones`.
 - Las HU 25 a 28 (pagos del usuario, en Spring) deben escribir en la tabla `pago` (V10), que es de donde el panel saca los ingresos. Si necesitan más columnas, se agregan con una migración nueva; no se edita V10.
 
@@ -185,6 +206,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 
 - En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA.
 - En Django, el runner `core/test_runner.py` crea las tablas de Flyway en la base temporal de pruebas, así que las pruebas no necesitan Spring.
+- Como los endpoints de Django piden token, las pruebas usan `core/pruebas.py`: `crear_admin("ROL")` crea un administrador activo, `con_sesion(admin)` da el header para un pedido e `iniciar_sesion(self.client, admin)` lo deja puesto para todos los pedidos.
 - En React, las pruebas reemplazan el `models/...Api.js` con datos de prueba (`vi.mock`), así no necesitan el backend encendido.
 
 ## Convenciones
@@ -215,7 +237,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar V1 a V11 (ya están subidas). Lo nuevo empieza en V12.
+- No crear tablas fuera de Flyway ni editar V1 a V12 (ya están subidas). Lo nuevo empieza en V13.
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.

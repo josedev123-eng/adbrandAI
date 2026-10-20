@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
+from core.pruebas import con_sesion, iniciar_sesion
 from moderacion.models import Contenido
 from usuarios.models import Rol, UsuarioAdmin
 
@@ -49,7 +50,7 @@ class RegistrarAccionesTests(APITestCase):
         crear_administradores(cls)
 
     def _como(self, admin):
-        return {"HTTP_X_ADMIN_ID": admin.id}
+        return con_sesion(admin)
 
     def test_se_registra_al_desactivar_una_cuenta(self):
         url = f"/api/usuarios/administradores/{self.objetivo.id}/desactivar/"
@@ -80,8 +81,9 @@ class RegistrarAccionesTests(APITestCase):
         contenido = crear_contenido_dudoso("Cigarrillos importados")
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{contenido.id}/moderar/",
-            {"accion": "APROBAR", "moderador_id": self.moderador.id},
+            {"accion": "APROBAR"},
             format="json",
+            **self._como(self.moderador),
         )
 
         self.assertEqual(respuesta.status_code, 200)
@@ -95,8 +97,9 @@ class RegistrarAccionesTests(APITestCase):
         contenido = crear_contenido_dudoso("Apuestas deportivas")
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{contenido.id}/moderar/",
-            {"accion": "RECHAZAR", "moderador_id": self.moderador.id, "motivo_rechazo": "Publicidad de apuestas"},
+            {"accion": "RECHAZAR", "motivo_rechazo": "Publicidad de apuestas"},
             format="json",
+            **self._como(self.moderador),
         )
 
         self.assertEqual(respuesta.status_code, 200)
@@ -111,16 +114,23 @@ class RegistrarAccionesTests(APITestCase):
         self.assertEqual(respuesta.status_code, 403)
         self.assertEqual(AuditoriaAdmin.objects.count(), 0)
 
-    def test_un_moderador_que_no_existe_no_rompe_la_moderacion(self):
+    def test_un_moderador_que_no_existe_no_puede_moderar(self):
+        # Antes el moderador_id venía en el cuerpo; ahora sale del token. Si la cuenta
+        # ya no existe, Django rechaza el pedido y no se modera ni se registra nada.
         contenido = crear_contenido_dudoso("Cigarrillos importados")
+        cabeceras = self._como(self.moderador)
+        UsuarioAdmin.objects.filter(pk=self.moderador.pk).delete()
+
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{contenido.id}/moderar/",
-            {"accion": "APROBAR", "moderador_id": 99999},
+            {"accion": "APROBAR"},
             format="json",
+            **cabeceras,
         )
 
-        self.assertEqual(respuesta.status_code, 200)
-        self.assertEqual(respuesta.data["estado"], "APROBADO")
+        self.assertEqual(respuesta.status_code, 403)
+        contenido.refresh_from_db()
+        self.assertEqual(contenido.estado, "DUDOSO")
         self.assertEqual(AuditoriaAdmin.objects.count(), 0)
 
     def test_si_falla_el_registro_la_accion_original_se_completa(self):
@@ -158,6 +168,9 @@ class ConsultarAuditoriaTests(APITestCase):
         AuditoriaAdmin.objects.filter(pk=cls.antiguo.pk).update(fecha=cls.hoy - timedelta(days=10))
         AuditoriaAdmin.objects.filter(pk=cls.intermedio.pk).update(fecha=cls.hoy - timedelta(days=5))
         AuditoriaAdmin.objects.filter(pk=cls.reciente.pk).update(fecha=cls.hoy - timedelta(days=1))
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.superadmin)
 
     def ids(self, respuesta):
         return [fila["id"] for fila in respuesta.data]

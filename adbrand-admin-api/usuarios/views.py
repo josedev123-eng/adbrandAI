@@ -6,9 +6,7 @@ from rest_framework.permissions import AllowAny
 from auditoria.services import registrar_accion
 
 from . import services
-from .authentication import AdminAuthentication
 from .models import Rol, UsuarioAdmin
-from .permissions import IsAdminActivo
 from .serializers import (
     AdministradorSerializer,
     CambiarRolSerializer,
@@ -18,20 +16,22 @@ from .serializers import (
     RolSerializer,
 )
 from .sesion import crear_token
+from .vistas import VistaAdmin
 
 
-class RolesView(APIView):
+class RolesView(VistaAdmin):
     """GET /api/usuarios/roles/ : lista de roles para el formulario."""
+    roles_permitidos = ("SUPERADMIN",)
 
     def get(self, request):
         roles = Rol.objects.order_by("id")
         return Response(RolSerializer(roles, many=True).data)
 
 
-class AdministradoresView(APIView):
+class AdministradoresView(VistaAdmin):
     """GET /api/usuarios/administradores/ : lista las cuentas, nunca la contraseña (HU 03).
     POST /api/usuarios/administradores/ : crea una cuenta de administrador con su rol (HU 01)."""
-    permission_classes = [AllowAny]
+    roles_permitidos = ("SUPERADMIN",)
 
     def get(self, request):
         administradores = UsuarioAdmin.objects.select_related("rol").order_by("id")
@@ -41,16 +41,18 @@ class AdministradoresView(APIView):
         serializer = CrearAdministradorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         administrador = services.crear_administrador(serializer.validated_data)
+        registrar_accion(
+            request.user.id, "CREAR_ADMIN", "usuario_admin", administrador.id,
+            f"Creó la cuenta de {administrador.correo} con el rol {administrador.rol.nombre}",
+        )
         return Response(AdministradorSerializer(administrador).data, status=status.HTTP_201_CREATED)
 
 
-class DesactivarAdministradorView(APIView):
+class DesactivarAdministradorView(VistaAdmin):
     """PATCH /api/usuarios/administradores/<id>/desactivar/ : desactiva un administrador (HU 03).
 
     Solo un superadministrador activo puede usarlo, y nunca sobre su propia cuenta.
     """
-    authentication_classes = [AdminAuthentication]
-    permission_classes = [IsAdminActivo]
 
     def patch(self, request, admin_id):
         if getattr(request.user.rol, "nombre", None) != "SUPERADMIN":
@@ -84,13 +86,11 @@ class DesactivarAdministradorView(APIView):
         return Response(AdministradorSerializer(admin).data)
 
 
-class CambiarRolAdministradorView(APIView):
+class CambiarRolAdministradorView(VistaAdmin):
     """PATCH /api/usuarios/administradores/<id>/rol/ : cambia el rol de un administrador (HU 02).
 
     Solo un superadministrador activo puede usarlo, y nunca sobre su propia cuenta.
     """
-    authentication_classes = [AdminAuthentication]
-    permission_classes = [IsAdminActivo]
 
     def patch(self, request, admin_id):
         if getattr(request.user.rol, "nombre", None) != "SUPERADMIN":
@@ -143,13 +143,11 @@ class LoginView(APIView):
         return Response({"token": crear_token(admin), "admin": AdministradorSerializer(admin).data})
 
 
-class SesionView(APIView):
+class SesionView(VistaAdmin):
     """GET /api/usuarios/sesion/ : devuelve quién está conectado según su token (Sprint 2).
 
     La web lo usa al recargar la página para saber si la sesión sigue activa y qué rol tiene.
     """
-    authentication_classes = [AdminAuthentication]
-    permission_classes = [IsAdminActivo]
 
     def get(self, request):
         return Response(AdministradorSerializer(request.user).data)

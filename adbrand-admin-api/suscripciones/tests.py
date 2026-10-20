@@ -8,12 +8,20 @@ from decimal import Decimal
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
+from core.pruebas import crear_admin, iniciar_sesion
 from suscripciones.models import Suscripcion
 
 URL = "/api/suscripciones/con-deuda/"
 
 
-class SuscripcionesConDeudaTests(APITestCase):
+class ConSesionDeFinanzas(APITestCase):
+    """Los endpoints de suscripciones piden un token de SUPERADMIN o FINANZAS."""
+
+    def setUp(self):
+        iniciar_sesion(self.client, crear_admin("FINANZAS"))
+
+
+class SuscripcionesConDeudaTests(ConSesionDeFinanzas):
     """HU-08: qué suscripciones devuelve la pantalla de morosos y con qué filtro."""
 
     @classmethod
@@ -111,7 +119,7 @@ def crear_suscripcion(estado, vence_en_dias, cliente="Panadería Doña Rosa"):
     )
 
 
-class SuscripcionesActivasTests(APITestCase):
+class SuscripcionesActivasTests(ConSesionDeFinanzas):
     """HU-05: cuántas PYMEs están usando el servicio hoy."""
 
     def total(self):
@@ -176,7 +184,7 @@ def nombre_del_mes(meses_atras):
     return primer_dia_del_mes(meses_atras).strftime("%Y-%m")
 
 
-class IngresosMensualesTests(APITestCase):
+class IngresosMensualesTests(ConSesionDeFinanzas):
     """HU-06: cuánto se cobró en cada uno de los últimos 6 meses."""
 
     @classmethod
@@ -254,7 +262,7 @@ class IngresosMensualesTests(APITestCase):
         self.assertEqual(self.ingresos()[nombre_del_mes(0)], "20.00")
 
 
-class IngresosPorRangoTests(APITestCase):
+class IngresosPorRangoTests(ConSesionDeFinanzas):
     """HU-07: filtrar los ingresos por un rango de meses para comparar periodos."""
 
     @classmethod

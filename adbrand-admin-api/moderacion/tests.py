@@ -1,6 +1,8 @@
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
+from core.pruebas import crear_admin, iniciar_sesion
+
 from .models import Contenido, PerfilNegocio
 
 URL_BANDEJA = "/api/moderacion/contenidos/dudosos/"
@@ -36,6 +38,10 @@ class BandejaRevisionTests(APITestCase):
         cls.dudoso_antiguo = crear_contenido(
             "DUDOSO", "Té que cura el cáncer", motivo='"cura el cáncer": Promete una cura médica.', minutos_atras=30
         )
+        cls.moderador = crear_admin("MODERADOR")
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.moderador)
 
     def test_la_bandeja_muestra_solo_los_dudosos(self):
         respuesta = self.client.get(URL_BANDEJA)
@@ -93,42 +99,47 @@ class ModerarContenidoTests(APITestCase):
         )
         cls.aprobado = crear_contenido("APROBADO", "Promo válida")
         cls.rechazado = crear_contenido("RECHAZADO", "Otra promo rechazada")
+        cls.moderador = crear_admin("MODERADOR")
+
+    def setUp(self):
+        # El moderador ya no va en el cuerpo: Django lo saca del token de sesión.
+        iniciar_sesion(self.client, self.moderador)
 
     def test_aprobar_contenido_dudoso_cambia_estado_a_aprobado_y_guarda_moderador(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
-            {"accion": "APROBAR", "moderador_id": 42},
+            {"accion": "APROBAR"},
             format="json",
         )
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(respuesta.data["estado"], "APROBADO")
-        self.assertEqual(respuesta.data["moderador_id"], 42)
+        self.assertEqual(respuesta.data["moderador_id"], self.moderador.id)
 
         # Verificar en BD
         self.dudoso.refresh_from_db()
         self.assertEqual(self.dudoso.estado, "APROBADO")
-        self.assertEqual(self.dudoso.moderador_id, 42)
+        self.assertEqual(self.dudoso.moderador_id, self.moderador.id)
 
     def test_rechazar_contenido_dudoso_cambia_estado_a_rechazado_y_guarda_moderador(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
-            {"accion": "RECHAZAR", "moderador_id": 99},
+            {"accion": "RECHAZAR"},
             format="json",
         )
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(respuesta.data["estado"], "RECHAZADO")
-        self.assertEqual(respuesta.data["moderador_id"], 99)
+        self.assertEqual(respuesta.data["moderador_id"], self.moderador.id)
 
         self.dudoso.refresh_from_db()
         self.assertEqual(self.dudoso.estado, "RECHAZADO")
-        self.assertEqual(self.dudoso.moderador_id, 99)
+        self.assertEqual(self.dudoso.moderador_id, self.moderador.id)
 
     def test_no_se_puede_moderar_contenido_ya_aprobado(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.aprobado.id}/moderar/",
-            {"accion": "RECHAZAR", "moderador_id": 1},
+            {"accion": "RECHAZAR"},
             format="json",
         )
 
@@ -138,7 +149,7 @@ class ModerarContenidoTests(APITestCase):
     def test_no_se_puede_moderar_contenido_ya_rechazado(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.rechazado.id}/moderar/",
-            {"accion": "APROBAR", "moderador_id": 1},
+            {"accion": "APROBAR"},
             format="json",
         )
 
@@ -148,25 +159,29 @@ class ModerarContenidoTests(APITestCase):
     def test_accion_invalida_devuelve_400(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
-            {"accion": "INVALIDO", "moderador_id": 1},
+            {"accion": "INVALIDO"},
             format="json",
         )
 
         self.assertEqual(respuesta.status_code, 400)
 
-    def test_moderador_id_faltante_devuelve_400(self):
+    def test_accion_faltante_devuelve_400(self):
+        # Antes faltaba moderador_id; ahora sale del token y lo obligatorio es la acción.
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
-            {"accion": "APROBAR"},
+            {},
             format="json",
         )
 
         self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("accion", respuesta.data)
+        self.dudoso.refresh_from_db()
+        self.assertEqual(self.dudoso.estado, "DUDOSO")
 
     def test_moderar_contenido_inexistente_devuelve_404(self):
         respuesta = self.client.post(
             "/api/moderacion/contenidos/99999/moderar/",
-            {"accion": "APROBAR", "moderador_id": 1},
+            {"accion": "APROBAR"},
             format="json",
         )
 
@@ -175,7 +190,7 @@ class ModerarContenidoTests(APITestCase):
     def test_rechazar_con_motivo_guarda_el_motivo_en_motivo_revision(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
-            {"accion": "RECHAZAR", "moderador_id": 99, "motivo_rechazo": "Publicidad de apuestas"},
+            {"accion": "RECHAZAR", "motivo_rechazo": "Publicidad de apuestas"},
             format="json",
         )
 
@@ -189,7 +204,7 @@ class ModerarContenidoTests(APITestCase):
     def test_rechazar_sin_motivo_conserva_el_motivo_de_la_observacion(self):
         respuesta = self.client.post(
             f"/api/moderacion/contenidos/{self.dudoso.id}/moderar/",
-            {"accion": "RECHAZAR", "moderador_id": 1},
+            {"accion": "RECHAZAR"},
             format="json",
         )
 

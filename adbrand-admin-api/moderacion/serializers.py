@@ -53,5 +53,4 @@ class ModerarContenidoSerializer(serializers.Serializer):
     """Serializador para aprobar o rechazar contenido (HU 15)."""
 
     accion = serializers.ChoiceField(choices=["APROBAR", "RECHAZAR"])
-    moderador_id = serializers.IntegerField(min_value=1)
     motivo_rechazo = serializers.CharField(max_length=500, required=False, allow_blank=True)

@@ -13,10 +13,11 @@ export function obtenerContenido(id) {
   return apiRequest(`/moderacion/contenidos/${id}/`)
 }
 
-export function moderarContenido(id, accion, moderadorId, motivoRechazo = '') {
+// El moderador no se manda: Django lo saca del token de sesión.
+export function moderarContenido(id, accion, motivoRechazo = '') {
   return apiRequest(`/moderacion/contenidos/${id}/moderar/`, {
     method: 'POST',
-    body: { accion, moderador_id: moderadorId, ...(motivoRechazo ? { motivo_rechazo: motivoRechazo } : {}) },
+    body: { accion, ...(motivoRechazo ? { motivo_rechazo: motivoRechazo } : {}) },
   })
 }
 

@@ -5,6 +5,9 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.core.management import CommandError, call_command
 from rest_framework.test import APITestCase
 
+from auditoria.models import AuditoriaAdmin
+from core.pruebas import con_sesion, crear_admin, iniciar_sesion
+
 from .models import Rol, UsuarioAdmin
 from .sesion import crear_token
 
@@ -32,7 +35,7 @@ class DesactivarAdminTests(APITestCase):
         )
 
     def _como(self, admin):
-        return {"HTTP_X_ADMIN_ID": admin.id} if admin else {}
+        return con_sesion(admin) if admin else {}
 
     def _desactivar(self, admin_objetivo, como=None, confirmar=True):
         url = f"/api/usuarios/administradores/{admin_objetivo.id}/desactivar/"
@@ -75,13 +78,14 @@ class DesactivarAdminTests(APITestCase):
 
         self.assertEqual(respuesta.status_code, 403)
 
-    def test_roles_responde_200_sin_header(self):
-        respuesta = self.client.get("/api/usuarios/roles/")
+    def test_roles_responde_200_al_superadmin(self):
+        # Antes era público; desde el login solo lo usa el SUPERADMIN (formulario de crear).
+        respuesta = self.client.get("/api/usuarios/roles/", **self._como(self.superadmin))
 
         self.assertEqual(respuesta.status_code, 200)
 
     def test_listado_de_administradores_no_trae_la_contrasena(self):
-        respuesta = self.client.get("/api/usuarios/administradores/")
+        respuesta = self.client.get("/api/usuarios/administradores/", **self._como(self.superadmin))
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(len(respuesta.data), 3)
@@ -119,6 +123,14 @@ class CrearAdministradorTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.moderador = Rol.objects.create(nombre="MODERADOR")
+        cls.superadmin = crear_admin("SUPERADMIN")
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.superadmin)
+
+    def creados(self):
+        """Las cuentas creadas en la prueba (sin contar al SUPERADMIN que las crea)."""
+        return UsuarioAdmin.objects.exclude(pk=self.superadmin.pk)
 
     def datos_validos(self, **cambios):
         datos = {
@@ -136,12 +148,12 @@ class CrearAdministradorTests(APITestCase):
 
         self.assertEqual(respuesta.status_code, 201)
         self.assertEqual(respuesta.data["rol"]["nombre"], "MODERADOR")
-        self.assertEqual(UsuarioAdmin.objects.count(), 1)
+        self.assertEqual(self.creados().count(), 1)
 
     def test_la_contrasena_se_guarda_cifrada_y_no_se_devuelve(self):
         respuesta = self.client.post(URL, self.datos_validos(), format="json")
 
-        guardado = UsuarioAdmin.objects.get()
+        guardado = self.creados().get()
         self.assertNotEqual(guardado.contrasena, "Secreta123")
         self.assertTrue(check_password("Secreta123", guardado.contrasena))
         self.assertNotIn("contrasena", respuesta.data)
@@ -152,7 +164,7 @@ class CrearAdministradorTests(APITestCase):
 
         self.assertEqual(respuesta.status_code, 400)
         self.assertIn("correo", respuesta.data)
-        self.assertEqual(UsuarioAdmin.objects.count(), 1)
+        self.assertEqual(self.creados().count(), 1)
 
     def test_no_crea_la_cuenta_sin_rol(self):
         datos = self.datos_validos()
@@ -174,7 +186,7 @@ class CrearAdministradorTests(APITestCase):
         self.assertEqual(respuesta.status_code, 400)
         for campo in ["nombres", "apellidos", "correo", "contrasena", "rol_id"]:
             self.assertIn(campo, respuesta.data)
-        self.assertEqual(UsuarioAdmin.objects.count(), 0)
+        self.assertEqual(self.creados().count(), 0)
 
     def test_valida_formato_de_correo_y_largo_de_contrasena(self):
         respuesta = self.client.post(
@@ -199,7 +211,7 @@ class CrearAdministradorTests(APITestCase):
 
                 self.assertEqual(respuesta.status_code, 400)
                 self.assertIn(motivo, str(respuesta.data["contrasena"][0]))
-        self.assertFalse(UsuarioAdmin.objects.exists())
+        self.assertFalse(self.creados().exists())
 
     def test_rechaza_nombres_con_numeros_o_simbolos(self):
         for nombre in ["Juan123", "@@@", "A", "Ana  María"]:
@@ -211,7 +223,7 @@ class CrearAdministradorTests(APITestCase):
                 self.assertEqual(respuesta.status_code, 400)
                 self.assertIn("nombres", respuesta.data)
                 self.assertIn("apellidos", respuesta.data)
-        self.assertFalse(UsuarioAdmin.objects.exists())
+        self.assertFalse(self.creados().exists())
 
     def test_acepta_nombres_con_tildes_y_espacios(self):
         respuesta = self.client.post(
@@ -243,7 +255,7 @@ class CambiarRolTests(APITestCase):
         )
 
     def _como(self, admin):
-        return {"HTTP_X_ADMIN_ID": admin.id} if admin else {}
+        return con_sesion(admin) if admin else {}
 
     def _cambiar_rol(self, admin_objetivo, rol_id, como=None):
         url = f"/api/usuarios/administradores/{admin_objetivo.id}/rol/"
@@ -456,3 +468,96 @@ class CrearSuperadminComandoTests(APITestCase):
                 contrasena="secreta", stdout=StringIO(),
             )
         self.assertFalse(UsuarioAdmin.objects.exists())
+
+
+class AccesoPorRolTests(APITestCase):
+    """Login de administradores (paso 3): Django revisa la sesión y el rol en cada endpoint."""
+
+    MODERACION = "/api/moderacion/contenidos/dudosos/"
+    SUSCRIPCIONES = "/api/suscripciones/activas/"
+    AUDITORIA = "/api/auditoria/"
+    ADMINISTRADORES = "/api/usuarios/administradores/"
+    SESION = "/api/usuarios/sesion/"
+    TODAS = [MODERACION, SUSCRIPCIONES, AUDITORIA, ADMINISTRADORES, "/api/usuarios/roles/", SESION]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superadmin = crear_admin("SUPERADMIN")
+        cls.moderador = crear_admin("MODERADOR")
+        cls.finanzas = crear_admin("FINANZAS")
+        cls.tecnico = crear_admin("TECNICO")
+
+    def _get(self, url, admin):
+        return self.client.get(url, **con_sesion(admin))
+
+    def _sin_acceso(self, respuesta):
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertEqual(respuesta.data["detail"], "Tu rol no tiene acceso a esta sección.")
+
+    def test_sin_token_cada_modulo_pide_iniciar_sesion(self):
+        for url in self.TODAS:
+            with self.subTest(url=url):
+                respuesta = self.client.get(url)
+                self.assertEqual(respuesta.status_code, 403)
+                self.assertEqual(respuesta.data["detail"], "Inicia sesión para continuar.")
+
+    def test_sin_token_no_se_puede_crear_un_administrador(self):
+        datos = {"nombres": "Karim", "apellidos": "Sovero", "correo": "karim@adbrand.pe",
+                 "contrasena": "Secreta123", "rol_id": self.moderador.rol_id}
+        respuesta = self.client.post(self.ADMINISTRADORES, datos, format="json")
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertFalse(UsuarioAdmin.objects.filter(correo="karim@adbrand.pe").exists())
+
+    def test_un_token_falso_es_rechazado(self):
+        respuesta = self.client.get(self.MODERACION, HTTP_AUTHORIZATION="Bearer token-inventado")
+
+        self.assertIn(respuesta.status_code, [401, 403])
+        self.assertEqual(respuesta.data["detail"], "Tu sesión venció o no es válida. Vuelve a iniciar sesión.")
+
+    def test_solo_x_admin_id_ya_no_sirve(self):
+        respuesta = self.client.get(self.AUDITORIA, HTTP_X_ADMIN_ID=self.superadmin.id)
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertEqual(respuesta.data["detail"], "Inicia sesión para continuar.")
+
+    def test_el_superadmin_entra_a_todo(self):
+        for url in self.TODAS:
+            with self.subTest(url=url):
+                self.assertEqual(self._get(url, self.superadmin).status_code, 200)
+
+    def test_el_moderador_entra_a_moderacion(self):
+        self.assertEqual(self._get(self.MODERACION, self.moderador).status_code, 200)
+
+    def test_el_moderador_no_entra_a_suscripciones(self):
+        self._sin_acceso(self._get(self.SUSCRIPCIONES, self.moderador))
+
+    def test_el_moderador_no_entra_a_auditoria(self):
+        self._sin_acceso(self._get(self.AUDITORIA, self.moderador))
+
+    def test_el_moderador_no_entra_a_administradores(self):
+        self._sin_acceso(self._get(self.ADMINISTRADORES, self.moderador))
+
+    def test_finanzas_entra_a_suscripciones_y_no_a_moderacion(self):
+        self.assertEqual(self._get(self.SUSCRIPCIONES, self.finanzas).status_code, 200)
+        self._sin_acceso(self._get(self.MODERACION, self.finanzas))
+
+    def test_el_tecnico_solo_entra_a_su_sesion(self):
+        self.assertEqual(self._get(self.SESION, self.tecnico).status_code, 200)
+        for url in [self.MODERACION, self.SUSCRIPCIONES, self.AUDITORIA, self.ADMINISTRADORES]:
+            with self.subTest(url=url):
+                self._sin_acceso(self._get(url, self.tecnico))
+
+    def test_crear_un_administrador_queda_en_la_auditoria(self):
+        # HU 01 y HU 04: ahora se sabe quién crea la cuenta.
+        datos = {"nombres": "Karim", "apellidos": "Sovero", "correo": "karim@adbrand.pe",
+                 "contrasena": "Secreta123", "rol_id": self.moderador.rol_id}
+        respuesta = self.client.post(self.ADMINISTRADORES, datos, format="json", **con_sesion(self.superadmin))
+
+        self.assertEqual(respuesta.status_code, 201)
+        registro = AuditoriaAdmin.objects.get()
+        self.assertEqual(registro.admin_id, self.superadmin.id)
+        self.assertEqual(registro.accion, "CREAR_ADMIN")
+        self.assertEqual(registro.entidad_id, respuesta.data["id"])
+        self.assertIn("karim@adbrand.pe", registro.detalle)
+        self.assertIn("MODERADOR", registro.detalle)

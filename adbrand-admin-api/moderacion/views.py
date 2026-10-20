@@ -1,35 +1,34 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
 
 from auditoria.services import registrar_accion
+from usuarios.vistas import VistaAdmin
 
 from . import services
 from .serializers import ContenidoBandejaSerializer, ContenidoDetalleSerializer, ModerarContenidoSerializer
 
 
-class BandejaRevisionView(APIView):
+class BandejaRevisionView(VistaAdmin):
     """GET /api/moderacion/contenidos/dudosos/ : la bandeja de revisión manual."""
-    permission_classes = [AllowAny]
+    roles_permitidos = ("SUPERADMIN", "MODERADOR")
 
     def get(self, request):
         contenidos = services.contenidos_dudosos()
         return Response(ContenidoBandejaSerializer(contenidos, many=True).data)
 
 
-class DetalleContenidoView(APIView):
+class DetalleContenidoView(VistaAdmin):
     """GET /api/moderacion/contenidos/<id>/ : detalle completo y motivo de la observación."""
-    permission_classes = [AllowAny]
+    roles_permitidos = ("SUPERADMIN", "MODERADOR")
 
     def get(self, request, contenido_id):
         contenido = services.obtener_contenido(contenido_id)
         return Response(ContenidoDetalleSerializer(contenido).data)
 
 
-class ModerarContenidoView(APIView):
+class ModerarContenidoView(VistaAdmin):
     """POST /api/moderacion/contenidos/<id>/moderar/ : aprueba o rechaza un contenido (HU 15)."""
-    permission_classes = [AllowAny]
+    roles_permitidos = ("SUPERADMIN", "MODERADOR")
 
     def post(self, request, contenido_id):
         serializer = ModerarContenidoSerializer(data=request.data)
@@ -39,7 +38,7 @@ class ModerarContenidoView(APIView):
             contenido = services.moderar_contenido(
                 contenido_id=contenido_id,
                 accion=serializer.validated_data["accion"],
-                moderador_id=serializer.validated_data["moderador_id"],
+                moderador_id=request.user.id,
                 motivo_rechazo=serializer.validated_data.get("motivo_rechazo"),
             )
         except ValueError as e:
