@@ -7,6 +7,7 @@ const OPCIONES = [
   { id: 'kit', nombre: 'Kit de Marca' },
   // HU-21: hasta que exista el inicio de sesión (HU-22), el registro se abre desde el menú.
   { id: 'registro', nombre: 'Crear cuenta' },
+  { id: 'login', nombre: 'Iniciar sesión' },
 ]
 
 export default function MenuUsuario({ actual, alCambiar }) {
