@@ -1,0 +1,70 @@
+/* EditarKitMarcaView.css: editar el kit de marca a mano (HU-32). */
+.pagina.pagina-kit-editar { max-width: 760px; }
+
+.editar-colores { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.editar-colores legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; padding: 0; }
+
+.editar-vista-previa {
+  display: flex;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.editar-franja { flex: 1; }
+
+.editar-color {
+  display: grid;
+  grid-template-columns: 44px 110px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+}
+
+.editar-color input {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+
+.editar-color .editar-selector { width: 44px; height: 40px; padding: 2px; cursor: pointer; }
+.editar-color .editar-hex { font-family: var(--f-mono); text-transform: uppercase; }
+.editar-color.campo-con-error .editar-hex { border-color: var(--bad); }
+
+.editar-quitar {
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.editar-quitar:disabled { opacity: 0.4; cursor: not-allowed; }
+.editar-error { grid-column: 2 / -1; }
+.editar-agregar { align-self: flex-start; }
+
+.editar-historial ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.editar-historial li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.editar-historial-colores { display: flex; gap: 3px; }
+.editar-historial-colores span { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--line); }
+.editar-historial-tipo { color: var(--fg); font-weight: 600; }
+
+@media (max-width: 560px) {
+  .editar-color { grid-template-columns: 44px 1fr 36px; }
+  .editar-color .editar-nombre { grid-column: 1 / -1; grid-row: 2; }
+  .editar-error { grid-column: 1 / -1; }
+}
