@@ -10,4 +10,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByCorreo(String correo);
 
     Optional<Usuario> findByCorreo(String correo);
+
+    // HU 23: el RUC ya lo tiene otra cuenta.
+    boolean existsByRucAndIdNot(String ruc, Long id);
 }

@@ -48,6 +48,19 @@ public class Usuario {
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
 
+    // HU 23: datos de la empresa (V16). Opcionales hasta que el usuario los guarda en "Mi cuenta".
+    @Column(unique = true, length = 11)
+    private String ruc;
+
+    @Column(name = "razon_social", length = 200)
+    private String razonSocial;
+
+    @Column(length = 15)
+    private String telefono;
+
+    @Column(length = 250)
+    private String direccion;
+
     @PrePersist
     void alCrear() {
         fechaCreacion = LocalDateTime.now();
@@ -80,4 +93,16 @@ public class Usuario {
 
     public LocalDateTime getUltimoAcceso() { return ultimoAcceso; }
     public void setUltimoAcceso(LocalDateTime ultimoAcceso) { this.ultimoAcceso = ultimoAcceso; }
+
+    public String getRuc() { return ruc; }
+    public void setRuc(String ruc) { this.ruc = ruc; }
+
+    public String getRazonSocial() { return razonSocial; }
+    public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
+
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
+
+    public String getDireccion() { return direccion; }
+    public void setDireccion(String direccion) { this.direccion = direccion; }
 }
