@@ -73,12 +73,11 @@ public class KitMarcaService {
 
     @Transactional(readOnly = true)
     public KitMarcaGeneradoResponse obtener(Long usuarioId, Long kitId) {
+        // HU 32: el kit de otra empresa responde 404 igual que uno que no existe (antes daba 500).
         KitMarca kit = kits.findById(kitId)
+                .filter(encontrado -> encontrado.getUsuarioId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "KIT_MARCA_NO_ENCONTRADO", "Kit de Marca no encontrado: " + kitId));
-        if (!kit.getUsuarioId().equals(usuarioId)) {
-            throw new IllegalArgumentException("El Kit de Marca no pertenece al usuario");
-        }
         return KitMarcaGeneradoResponse.desde(kit, false);
     }
 
