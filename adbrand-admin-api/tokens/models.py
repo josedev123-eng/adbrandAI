@@ -19,3 +19,23 @@ class ConsumoToken(models.Model):
 
     def __str__(self):
         return f"Empresa {self.usuario_id}: {self.tokens_total} tokens ({self.origen})"
+
+
+class LimiteTokens(models.Model):
+    """Límite mensual de tokens y porcentaje de aviso (HU 19). La tabla la crea Flyway (V31).
+
+    usuario_id vacío es el límite por defecto para todas las empresas.
+    """
+
+    usuario_id = models.BigIntegerField(null=True, blank=True, unique=True)
+    limite_mensual = models.BigIntegerField()
+    porcentaje_aviso = models.IntegerField(default=80)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = False  # la tabla la crea Flyway (V31)
+        db_table = "limite_tokens"
+
+    def __str__(self):
+        quien = f"Empresa {self.usuario_id}" if self.usuario_id else "Por defecto"
+        return f"{quien}: {self.limite_mensual} tokens, aviso al {self.porcentaje_aviso} %"
