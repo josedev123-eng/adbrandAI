@@ -1,0 +1,14 @@
+/* Estilos que comparten las pantallas de pago (HU 26 a 28). */
+.boton-primario { padding: 11px 18px; border: none; border-radius: 10px; background: var(--primary); color: #ffffff; font-weight: 600; cursor: pointer; }
+.boton-primario:disabled { opacity: 0.6; cursor: wait; }
+.boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; cursor: pointer; }
+.boton-secundario:disabled { opacity: 0.6; cursor: wait; }
+
+.pago-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+.pago-resumen { display: flex; flex-direction: column; gap: 4px; border-left: 4px solid var(--primary); }
+.pago-resumen-etiqueta { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--primary); }
+.pago-resumen-monto { font-family: var(--f-display); font-size: 1.6rem; }
+.pago-resumen-detalle { color: var(--muted); font-size: 0.88rem; }
+
+.pago-codigo { font-family: var(--f-mono); font-size: 1.1rem; letter-spacing: 0.08em; }

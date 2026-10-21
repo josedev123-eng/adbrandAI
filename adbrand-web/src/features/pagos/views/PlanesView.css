@@ -42,3 +42,16 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+
+.plan-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.plan-acciones .boton-primario,
+.plan-acciones .boton-secundario {
+  flex: 1 1 auto;
+}

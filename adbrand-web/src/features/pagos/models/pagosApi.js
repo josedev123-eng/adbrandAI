@@ -4,3 +4,7 @@ import { apiRequest } from '../../../shared/services/apiClient'
 export function obtenerPlanes() {
   return apiRequest('/planes')
 }
+
+export function pagarConTarjeta(datos) {
+  return apiRequest('/pagos/tarjeta', { method: 'POST', body: datos })
+}

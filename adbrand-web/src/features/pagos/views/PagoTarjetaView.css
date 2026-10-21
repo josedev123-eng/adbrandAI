@@ -1,0 +1,6 @@
+/* HU 26: formulario de pago con tarjeta. */
+.pago-tarjeta-ayuda {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}

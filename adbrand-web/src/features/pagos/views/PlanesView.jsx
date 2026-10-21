@@ -1,12 +1,45 @@
-// View: muestra los planes de suscripción con su precio y su límite de tokens (HU 25).
-// La lógica de carga está en usePlanes.
+// View: muestra los planes de suscripción y deja elegir cómo pagarlos (HU 25 y 26).
+// La lógica de carga está en usePlanes; la del formulario, en usePagoTarjeta.
+import { useState } from 'react'
 import { usePlanes } from '../viewmodels/usePlanes'
+import PagoTarjetaView from './PagoTarjetaView'
+import './pagoComun.css'
 import './PlanesView.css'
 
 const SOLES = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' })
 
 export default function PlanesView() {
   const { planes, cargando, error } = usePlanes()
+  const [planElegido, setPlanElegido] = useState(null)
+  const [metodo, setMetodo] = useState(null)
+  const [pago, setPago] = useState(null)
+
+  function reiniciar() {
+    setPago(null)
+    setMetodo(null)
+    setPlanElegido(null)
+  }
+
+  if (pago) {
+    return (
+      <main className="pagina">
+        <section className="tarjeta pago-resumen">
+          <span className="pago-resumen-etiqueta">Pago aprobado</span>
+          <strong className="pago-resumen-monto">{SOLES.format(pago.monto)}</strong>
+          <span className="pago-resumen-detalle">
+            Plan {pago.plan} · referencia {pago.referencia}
+          </span>
+          <button type="button" className="boton-primario" onClick={reiniciar}>
+            Volver a los planes
+          </button>
+        </section>
+      </main>
+    )
+  }
+
+  if (planElegido && metodo === 'TARJETA') {
+    return <PagoTarjetaView plan={planElegido} alPagar={setPago} alVolver={() => setMetodo(null)} />
+  }
 
   if (cargando) {
     return (
@@ -37,6 +70,18 @@ export default function PlanesView() {
             <p className="plan-tokens">
               {Number(plan.limiteTokens).toLocaleString('es-PE')} tokens de IA al mes
             </p>
+            <div className="plan-acciones">
+              <button
+                type="button"
+                className="boton-primario"
+                onClick={() => {
+                  setPlanElegido(plan)
+                  setMetodo('TARJETA')
+                }}
+              >
+                Pagar con tarjeta
+              </button>
+            </div>
           </article>
         ))}
       </section>
