@@ -7,6 +7,7 @@ import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import LoginView from './features/auth/views/LoginView'
 import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
 import PanelFinancieroView from './features/suscripciones/views/PanelFinancieroView'
+import ConsumoTokensView from './features/tokens/views/ConsumoTokensView'
 import MenuAdmin from './shared/components/MenuAdmin'
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
       {actual === 'lista-administradores' && <AdministradoresView />}
       {actual === 'auditoria' && <AuditoriaView />}
       {actual === 'panel-financiero' && <PanelFinancieroView />}
+      {actual === 'consumo-tokens' && <ConsumoTokensView />}
       {!actual && (
         <main className="sin-pantallas">
           <h1>Hola, {admin.nombres}</h1>

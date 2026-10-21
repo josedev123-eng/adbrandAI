@@ -6,6 +6,7 @@ export const PANTALLAS = [
   { id: 'lista-administradores', nombre: 'Lista de administradores', roles: ['SUPERADMIN'] },
   { id: 'auditoria', nombre: 'Auditoría', roles: ['SUPERADMIN'] },
   { id: 'panel-financiero', nombre: 'Panel financiero', roles: ['SUPERADMIN', 'FINANZAS'] },
+  { id: 'consumo-tokens', nombre: 'Consumo de IA', roles: ['SUPERADMIN', 'TECNICO'] },
 ]
 
 export const NOMBRES_ROL = {

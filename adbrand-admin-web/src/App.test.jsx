@@ -18,6 +18,7 @@ vi.mock('./features/admin/views/CrearAdministradorView', () => ({ default: () =>
 vi.mock('./features/admin/views/AdministradoresView', () => ({ default: () => <p>Pantalla de lista</p> }))
 vi.mock('./features/auditoria/views/AuditoriaView', () => ({ default: () => <p>Pantalla de auditoría</p> }))
 vi.mock('./features/suscripciones/views/PanelFinancieroView', () => ({ default: () => <p>Pantalla financiera</p> }))
+vi.mock('./features/tokens/views/ConsumoTokensView', () => ({ default: () => <p>Pantalla de consumo de IA</p> }))
 
 function adminCon(rol) {
   return { id: 7, nombres: 'Ana', apellidos: 'Quispe', correo: 'ana@adbrand.pe', rol: { id: 2, nombre: rol } }
@@ -61,6 +62,7 @@ describe('App (login y menú por rol)', () => {
       'Lista de administradores',
       'Auditoría',
       'Panel financiero',
+      'Consumo de IA',
     ])
   })
 
@@ -82,13 +84,14 @@ describe('App (login y menú por rol)', () => {
     expect(opcionesDelMenu()).toEqual(['Panel financiero'])
   })
 
-  it('TECNICO todavía no tiene pantallas y ve un aviso', async () => {
+  it('TECNICO entra directo al consumo de IA (HU 17)', async () => {
     guardarToken('token-guardado')
     obtenerSesion.mockResolvedValue(adminCon('TECNICO'))
     mostrar()
 
-    expect(await screen.findByText(/Tu rol todavía no tiene pantallas/)).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual([])
+    expect(await screen.findByText('Pantalla de consumo de IA')).toBeInTheDocument()
+    expect(opcionesDelMenu()).toEqual(['Consumo de IA'])
+    expect(screen.queryByText(/Tu rol todavía no tiene pantallas/)).toBeNull()
   })
 
   it('si el token guardado ya no sirve, lo borra y muestra el login', async () => {

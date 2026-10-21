@@ -1,0 +1,63 @@
+/* ConsumoTokensView.css (HU-17) */
+.pagina.pagina-consumo { max-width: 880px; }
+
+.pagina-consumo .tarjeta { overflow-x: auto; }
+
+.consumo-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.consumo-total {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.consumo-total-etiqueta { color: var(--muted); font-weight: 600; }
+
+.consumo-total-valor {
+  font-family: var(--f-display);
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--primary);
+}
+
+.consumo-vacio {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px;
+  margin: 0;
+}
+
+.tabla-consumo {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla-consumo th,
+.tabla-consumo td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla-consumo th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tabla-consumo .consumo-numero { text-align: right; font-family: var(--f-mono); }
+
+.consumo-empresa { font-weight: 600; }
+
+.consumo-fecha { white-space: nowrap; color: var(--muted); }
