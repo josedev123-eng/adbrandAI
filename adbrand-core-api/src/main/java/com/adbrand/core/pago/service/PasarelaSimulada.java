@@ -3,14 +3,18 @@ package com.adbrand.core.pago.service;
 import com.adbrand.core.pago.dto.PagoTarjetaRequest;
 import java.time.YearMonth;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 // HU 26: pasarela simulada. No cobra de verdad: valida la tarjeta como lo haría el banco
-// y devuelve una referencia de operación. Las tarjetas que terminan en 0000 se rechazan
+// y devuelve una referencia de operación. La tarjeta de prueba 4000 0000 0000 0002 se rechaza
 // para poder probar el camino de error sin salir del sistema.
 @Component
 public class PasarelaSimulada implements PasarelaPago {
+
+    // Tarjetas de prueba que el "banco" simulado rechaza aunque el número sea válido.
+    private static final Set<String> TARJETAS_RECHAZADAS = Set.of("4000000000000002");
 
     @Override
     public ResultadoCobro cobrar(PagoTarjetaRequest datos) {
@@ -25,7 +29,7 @@ public class PasarelaSimulada implements PasarelaPago {
         if (!datos.cvv().matches("[0-9]{3,4}")) {
             return ResultadoCobro.rechazado("El CVV no es válido.");
         }
-        if (numero.endsWith("0000")) {
+        if (TARJETAS_RECHAZADAS.contains(numero)) {
             return ResultadoCobro.rechazado("La tarjeta fue rechazada por el banco. Usa otra tarjeta.");
         }
 
