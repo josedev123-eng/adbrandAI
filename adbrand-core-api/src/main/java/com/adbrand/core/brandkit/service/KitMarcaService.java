@@ -5,6 +5,7 @@ import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
 import com.adbrand.core.brandkit.dto.KitMarcaPrompt;
 import com.adbrand.core.brandkit.entity.KitMarca;
 import com.adbrand.core.brandkit.repository.KitMarcaRepository;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
 import com.adbrand.core.negocio.service.PerfilNegocioService;
@@ -37,7 +38,8 @@ public class KitMarcaService {
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
 
         KitMarcaPrompt prompt = plantilla.construir(perfil, datos);
-        String respuestaJson = ia.generarTexto(prompt.sistema(), prompt.usuario());
+        // HU 17: los tokens usados se suman a la empresa que pidió el kit.
+        String respuestaJson = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.KIT_MARCA);
 
         // Parsear JSON de la IA
         KitMarca kit = parsearYGuardar(usuarioId, datos, respuestaJson);

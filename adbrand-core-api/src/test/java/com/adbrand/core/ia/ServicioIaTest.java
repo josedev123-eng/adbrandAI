@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.adbrand.core.config.IaProperties;
 import com.adbrand.core.ia.client.ClienteIa;
 import com.adbrand.core.ia.service.IaNoDisponibleException;
+import com.adbrand.core.ia.service.RegistroConsumoIa;
 import com.adbrand.core.ia.service.ServicioIa;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.ResourceAccessException;
@@ -21,7 +22,8 @@ class ServicioIaTest {
     private final ClienteIa cliente = mock(ClienteIa.class);
 
     private ServicioIa servicio(boolean mock) {
-        return new ServicioIa(cliente, new IaProperties("http://ia", "", "modelo", "/chat", 5, mock));
+        return new ServicioIa(cliente, new IaProperties("http://ia", "", "modelo", "/chat", 5, mock),
+                mock(RegistroConsumoIa.class));
     }
 
     @Test
