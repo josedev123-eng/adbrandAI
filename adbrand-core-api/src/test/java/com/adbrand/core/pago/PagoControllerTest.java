@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.adbrand.core.pago.controller.PagoController;
 import com.adbrand.core.pago.dto.PagoResponse;
+import com.adbrand.core.pago.service.OperacionYapeService;
 import com.adbrand.core.pago.service.PagoService;
 import com.adbrand.core.shared.error.ConflictoException;
 import java.math.BigDecimal;
@@ -35,6 +36,9 @@ class PagoControllerTest {
 
     @MockitoBean
     private PagoService servicio;
+
+    @MockitoBean
+    private OperacionYapeService yape;
 
     @Test
     void devuelve201ConElPagoAprobado() throws Exception {
