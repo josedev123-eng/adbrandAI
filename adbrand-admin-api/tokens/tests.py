@@ -6,8 +6,8 @@ from rest_framework.test import APITestCase
 from core.pruebas import con_sesion, crear_admin, iniciar_sesion
 from moderacion.models import PerfilNegocio
 
-from .models import ConsumoToken
-from .services import inicio_del_mes_actual
+from .models import ConsumoToken, LimiteTokens
+from .services import inicio_del_mes_actual, limite_de_empresa
 
 URL = "/api/tokens/consumo-actual/"
 
@@ -121,3 +121,124 @@ class ConsumoActualPermisosTests(APITestCase):
 
         self.assertEqual(respuesta.status_code, 403)
         self.assertEqual(respuesta.data["detail"], "Inicia sesión para continuar.")
+
+
+class AlertaConsumoTests(APITestCase):
+    """HU 19: alerta cuando una empresa llega al porcentaje de aviso de su límite mensual.
+
+    En la base de prueba limite_tokens empieza vacía (la fila por defecto de V31 no se carga),
+    así que cada prueba pone el límite que necesita.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.tecnico = crear_admin("TECNICO")
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.tecnico)
+
+    def limite(self, limite_mensual, porcentaje_aviso=80, usuario_id=None):
+        return LimiteTokens.objects.create(
+            usuario_id=usuario_id, limite_mensual=limite_mensual, porcentaje_aviso=porcentaje_aviso
+        )
+
+    def consultar(self):
+        respuesta = self.client.get(URL)
+        self.assertEqual(respuesta.status_code, 200)
+        return respuesta.data
+
+    def fila(self, datos, usuario_id):
+        return next(fila for fila in datos["empresas"] if fila["usuario_id"] == usuario_id)
+
+    def test_al_79_por_ciento_no_hay_alerta(self):
+        # Criterio 2: por debajo del 80 % no hay ninguna alerta.
+        self.limite(1000)
+        consumir(1, 790)
+
+        datos = self.consultar()
+
+        self.assertEqual(datos["alertas"], [])
+        fila = self.fila(datos, 1)
+        self.assertFalse(fila["alerta"])
+        self.assertEqual(fila["porcentaje"], 79.0)
+        self.assertEqual(fila["limite"], 1000)
+
+    def test_justo_al_80_por_ciento_hay_alerta(self):
+        # Criterio 1: la alerta trae la empresa y el porcentaje consumido.
+        PerfilNegocio.objects.create(usuario_id=1, nombre_comercial="Panadería Doña Rosa", rubro="Panadería")
+        self.limite(1000)
+        consumir(1, 500)
+        consumir(1, 300)
+
+        datos = self.consultar()
+
+        self.assertEqual(
+            datos["alertas"],
+            [{"usuario_id": 1, "empresa": "Panadería Doña Rosa", "tokens": 800, "limite": 1000, "porcentaje": 80.0}],
+        )
+        self.assertTrue(self.fila(datos, 1)["alerta"])
+
+    def test_mas_del_100_por_ciento_sigue_en_alerta(self):
+        self.limite(1000)
+        consumir(1, 1234)
+
+        alerta = self.consultar()["alertas"][0]
+
+        self.assertEqual(alerta["porcentaje"], 123.4)
+
+    def test_solo_avisa_de_las_empresas_que_llegaron_y_de_mayor_a_menor(self):
+        self.limite(1000)
+        consumir(1, 850)
+        consumir(2, 100)
+        consumir(3, 990)
+
+        alertas = self.consultar()["alertas"]
+
+        self.assertEqual([alerta["usuario_id"] for alerta in alertas], [3, 1])
+
+    def test_el_limite_propio_de_la_empresa_gana_al_de_por_defecto(self):
+        self.limite(1000)
+        self.limite(5000, usuario_id=1)
+        consumir(1, 900)  # 90 % del de por defecto, pero solo 18 % del suyo
+        consumir(2, 900)
+
+        datos = self.consultar()
+
+        self.assertEqual(self.fila(datos, 1)["limite"], 5000)
+        self.assertEqual(self.fila(datos, 1)["porcentaje"], 18.0)
+        self.assertEqual([alerta["usuario_id"] for alerta in datos["alertas"]], [2])
+        self.assertEqual(limite_de_empresa(1).limite_mensual, 5000)
+        self.assertEqual(limite_de_empresa(2).limite_mensual, 1000)
+
+    def test_respeta_un_porcentaje_de_aviso_distinto_de_80(self):
+        self.limite(1000, porcentaje_aviso=50)
+        consumir(1, 500)
+        consumir(2, 499)
+
+        datos = self.consultar()
+
+        self.assertEqual([alerta["usuario_id"] for alerta in datos["alertas"]], [1])
+        self.assertEqual(self.fila(datos, 1)["porcentaje_aviso"], 50)
+
+    def test_sin_ningun_limite_no_hay_alertas_ni_error(self):
+        consumir(1, 999999)
+
+        datos = self.consultar()
+
+        self.assertEqual(datos["alertas"], [])
+        fila = self.fila(datos, 1)
+        self.assertIsNone(fila["limite"])
+        self.assertIsNone(fila["porcentaje"])
+        self.assertFalse(fila["alerta"])
+        self.assertIsNone(limite_de_empresa(1))
+
+    def test_el_moderador_no_ve_las_alertas(self):
+        self.limite(1000)
+        consumir(1, 900)
+
+        iniciar_sesion(self.client, crear_admin("MODERADOR"))
+
+        respuesta = self.client.get(URL)
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertNotIn("alertas", respuesta.data)
