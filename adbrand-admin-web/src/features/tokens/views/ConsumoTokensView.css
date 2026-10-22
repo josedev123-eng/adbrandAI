@@ -61,3 +61,22 @@
 .consumo-empresa { font-weight: 600; }
 
 .consumo-fecha { white-space: nowrap; color: var(--muted); }
+
+/* HU-19: alerta cuando una empresa llega al porcentaje de aviso de su límite */
+.consumo-alertas {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.consumo-alertas ul { margin: 6px 0 0; padding-left: 20px; }
+
+.consumo-alertas li { margin-top: 4px; }
+
+.consumo-alertas-excedida { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+
+.consumo-alerta-excedida { font-weight: 700; }
+
+.tabla-consumo .consumo-fila-alerta td { background: var(--warn-soft); }

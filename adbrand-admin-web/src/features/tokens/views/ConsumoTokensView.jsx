@@ -1,8 +1,28 @@
 // View: panel del administrador técnico con los tokens de IA que gasta cada empresa (HU-17).
 // La lógica (pedir los datos y refrescar cada 30 segundos) está en useConsumoTokens.
-import { formatearFecha, formatearMes, formatearTokens } from '../models/tokensApi'
+// HU-19: si una empresa llega al porcentaje de aviso de su límite mensual, aparece una alerta arriba de la tabla.
+import { formatearFecha, formatearMes, formatearPorcentaje, formatearTokens } from '../models/tokensApi'
 import { useConsumoTokens } from '../viewmodels/useConsumoTokens'
 import './ConsumoTokensView.css'
+
+function AlertasConsumo({ alertas }) {
+  if (!alertas?.length) return null
+  // Si alguna ya pasó el 100 % se pinta como error; si no, como advertencia.
+  const excedida = alertas.some((alerta) => alerta.porcentaje >= 100)
+  return (
+    <div className={`consumo-alertas ${excedida ? 'consumo-alertas-excedida' : ''}`} role="alert">
+      <strong>Consumo cerca del límite mensual</strong>
+      <ul>
+        {alertas.map((alerta) => (
+          <li key={alerta.usuario_id} className={alerta.porcentaje >= 100 ? 'consumo-alerta-excedida' : undefined}>
+            {alerta.empresa} consumió el {formatearPorcentaje(alerta.porcentaje)}% de su límite mensual (
+            {formatearTokens(alerta.tokens)} de {formatearTokens(alerta.limite)} tokens)
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export default function ConsumoTokensView() {
   const { consumo, cargando, error, actualizando, actualizar } = useConsumoTokens()
@@ -31,6 +51,8 @@ export default function ConsumoTokensView() {
             <span className="consumo-total-etiqueta">tokens</span>
           </section>
 
+          <AlertasConsumo alertas={consumo.alertas} />
+
           <section className="tarjeta">
             <h2>Por empresa</h2>
 
@@ -42,15 +64,19 @@ export default function ConsumoTokensView() {
                   <tr>
                     <th>Empresa</th>
                     <th className="consumo-numero">Tokens</th>
+                    <th className="consumo-numero">% del límite</th>
                     <th className="consumo-numero">Generaciones</th>
                     <th>Última generación</th>
                   </tr>
                 </thead>
                 <tbody>
                   {consumo.empresas.map((fila) => (
-                    <tr key={fila.usuario_id}>
+                    <tr key={fila.usuario_id} className={fila.alerta ? 'consumo-fila-alerta' : undefined}>
                       <td className="consumo-empresa">{fila.empresa}</td>
                       <td className="consumo-numero">{formatearTokens(fila.tokens)}</td>
+                      <td className="consumo-numero">
+                        {fila.porcentaje == null ? '—' : `${formatearPorcentaje(fila.porcentaje)}%`}
+                      </td>
                       <td className="consumo-numero">{fila.generaciones}</td>
                       <td className="consumo-fecha">{formatearFecha(fila.ultima_generacion)}</td>
                     </tr>

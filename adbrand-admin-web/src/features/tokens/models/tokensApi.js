@@ -1,17 +1,25 @@
 // Model: llamadas a la API del consumo de tokens de IA (HU-17).
 import { apiRequest } from '../../../shared/services/apiClient'
 
-// Devuelve { mes, total, empresas: [{ usuario_id, empresa, tokens, generaciones, ultima_generacion }] }.
+// Devuelve { mes, total, empresas: [{ usuario_id, empresa, tokens, generaciones, ultima_generacion,
+// limite, porcentaje_aviso, porcentaje, alerta }], alertas: [{ usuario_id, empresa, tokens, limite, porcentaje }] }.
+// limite y porcentaje vienen en null si no hay límite configurado (HU-19).
 export function obtenerConsumoActual() {
   return apiRequest('/tokens/consumo-actual/')
 }
 
 const FORMATO_TOKENS = new Intl.NumberFormat('es-PE')
+const FORMATO_PORCENTAJE = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 })
 const FORMATO_FECHA = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeStyle: 'short' })
 const FORMATO_MES = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' })
 
 export function formatearTokens(numero) {
   return FORMATO_TOKENS.format(numero)
+}
+
+// HU-19: 80 → "80", 85.5 → "85.5" (sin el signo %, la vista lo agrega).
+export function formatearPorcentaje(numero) {
+  return FORMATO_PORCENTAJE.format(numero)
 }
 
 export function formatearFecha(texto) {

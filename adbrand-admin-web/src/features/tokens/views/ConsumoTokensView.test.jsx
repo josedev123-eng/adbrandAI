@@ -11,8 +11,8 @@ vi.mock('../models/tokensApi', async (importOriginal) => ({
   obtenerConsumoActual: vi.fn(),
 }))
 
-function consumoCon(total, empresas = []) {
-  return { mes: '2026-10', total, empresas }
+function consumoCon(total, empresas = [], alertas = []) {
+  return { mes: '2026-10', total, empresas, alertas }
 }
 
 const ROSA = {
@@ -103,5 +103,51 @@ describe('ConsumoTokensView (HU-17)', () => {
     })
 
     expect(obtenerConsumoActual).toHaveBeenCalledTimes(1)
+  })
+
+  // HU-19
+  const EN_ALERTA = { ...ROSA, tokens: 85000, limite: 100000, porcentaje_aviso: 80, porcentaje: 85, alerta: true }
+  const SIN_ALERTA = { ...CAFE, tokens: 79000, limite: 100000, porcentaje_aviso: 80, porcentaje: 79, alerta: false }
+  const ALERTA_ROSA = { usuario_id: 1, empresa: 'Panadería Doña Rosa', tokens: 85000, limite: 100000, porcentaje: 85 }
+
+  it('muestra la alerta con la empresa y el porcentaje consumido (HU-19, criterio 1)', async () => {
+    obtenerConsumoActual.mockResolvedValue(consumoCon(164000, [EN_ALERTA, SIN_ALERTA], [ALERTA_ROSA]))
+    render(<ConsumoTokensView />)
+
+    const alerta = await screen.findByRole('alert')
+    expect(alerta).toHaveTextContent('Panadería Doña Rosa consumió el 85% de su límite mensual')
+    expect(alerta).toHaveTextContent(`${formatearTokens(85000)} de ${formatearTokens(100000)} tokens`)
+    expect(alerta).not.toHaveTextContent('Empresa #2')
+    expect(alerta).not.toHaveClass('consumo-alertas-excedida')
+  })
+
+  it('sin empresas en alerta no muestra ningún aviso (HU-19, criterio 2)', async () => {
+    obtenerConsumoActual.mockResolvedValue(consumoCon(79000, [SIN_ALERTA], []))
+    render(<ConsumoTokensView />)
+
+    await screen.findByText('Empresa #2')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('si una empresa pasó el 100 % la alerta se pinta como error', async () => {
+    const pasada = { ...ALERTA_ROSA, tokens: 120000, porcentaje: 120 }
+    obtenerConsumoActual.mockResolvedValue(consumoCon(120000, [{ ...EN_ALERTA, tokens: 120000, porcentaje: 120 }], [pasada]))
+    render(<ConsumoTokensView />)
+
+    expect(await screen.findByRole('alert')).toHaveClass('consumo-alertas-excedida')
+  })
+
+  it('la tabla muestra el % del límite y resalta la fila en alerta', async () => {
+    const sinLimite = { ...CAFE, usuario_id: 3, empresa: 'Empresa #3', limite: null, porcentaje: null, alerta: false }
+    obtenerConsumoActual.mockResolvedValue(consumoCon(164300, [EN_ALERTA, SIN_ALERTA, sinLimite], [ALERTA_ROSA]))
+    render(<ConsumoTokensView />)
+
+    await screen.findByRole('columnheader', { name: '% del límite' })
+    const filaRosa = screen.getByRole('row', { name: /Panadería Doña Rosa/ })
+    expect(filaRosa).toHaveTextContent('85%')
+    expect(filaRosa).toHaveClass('consumo-fila-alerta')
+    expect(screen.getByRole('row', { name: /Empresa #2/ })).toHaveTextContent('79%')
+    expect(screen.getByRole('row', { name: /Empresa #2/ })).not.toHaveClass('consumo-fila-alerta')
+    expect(screen.getByRole('row', { name: /Empresa #3/ })).toHaveTextContent('—')
   })
 })
