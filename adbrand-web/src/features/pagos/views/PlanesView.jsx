@@ -1,8 +1,9 @@
-// View: muestra los planes de suscripción y deja elegir cómo pagarlos (HU 25 y 26).
-// La lógica de carga está en usePlanes; la del formulario, en usePagoTarjeta.
+// View: muestra los planes de suscripción y deja elegir cómo pagarlos (HU 25 a 27).
+// La lógica de carga está en usePlanes; la de cada formulario, en su viewmodel.
 import { useState } from 'react'
 import { usePlanes } from '../viewmodels/usePlanes'
 import PagoTarjetaView from './PagoTarjetaView'
+import PagoYapeView from './PagoYapeView'
 import './pagoComun.css'
 import './PlanesView.css'
 
@@ -27,7 +28,7 @@ export default function PlanesView() {
           <span className="pago-resumen-etiqueta">Pago aprobado</span>
           <strong className="pago-resumen-monto">{SOLES.format(pago.monto)}</strong>
           <span className="pago-resumen-detalle">
-            Plan {pago.plan} · referencia {pago.referencia}
+            Plan {pago.plan} · {pago.metodo === 'YAPE' ? 'Yape' : 'Tarjeta'} · referencia {pago.referencia}
           </span>
           <button type="button" className="boton-primario" onClick={reiniciar}>
             Volver a los planes
@@ -39,6 +40,10 @@ export default function PlanesView() {
 
   if (planElegido && metodo === 'TARJETA') {
     return <PagoTarjetaView plan={planElegido} alPagar={setPago} alVolver={() => setMetodo(null)} />
+  }
+
+  if (planElegido && metodo === 'YAPE') {
+    return <PagoYapeView plan={planElegido} alConfirmar={setPago} alVolver={() => setMetodo(null)} />
   }
 
   if (cargando) {
@@ -80,6 +85,16 @@ export default function PlanesView() {
                 }}
               >
                 Pagar con tarjeta
+              </button>
+              <button
+                type="button"
+                className="boton-secundario"
+                onClick={() => {
+                  setPlanElegido(plan)
+                  setMetodo('YAPE')
+                }}
+              >
+                Pagar con Yape
               </button>
             </div>
           </article>
