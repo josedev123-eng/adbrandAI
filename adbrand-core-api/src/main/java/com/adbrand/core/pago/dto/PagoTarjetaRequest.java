@@ -11,7 +11,7 @@ public record PagoTarjetaRequest(
         Long planId,
 
         @NotBlank(message = "Escribe el número de la tarjeta.")
-        @Pattern(regexp = "[0-9 ]{13,23}", message = "El número de la tarjeta tiene entre 13 y 19 dígitos.")
+        @Pattern(regexp = "^$|[0-9 ]{13,23}", message = "El número de la tarjeta tiene entre 13 y 19 dígitos.")
         String numeroTarjeta,
 
         @NotBlank(message = "Escribe el nombre del titular.")
