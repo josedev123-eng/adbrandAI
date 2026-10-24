@@ -8,7 +8,15 @@ export function obtenerConsumoActual() {
   return apiRequest('/tokens/consumo-actual/')
 }
 
+// HU-20: tokens de cada mes del periodo y el total. desde y hasta van como "AAAA-MM".
+// Devuelve { desde, hasta, total, meses: [{ mes, tokens, generaciones }] }.
+export function obtenerHistorial(desde, hasta) {
+  const parametros = new URLSearchParams({ desde, hasta })
+  return apiRequest(`/tokens/historial/?${parametros}`)
+}
+
 const FORMATO_TOKENS = new Intl.NumberFormat('es-PE')
+const NOMBRE_MES = new Intl.DateTimeFormat('es-PE', { month: 'long' })
 const FORMATO_PORCENTAJE = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 })
 const FORMATO_FECHA = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeStyle: 'short' })
 const FORMATO_MES = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' })
@@ -30,4 +38,10 @@ export function formatearFecha(texto) {
 export function formatearMes(mes) {
   const [anio, numero] = mes.split('-').map(Number)
   return FORMATO_MES.format(new Date(anio, numero - 1, 1))
+}
+
+// HU-20: "2026-10" → "octubre 2026"
+export function nombreDelMes(mes) {
+  const [anio, numero] = mes.split('-').map(Number)
+  return `${NOMBRE_MES.format(new Date(anio, numero - 1, 1))} ${anio}`
 }

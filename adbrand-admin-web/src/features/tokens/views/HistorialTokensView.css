@@ -1,0 +1,57 @@
+/* HistorialTokensView.css (HU-20) */
+.pagina.pagina-historial { max-width: 760px; }
+
+.pagina-historial .tarjeta { overflow-x: auto; }
+
+.historial-filtros {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.historial-aviso {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.tabla-historial {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla-historial th,
+.tabla-historial td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla-historial thead th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tabla-historial .historial-numero { text-align: right; font-family: var(--f-mono); }
+
+.historial-mes { text-transform: capitalize; }
+
+.tabla-historial tfoot th,
+.tabla-historial tfoot td {
+  font-weight: 700;
+  border-bottom: 0;
+  border-top: 2px solid var(--line);
+}
+
+@media (max-width: 560px) {
+  .historial-filtros { grid-template-columns: 1fr; }
+}

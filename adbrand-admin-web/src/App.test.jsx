@@ -19,6 +19,7 @@ vi.mock('./features/admin/views/AdministradoresView', () => ({ default: () => <p
 vi.mock('./features/auditoria/views/AuditoriaView', () => ({ default: () => <p>Pantalla de auditoría</p> }))
 vi.mock('./features/suscripciones/views/PanelFinancieroView', () => ({ default: () => <p>Pantalla financiera</p> }))
 vi.mock('./features/tokens/views/ConsumoTokensView', () => ({ default: () => <p>Pantalla de consumo de IA</p> }))
+vi.mock('./features/tokens/views/HistorialTokensView', () => ({ default: () => <p>Pantalla de historial de IA</p> }))
 
 function adminCon(rol) {
   return { id: 7, nombres: 'Ana', apellidos: 'Quispe', correo: 'ana@adbrand.pe', rol: { id: 2, nombre: rol } }
@@ -63,6 +64,7 @@ describe('App (login y menú por rol)', () => {
       'Auditoría',
       'Panel financiero',
       'Consumo de IA',
+      'Historial de IA',
     ])
   })
 
@@ -90,7 +92,7 @@ describe('App (login y menú por rol)', () => {
     mostrar()
 
     expect(await screen.findByText('Pantalla de consumo de IA')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Consumo de IA'])
+    expect(opcionesDelMenu()).toEqual(['Consumo de IA', 'Historial de IA'])
     expect(screen.queryByText(/Tu rol todavía no tiene pantallas/)).toBeNull()
   })
 
