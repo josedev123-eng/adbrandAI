@@ -58,6 +58,9 @@ public class Pago {
     @Column(name = "ultimos_digitos", length = 4)
     private String ultimosDigitos;
 
+    @Column(name = "numero_comprobante", unique = true, length = 20)
+    private String numeroComprobante;
+
     @PrePersist
     void alCrear() {
         fechaCreacion = LocalDateTime.now();
@@ -96,4 +99,7 @@ public class Pago {
 
     public String getUltimosDigitos() { return ultimosDigitos; }
     public void setUltimosDigitos(String ultimosDigitos) { this.ultimosDigitos = ultimosDigitos; }
+
+    public String getNumeroComprobante() { return numeroComprobante; }
+    public void setNumeroComprobante(String numeroComprobante) { this.numeroComprobante = numeroComprobante; }
 }
