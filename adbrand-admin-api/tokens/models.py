@@ -39,3 +39,23 @@ class LimiteTokens(models.Model):
     def __str__(self):
         quien = f"Empresa {self.usuario_id}" if self.usuario_id else "Por defecto"
         return f"{quien}: {self.limite_mensual} tokens, aviso al {self.porcentaje_aviso} %"
+
+
+class ConsumoMensual(models.Model):
+    """Tokens de cada empresa agrupados por mes (HU 20). Es la vista vista_consumo_token_mensual de Flyway (V32).
+
+    Solo se lee. Una fila por mes y empresa, por eso la clave es (mes, usuario_id).
+    """
+
+    pk = models.CompositePrimaryKey("mes", "usuario_id")
+    mes = models.DateField()  # el primer día del mes
+    usuario_id = models.BigIntegerField()
+    tokens = models.BigIntegerField()
+    generaciones = models.BigIntegerField()
+
+    class Meta:
+        managed = False  # es una vista de Flyway (V32)
+        db_table = "vista_consumo_token_mensual"
+
+    def __str__(self):
+        return f"{self.mes:%Y-%m} empresa {self.usuario_id}: {self.tokens} tokens"

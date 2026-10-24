@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from moderacion.models import PerfilNegocio
 
-from .models import ConsumoToken, LimiteTokens
+from .models import ConsumoMensual, ConsumoToken, LimiteTokens
 
 
 def inicio_del_mes_actual():
@@ -74,4 +74,51 @@ def consumo_del_mes_actual():
         "total": sum(fila["tokens"] for fila in filas),
         "empresas": filas,
         "alertas": alertas,
+    }
+
+
+MAXIMO_MESES = 24
+
+
+def meses_entre(desde, hasta):
+    """HU 20: cuántos meses abarca el rango, contando los dos extremos."""
+    return (hasta.year - desde.year) * 12 + (hasta.month - desde.month) + 1
+
+
+def _meses_del_rango(desde, hasta):
+    """El primer día de cada mes desde `desde` hasta `hasta`, los dos incluidos."""
+    meses, mes = [], desde.replace(day=1)
+    while mes <= hasta:
+        meses.append(mes)
+        mes = mes.replace(year=mes.year + 1, month=1) if mes.month == 12 else mes.replace(month=mes.month + 1)
+    return meses
+
+
+def historial_por_periodo(desde, hasta, usuario_id=None):
+    """HU 20, criterio 1: tokens y generaciones de cada mes del periodo (también los meses en cero) y el total.
+
+    Con usuario_id solo cuenta esa empresa.
+    """
+    consulta = ConsumoMensual.objects.filter(mes__gte=desde, mes__lte=hasta)
+    if usuario_id is not None:
+        consulta = consulta.filter(usuario_id=usuario_id)
+    por_mes = {
+        fila["mes"]: fila
+        for fila in consulta.values("mes").annotate(suma_tokens=Sum("tokens"), suma_generaciones=Sum("generaciones"))
+    }
+
+    meses = []
+    for mes in _meses_del_rango(desde, hasta):
+        fila = por_mes.get(mes, {})
+        meses.append({
+            "mes": mes.strftime("%Y-%m"),
+            "tokens": fila.get("suma_tokens") or 0,
+            "generaciones": fila.get("suma_generaciones") or 0,
+        })
+
+    return {
+        "desde": desde.strftime("%Y-%m"),
+        "hasta": hasta.strftime("%Y-%m"),
+        "total": sum(mes["tokens"] for mes in meses),
+        "meses": meses,
     }

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from core.pruebas import con_sesion, crear_admin, iniciar_sesion
 from moderacion.models import PerfilNegocio
 
-from .models import ConsumoToken, LimiteTokens
+from .models import ConsumoMensual, ConsumoToken, LimiteTokens
 from .services import inicio_del_mes_actual, limite_de_empresa
 
 URL = "/api/tokens/consumo-actual/"
@@ -242,3 +242,96 @@ class AlertaConsumoTests(APITestCase):
 
         self.assertEqual(respuesta.status_code, 403)
         self.assertNotIn("alertas", respuesta.data)
+
+
+URL_HISTORIAL = "/api/tokens/historial/"
+
+
+class HistorialTests(APITestCase):
+    """HU 20: tokens consumidos en cada mes de un periodo y el total.
+
+    En la base de prueba la vista vista_consumo_token_mensual (V32) es una tabla común,
+    así que se llena directo con lo que la vista devolvería.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.tecnico = crear_admin("TECNICO")
+        for mes, usuario_id, tokens, generaciones in [
+            (date(2026, 8, 1), 1, 1000, 4),
+            (date(2026, 8, 1), 2, 500, 1),
+            (date(2026, 10, 1), 1, 300, 2),
+            (date(2026, 7, 1), 1, 9999, 9),  # fuera del periodo
+        ]:
+            ConsumoMensual.objects.create(mes=mes, usuario_id=usuario_id, tokens=tokens, generaciones=generaciones)
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.tecnico)
+
+    def test_muestra_cada_mes_del_periodo_y_el_total(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-08&hasta=2026-10")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.data["desde"], "2026-08")
+        self.assertEqual(respuesta.data["hasta"], "2026-10")
+        self.assertEqual(respuesta.data["total"], 1800)
+        self.assertEqual(
+            respuesta.data["meses"],
+            [
+                {"mes": "2026-08", "tokens": 1500, "generaciones": 5},
+                {"mes": "2026-09", "tokens": 0, "generaciones": 0},  # un mes sin consumo sale en cero
+                {"mes": "2026-10", "tokens": 300, "generaciones": 2},
+            ],
+        )
+
+    def test_un_periodo_de_un_solo_mes(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-10&hasta=2026-10")
+
+        self.assertEqual(respuesta.data["total"], 300)
+        self.assertEqual(len(respuesta.data["meses"]), 1)
+
+    def test_filtra_por_una_empresa(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-08&hasta=2026-10&usuario_id=2")
+
+        self.assertEqual(respuesta.data["total"], 500)
+        self.assertEqual(respuesta.data["meses"][0]["tokens"], 500)
+
+    def test_un_periodo_que_cruza_de_anio(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-11&hasta=2027-02")
+
+        self.assertEqual([mes["mes"] for mes in respuesta.data["meses"]], ["2026-11", "2026-12", "2027-01", "2027-02"])
+        self.assertEqual(respuesta.data["total"], 0)
+
+    def test_inicio_posterior_al_fin_responde_400(self):
+        # HU 20, criterio 2
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-10&hasta=2026-08")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertEqual(respuesta.data["desde"][0], "La fecha de inicio no puede ser posterior a la fecha de fin")
+
+    def test_formato_invalido_responde_400(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=08/2026&hasta=2026-13")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertEqual(respuesta.data["desde"][0], "Usa el formato AAAA-MM.")
+        self.assertIn("hasta", respuesta.data)
+
+    def test_faltan_las_fechas_responde_400(self):
+        respuesta = self.client.get(URL_HISTORIAL)
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertEqual(respuesta.data["desde"][0], "Indica el mes de inicio.")
+        self.assertEqual(respuesta.data["hasta"][0], "Indica el mes de fin.")
+
+    def test_un_periodo_de_mas_de_24_meses_responde_400(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2024-01&hasta=2026-01")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("hasta", respuesta.data)
+
+    def test_el_moderador_recibe_403(self):
+        iniciar_sesion(self.client, crear_admin("MODERADOR"))
+
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-08&hasta=2026-10")
+
+        self.assertEqual(respuesta.status_code, 403)
