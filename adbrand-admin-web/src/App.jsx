@@ -6,6 +6,7 @@ import CrearAdministradorView from './features/admin/views/CrearAdministradorVie
 import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import LoginView from './features/auth/views/LoginView'
 import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
+import EstadoServidorView from './features/servidor/views/EstadoServidorView'
 import PanelFinancieroView from './features/suscripciones/views/PanelFinancieroView'
 import ConsumoTokensView from './features/tokens/views/ConsumoTokensView'
 import HistorialTokensView from './features/tokens/views/HistorialTokensView'
@@ -45,6 +46,7 @@ function App() {
       {actual === 'panel-financiero' && <PanelFinancieroView />}
       {actual === 'consumo-tokens' && <ConsumoTokensView />}
       {actual === 'historial-tokens' && <HistorialTokensView />}
+      {actual === 'estado-servidor' && <EstadoServidorView />}
       {!actual && (
         <main className="sin-pantallas">
           <h1>Hola, {admin.nombres}</h1>

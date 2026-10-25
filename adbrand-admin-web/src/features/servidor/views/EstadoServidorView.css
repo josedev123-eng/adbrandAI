@@ -1,0 +1,49 @@
+/* EstadoServidorView.css (HU-18) */
+.pagina.pagina-estado { max-width: 880px; }
+
+.estado-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.estado-cargando { text-align: center; color: var(--muted); padding: 24px; margin: 0; }
+
+.estado-servicios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.servicio { display: flex; flex-direction: column; gap: 8px; border-left-width: 5px; }
+
+.servicio h2 { margin: 0; font-size: 1.05rem; }
+
+.servicio-activo { border-left-color: var(--ok); }
+
+.servicio-caido { border-left-color: var(--bad); }
+
+.servicio-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.servicio-activo .servicio-estado { background: var(--ok-soft); color: var(--ok); }
+
+.servicio-caido .servicio-estado { background: var(--bad-soft); color: var(--bad); }
+
+.servicio-luz { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+
+.servicio-tiempo { font-family: var(--f-mono); font-size: 0.85rem; color: var(--muted); }
+
+.servicio-detalle { margin: 0; color: var(--bad); font-size: 0.9rem; }
+
+.servicio-nota { margin: 0; color: var(--muted); font-size: 0.85rem; }
