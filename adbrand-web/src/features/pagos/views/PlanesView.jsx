@@ -2,6 +2,7 @@
 // La lógica de carga está en usePlanes; la de cada formulario, en su viewmodel.
 import { useState } from 'react'
 import { usePlanes } from '../viewmodels/usePlanes'
+import ConfirmacionPagoView from './ConfirmacionPagoView'
 import PagoTarjetaView from './PagoTarjetaView'
 import PagoYapeView from './PagoYapeView'
 import './pagoComun.css'
@@ -22,20 +23,7 @@ export default function PlanesView() {
   }
 
   if (pago) {
-    return (
-      <main className="pagina">
-        <section className="tarjeta pago-resumen">
-          <span className="pago-resumen-etiqueta">Pago aprobado</span>
-          <strong className="pago-resumen-monto">{SOLES.format(pago.monto)}</strong>
-          <span className="pago-resumen-detalle">
-            Plan {pago.plan} · {pago.metodo === 'YAPE' ? 'Yape' : 'Tarjeta'} · referencia {pago.referencia}
-          </span>
-          <button type="button" className="boton-primario" onClick={reiniciar}>
-            Volver a los planes
-          </button>
-        </section>
-      </main>
-    )
+    return <ConfirmacionPagoView pago={pago} alVolver={reiniciar} />
   }
 
   if (planElegido && metodo === 'TARJETA') {

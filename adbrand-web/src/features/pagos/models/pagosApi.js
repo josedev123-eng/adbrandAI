@@ -21,3 +21,8 @@ export function confirmarYape(operacionId) {
 export function obtenerYapePendientes() {
   return apiRequest('/pagos/yape/pendientes')
 }
+
+// HU 28: comprobante del pago. La primera vez el backend genera el número y envía el correo.
+export function obtenerComprobante(pagoId) {
+  return apiRequest(`/pagos/${pagoId}/comprobante`)
+}
