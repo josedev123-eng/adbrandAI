@@ -8,4 +8,5 @@ urlpatterns = [
     path("api/suscripciones/", include("suscripciones.urls")),
     path("api/auditoria/", include("auditoria.urls")),
     path("api/tokens/", include("tokens.urls")),
+    path("api/servidor/", include("servidor.urls")),
 ]
