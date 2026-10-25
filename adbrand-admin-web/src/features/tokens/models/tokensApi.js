@@ -43,5 +43,6 @@ export function formatearMes(mes) {
 // HU-20: "2026-10" → "octubre 2026"
 export function nombreDelMes(mes) {
   const [anio, numero] = mes.split('-').map(Number)
-  return `${NOMBRE_MES.format(new Date(anio, numero - 1, 1))} ${anio}`
+  // En minúsculas: según el navegador, es-PE puede devolver "Agosto" o "agosto".
+  return `${NOMBRE_MES.format(new Date(anio, numero - 1, 1)).toLowerCase()} ${anio}`
 }

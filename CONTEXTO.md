@@ -68,6 +68,7 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 15 | Aprobar o rechazar contenido | Django `moderacion` + admin-web `features/moderacion` |
 | 17 | Consumo de tokens de IA por empresa en el mes actual | Spring `ia` (guarda cada consumo) + Django `tokens` + admin-web `features/tokens` (entrada en el menú `Consumo de IA`; se actualiza sola cada 30 segundos) |
 | 19 | Alerta cuando una empresa llega al porcentaje de aviso de su límite mensual de tokens | Django `tokens` (límite en `limite_tokens`, V31) + admin-web `features/tokens` (aviso arriba de la tabla de `Consumo de IA` y columna % del límite) |
+| 20 | Historial de consumo de tokens por periodo | Django `tokens` (vista `vista_consumo_token_mensual`, V32) + admin-web `features/tokens` (entrada en el menú `Historial de IA`; campos Desde y Hasta, por defecto los últimos 6 meses) |
 
 Pendiente conocido:
 - Spring todavía no tiene inicio de sesión: usa el usuario fijo `USUARIO_DE_PRUEBA = 1L` en los controllers hasta la HU 21. La web de administración ya pide login (ver "Inicio de sesión de administradores").
@@ -98,6 +99,7 @@ Django (`http://localhost:8000/api`):
 - `GET /auditoria/` con `?admin_id=`, `?desde=AAAA-MM-DD` y `?hasta=AAAA-MM-DD` (todos opcionales): historial de acciones, la más reciente primero, con el nombre y correo del administrador. Responde 400 si una fecha es inválida o `desde` es mayor que `hasta` (HU 4).
 - `GET /tokens/consumo-actual/`: responde `{"mes": "2026-10", "total": n, "empresas": [{usuario_id, empresa, tokens, generaciones, ultima_generacion}]}` con los tokens de IA del mes actual (hora de Lima), de la empresa que más gasta a la que menos. La empresa es el `usuario_id`; el nombre sale de `perfil_negocio` o es "Empresa #id". Solo SUPERADMIN y TECNICO (HU 17).
   - HU 19: cada empresa trae además `limite`, `porcentaje_aviso`, `porcentaje` (1 decimal) y `alerta`, y la raíz trae `alertas: [{usuario_id, empresa, tokens, limite, porcentaje}]` con solo las empresas en alerta, de mayor a menor porcentaje. El límite es la fila propia de la empresa en `limite_tokens` o, si no tiene, la fila por defecto (`usuario_id` NULL). Hay alerta cuando `tokens * 100 >= limite * porcentaje_aviso` (en enteros: el 80 % exacto avisa). Sin ningún límite: `limite` y `porcentaje` en null y nunca hay alerta.
+- `GET /tokens/historial/?desde=AAAA-MM&hasta=AAAA-MM` (los dos obligatorios; `&usuario_id=` opcional): responde `{"desde", "hasta", "total", "meses": [{mes, tokens, generaciones}]}` con todos los meses del periodo, también los que están en 0, del más antiguo al más reciente. Responde 400 si falta una fecha, si el formato no es AAAA-MM, si el inicio es posterior al fin ("La fecha de inicio no puede ser posterior a la fecha de fin") o si pasa de 24 meses. Solo SUPERADMIN y TECNICO (HU 20). La web hace la misma revisión del periodo antes de llamar.
 - Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
 ### Inicio de sesión de administradores
@@ -138,6 +140,7 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V12 | rol `TECNICO` (consumo de tokens de IA y estado del servidor) | 17 |
 | V30 | `consumo_token` (tokens de entrada, salida y total de cada generación con IA, por `usuario_id` y `origen`; `simulado` si se estimaron) | 17 |
 | V31 | `limite_tokens` (límite mensual y porcentaje de aviso; `usuario_id` NULL es el de por defecto: 100 000 tokens y aviso al 80 %; una fila por empresa) | 19 |
+| V32 | vista `vista_consumo_token_mensual` (tokens y generaciones por mes, con la hora de Lima, y por `usuario_id`; solo lectura) | 20 |
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión y `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses).
 
@@ -215,6 +218,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 
 - En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA.
 - En Django, el runner `core/test_runner.py` crea las tablas de Flyway en la base temporal de pruebas, así que las pruebas no necesitan Spring.
+- La vista `vista_consumo_token_mensual` (V32) se lee con el modelo `ConsumoMensual` (clave compuesta `mes` + `usuario_id`). En la base de prueba Django la crea como una tabla común, así que las pruebas la llenan directo.
 - Como los endpoints de Django piden token, las pruebas usan `core/pruebas.py`: `crear_admin("ROL")` crea un administrador activo, `con_sesion(admin)` da el header para un pedido e `iniciar_sesion(self.client, admin)` lo deja puesto para todos los pedidos.
 - En React, las pruebas reemplazan el `models/...Api.js` con datos de prueba (`vi.mock`), así no necesitan el backend encendido.
 
@@ -246,7 +250,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V12, V30 y V31). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
+- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V12 y V30 a V32). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.
