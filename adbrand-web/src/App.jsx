@@ -7,6 +7,7 @@ import LoginView from './features/auth/views/LoginView'
 import RecuperarContrasenaView from './features/auth/views/RecuperarContrasenaView'
 import MiCuentaView from './features/cuenta/views/MiCuentaView'
 import PlanesView from './features/pagos/views/PlanesView'
+import CalendarioView from './features/calendario/views/CalendarioView'
 import MenuUsuario from './shared/components/MenuUsuario'
 import { useSesion } from './app/context/useSesion'
 
@@ -63,6 +64,7 @@ function App() {
       {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} />}
       {pantalla === 'kit' && <SolicitarKitMarcaView />}
       {pantalla === 'planes' && <PlanesView />}
+      {pantalla === 'calendario' && <CalendarioView />}
       {pantalla === 'cuenta' && <MiCuentaView />}
     </>
   )

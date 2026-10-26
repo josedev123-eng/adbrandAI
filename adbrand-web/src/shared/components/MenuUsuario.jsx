@@ -6,6 +6,7 @@ const OPCIONES = [
   { id: 'anuncio', nombre: 'Crear anuncio' },
   { id: 'kit', nombre: 'Kit de Marca' },
   { id: 'planes', nombre: 'Planes' },
+  { id: 'calendario', nombre: 'Calendario' },
   { id: 'cuenta', nombre: 'Mi cuenta' },
 ]
 
