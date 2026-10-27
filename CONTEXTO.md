@@ -68,14 +68,19 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 15 | Aprobar o rechazar contenido | Django `moderacion` + admin-web `features/moderacion` |
 | 16 | Historial de contenidos aprobados y rechazados | Django `moderacion` (vista `vista_historial_contenido`, V34) + admin-web `features/moderacion` (entrada en el menú `Historial de contenidos`; filtros Estado, Desde y Hasta; clic en la fila para ver el texto) |
 | 17 | Consumo de tokens de IA por empresa en el mes actual | Spring `ia` (guarda cada consumo) + Django `tokens` + admin-web `features/tokens` (entrada en el menú `Consumo de IA`; se actualiza sola cada 30 segundos) |
+| 18 | Estado del servidor (backend, base de datos e IA) | Spring `estado` (`GET /api/estado`) + Django `servidor` (verifica y guarda en `verificacion_servidor`, V33) + admin-web `features/servidor` (entrada en el menú `Estado del servidor`; se verifica sola cada 15 segundos) |
 | 19 | Alerta cuando una empresa llega al porcentaje de aviso de su límite mensual de tokens | Django `tokens` (límite en `limite_tokens`, V31) + admin-web `features/tokens` (aviso arriba de la tabla de `Consumo de IA` y columna % del límite) |
 | 20 | Historial de consumo de tokens por periodo | Django `tokens` (vista `vista_consumo_token_mensual`, V32) + admin-web `features/tokens` (entrada en el menú `Historial de IA`; campos Desde y Hasta, por defecto los últimos 6 meses) |
-| 18 | Estado del servidor (backend, base de datos e IA) | Spring `estado` (`GET /api/estado`) + Django `servidor` (verifica y guarda en `verificacion_servidor`, V33) + admin-web `features/servidor` (entrada en el menú `Estado del servidor`; se verifica sola cada 15 segundos) |
 | 21 | Registro de la cuenta de la PYME | Spring `auth` + web `features/auth` (pantalla `Crear una cuenta`) |
 | 22 | Inicio de sesión del usuario PYME con JWT | Spring `auth` (`FiltroJwt`) + web `features/auth` y `app/context` (`SesionProvider`, `useSesion`); botón Cerrar sesión en el menú |
 | 23 | Datos de la empresa (RUC, razón social, teléfono, dirección) | Spring `cuenta` + web `features/cuenta` (entrada en el menú `Mi cuenta`) |
 | 24 | Recuperar la contraseña con un código de 6 dígitos por correo | Spring `auth` y `notificacion` + web `features/auth` (enlace ¿Olvidaste tu contraseña? en el inicio de sesión) |
+| 25 | Ver los planes de suscripción | Spring `pago` (`GET /api/planes`, ruta pública) + web `features/pagos` (entrada en el menú `Planes`) |
+| 26 | Pagar la suscripción con tarjeta (pasarela simulada) | Spring `pago` (`POST /api/pagos/tarjeta`) + web `features/pagos` (`PagoTarjetaView`) |
+| 27 | Pagar la suscripción con Yape (QR y confirmación) | Spring `pago` (`/api/pagos/yape`) + web `features/pagos` (`PagoYapeView`) |
+| 28 | Comprobante del pago por correo | Spring `pago` y `notificacion` (`GET /api/pagos/{id}/comprobante`) + web `features/pagos` (`ConfirmacionPagoView`) |
 | 32 | Editar a mano colores, tipografías y logotipo del kit de marca | Spring `brandkit` (`EdicionKitMarcaService`) + web `features/brandkit` (lista Tus kits guardados y botón Editar en el kit) |
+| 33 | Calendario mensual de publicaciones | Spring `calendario` (`GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`) + web `features/calendario` (entrada en el menú `Calendario`) |
 
 Inicio de sesión del usuario PYME (HU 21, 22 y 24):
 - La web guarda el token en `localStorage` con la clave `adbrand-token` y lo manda en cada petición como `Authorization: Bearer <token>` (`apiClient.js`). Si Spring responde 401, la web borra el token y vuelve al inicio de sesión.
@@ -103,7 +108,7 @@ Spring Boot (`http://localhost:8080/api`):
 - `POST /auth/recuperar/solicitar` con `{correo}`: envía un código de 6 dígitos que vence en 15 minutos; responde 200 con el mismo mensaje exista o no el correo (HU 24).
 - `POST /auth/recuperar/cambiar` con `{correo, codigo, contrasenaNueva}`: cambia la contraseña; 400 `CODIGO_INVALIDO` si el código está mal, venció o ya se usó (HU 24).
 - `GET /cuenta/empresa` y `PUT /cuenta/empresa` con `{ruc, razonSocial, telefono, direccion}`: datos de la empresa del token, sin id en la URL; 409 `RUC_REPETIDO` (HU 23).
-- `GET /estado`: responde `{"backend": "ACTIVO", "ia": {"estado": "ACTIVO" o "CAIDO", "tiempo_ms", "detalle"}}` (HU 18). La IA se revisa con una petición liviana a `AI_BASE_URL` (no llama al chat ni manda la clave; 5 s de espera); con `AI_MOCK=true` sale ACTIVO con "Modo simulado". La usa Django. Es ruta pública en `SeguridadConfig` (no pide token).
+- `GET /estado`: responde `{"backend": "ACTIVO", "ia": {"estado": "ACTIVO" o "CAIDO", "tiempo_ms", "detalle"}}` (HU 18). La IA se revisa con una petición liviana a `AI_BASE_URL` (no llama al chat ni manda la clave; 5 s de espera); con `AI_MOCK=true` sale ACTIVO con "Modo simulado". La usa Django y queda como ruta pública para que `/api/estado` no pida token.
 
 Django (`http://localhost:8000/api`):
 - `POST /usuarios/login/` con `{"correo", "contrasena"}`: responde `{token, admin}`; 401 si los datos están mal y 403 si la cuenta está desactivada (login de administradores).
@@ -147,7 +152,7 @@ Primer superadministrador: en `adbrand-admin-api` correr `python manage.py crear
 
 ### Migraciones Flyway aplicadas
 
-Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose V30 a V39. Por eso cada uno pone `spring.flyway.out-of-order=true` en su `adbrand-core-api/.env`, así Flyway aplica una versión menor que llega después de una mayor.
+Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose V30 a V39. Por eso cada uno pone `spring.flyway.out-of-order=true` en su `adbrand-core-api/.env`, así Flyway aplica una versión menor que llega después de una mayor. V12 es del login de administradores.
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -168,13 +173,18 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V15 | `codigo_recuperacion` (hash del código, vencimiento y si ya se usó) | 24 |
 | V16 | `usuario.ruc` (único), `razon_social`, `telefono` y `direccion` | 23 |
 | V17 | `kit_marca_version` (cada edición del kit de marca) | 32 |
+| V20 | `plan` (planes de suscripción Básico, Pro y Premium) | 25 |
+| V21 | `pago`: datos de la operación y del plan pagado | 26 |
+| V22 | `operacion_yape` (pago con Yape en dos pasos) | 27 |
+| V23 | `pago.numero_comprobante` | 28 |
+| V24 | `publicacion_programada` (publicaciones del calendario) | 33 |
 | V30 | `consumo_token` (tokens de entrada, salida y total de cada generación con IA, por `usuario_id` y `origen`; `simulado` si se estimaron) | 17 |
 | V31 | `limite_tokens` (límite mensual y porcentaje de aviso; `usuario_id` NULL es el de por defecto: 100 000 tokens y aviso al 80 %; una fila por empresa) | 19 |
 | V32 | vista `vista_consumo_token_mensual` (tokens y generaciones por mes, con la hora de Lima, y por `usuario_id`; solo lectura) | 20 |
 | V33 | `verificacion_servidor` (servicio BACKEND, BASE_DATOS o IA; estado ACTIVO o CAIDO; tiempo_ms, detalle y fecha de cada verificación) | 18 |
 | V34 | vista `vista_historial_contenido` (contenidos APROBADO o RECHAZADO con el nombre del moderador o "Filtro automático", el motivo y la fecha de la decisión; solo lectura) | 16 |
 
-Si la base local ya tenía una versión mayor cuando llegaron V13 a V17, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
+Si la base local ya tenía una versión mayor cuando llegaron V13 a V17 o V30 a V34, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
 
@@ -191,11 +201,28 @@ Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y s
 
 Pruebas al cerrar el sprint: Spring 59, Django 170 y admin-web 102, todas en verde.
 
+### Resumen del Sprint 2 de Edu (`rama-edu`)
+
+| HU | Qué quedó | Migración |
+|---|---|---|
+| 25 | Planes Básico, Pro y Premium en `GET /api/planes`; pantalla `Planes` (`features/pagos`) | V20 |
+| 26 | Pago con tarjeta simulado (Luhn, vencimiento y CVV), suscripción de un mes y `POST /api/pagos/tarjeta`; pantalla `PagoTarjetaView` | V21 |
+| 27 | Pago con Yape en dos pasos: `POST /api/pagos/yape`, `POST /api/pagos/yape/{id}/confirmar` y `GET /api/pagos/yape/pendientes`; pantalla `PagoYapeView` con QR (`qrcode`) | V22 |
+| 28 | Comprobante `ADB-000001` con `GET /api/pagos/{id}/comprobante` y envío con `ServicioCorreo`; pantalla `ConfirmacionPagoView` | V23 |
+| 33 | Calendario mensual con `GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`; pantalla `Calendario` (`features/calendario`) | V24 |
+
+Notas del sprint de Edu:
+
+- Cada pago aprobado (tarjeta o Yape) crea una suscripción `ACTIVA` de un mes en `suscripcion` (V7) y una fila en `pago` (V10); el panel financiero de Django los ve sin cambios.
+- El número de comprobante se deriva del id del pago (`ADB-%06d`) y el correo sale solo la primera vez que se pide. Con `MAIL_MOCK=true` el comprobante se escribe en la consola.
+- La pasarela es simulada: la tarjeta `4000 0000 0000 0002` siempre se rechaza. El pago con Yape queda `PENDIENTE` hasta que el usuario pulsa "Ya pagué, confirmar".
+- Pruebas al cerrar el sprint: Spring 37 (pago y calendario) y React 13 (Vitest), todas en verde. La suite completa de Spring y Django necesita la base PostgreSQL local con sus credenciales.
+
 ### Notas para las siguientes historias
 
 - Autenticación de administradores: ver la sección "Inicio de sesión de administradores". Toda vista nueva de la web de administración hereda de `VistaAdmin` y declara sus `roles_permitidos`.
 - El `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) reúne las HU 5, 6 y 7. Un indicador nuevo del dueño de la aplicación va ahí, con su endpoint en la app Django `suscripciones`.
-- Las HU 25 a 28 (pagos del usuario, en Spring) deben escribir en la tabla `pago` (V10), que es de donde el panel saca los ingresos. Si necesitan más columnas, se agregan con una migración nueva; no se edita V10.
+- Las HU 25 a 28 (pagos del usuario, en Spring) escriben en las tablas `pago` (V10) y `suscripcion` (V7), de donde el panel financiero saca los ingresos. Las columnas nuevas se agregaron con V21 y V23; no se edita V10.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
@@ -298,7 +325,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17 y V30 a V34). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
+- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17, V20 a V24 y V30 a V34). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.

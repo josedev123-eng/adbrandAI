@@ -1,0 +1,33 @@
+/* HU 27: pantalla de pago con QR de Yape. */
+.yape-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.yape-qr-titulo {
+  margin: 0;
+  font-weight: 700;
+}
+
+.yape-qr-imagen {
+  width: 240px;
+  height: 240px;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+
+.yape-qr-codigo,
+.yape-qr-detalle {
+  margin: 0;
+}
+
+.yape-qr .pago-acciones {
+  width: 100%;
+  justify-content: center;
+  margin-top: 6px;
+}

@@ -4,4 +4,9 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Pruebas con Vitest: simula un navegador (jsdom) para dibujar las pantallas.
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+  },
 })
