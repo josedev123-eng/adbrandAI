@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from core.pruebas import crear_admin, iniciar_sesion
+from core.pruebas import crear_admin, iniciar_sesion, usar_vista_de_flyway
 
 from .models import Contenido, PerfilNegocio
 
@@ -214,3 +214,53 @@ class ModerarContenidoTests(APITestCase):
         self.assertEqual(self.dudoso.estado, "RECHAZADO")
         self.assertEqual(self.dudoso.motivo_revision, '"cigarrillos": Publicidad de tabaco.')
 
+
+URL_HISTORIAL = "/api/moderacion/historial/"
+
+
+class HistorialContenidoTests(APITestCase):
+    """HU 16: historial de contenidos aprobados y rechazados con moderador y motivo.
+
+    Usa la vista real de Flyway (V34), así se prueba también el nombre del moderador.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        usar_vista_de_flyway("V34__crear_vista_historial_contenido.sql")
+        PerfilNegocio.objects.create(usuario_id=1, nombre_comercial="Panadería Doña Rosa", rubro="Panadería")
+        cls.moderador = crear_admin("MODERADOR")
+        cls.aprobado_por_filtro = crear_contenido("APROBADO", "2 panetones por S/ 35", minutos_atras=30)
+        cls.dudoso = crear_contenido("DUDOSO", "Cigarrillos importados", motivo='"cigarrillos": Publicidad de tabaco.')
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.moderador)
+
+    def test_muestra_aprobados_y_rechazados_pero_no_los_dudosos(self):
+        rechazado = crear_contenido("RECHAZADO", "Apuestas", motivo="Publicidad de apuestas")
+
+        respuesta = self.client.get(URL_HISTORIAL)
+
+        self.assertEqual(respuesta.status_code, 200)
+        ids = [fila["id"] for fila in respuesta.data["resultados"]]
+        self.assertEqual(ids, [rechazado.id, self.aprobado_por_filtro.id])  # el más reciente primero
+        self.assertEqual(respuesta.data["total"], 2)
+
+    def test_cada_fila_trae_fecha_moderador_y_motivo(self):
+        # Criterio 1: lo aprobó el filtro automático (sin moderador).
+        fila = self.client.get(URL_HISTORIAL).data["resultados"][0]
+
+        self.assertEqual(fila["empresa"], "Panadería Doña Rosa")
+        self.assertEqual(fila["moderador"], "Filtro automático")
+        self.assertIsNone(fila["motivo"])
+        self.assertIsNotNone(fila["fecha_decision"])
+
+    def test_inicio_posterior_al_fin_responde_400(self):
+        respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-10-20&hasta=2026-10-01")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertEqual(respuesta.data["desde"][0], "La fecha de inicio no puede ser posterior a la fecha de fin")
+
+    def test_finanzas_no_entra(self):
+        iniciar_sesion(self.client, crear_admin("FINANZAS"))
+
+        self.assertEqual(self.client.get(URL_HISTORIAL).status_code, 403)

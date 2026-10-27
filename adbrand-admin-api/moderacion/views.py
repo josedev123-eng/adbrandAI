@@ -5,7 +5,13 @@ from auditoria.services import registrar_accion
 from usuarios.vistas import VistaAdmin
 
 from . import services
-from .serializers import ContenidoBandejaSerializer, ContenidoDetalleSerializer, ModerarContenidoSerializer
+from .serializers import (
+    ContenidoBandejaSerializer,
+    ContenidoDetalleSerializer,
+    FiltrosHistorialSerializer,
+    ModerarContenidoSerializer,
+    PaginaHistorialSerializer,
+)
 
 
 class BandejaRevisionView(VistaAdmin):
@@ -47,3 +53,19 @@ class ModerarContenidoView(VistaAdmin):
         registrar_accion(contenido.moderador_id, f"{serializer.validated_data['accion']}_CONTENIDO", "contenido", contenido.id, contenido.oferta)
 
         return Response(ContenidoDetalleSerializer(contenido).data)
+
+class HistorialContenidoView(VistaAdmin):
+    """GET /api/moderacion/historial/ : contenidos aprobados y rechazados con moderador y motivo (HU 16).
+
+    Filtros opcionales: ?estado=APROBADO|RECHAZADO, ?desde=AAAA-MM-DD, ?hasta=AAAA-MM-DD y ?pagina=n.
+    """
+
+    roles_permitidos = ("SUPERADMIN", "MODERADOR")
+
+    def get(self, request):
+        filtros = FiltrosHistorialSerializer(data=request.query_params)
+        filtros.is_valid(raise_exception=True)
+
+        pagina = services.historial(**filtros.validated_data)
+
+        return Response(PaginaHistorialSerializer(pagina).data)
