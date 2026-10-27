@@ -2,6 +2,7 @@
 // Django también revisa el rol en cada endpoint (paso 3), esto solo ordena el menú.
 export const PANTALLAS = [
   { id: 'revision', nombre: 'Revisión de contenido', roles: ['SUPERADMIN', 'MODERADOR'] },
+  { id: 'historial-contenidos', nombre: 'Historial de contenidos', roles: ['SUPERADMIN', 'MODERADOR'] },
   { id: 'administradores', nombre: 'Administradores', roles: ['SUPERADMIN'] },
   { id: 'lista-administradores', nombre: 'Lista de administradores', roles: ['SUPERADMIN'] },
   { id: 'auditoria', nombre: 'Auditoría', roles: ['SUPERADMIN'] },

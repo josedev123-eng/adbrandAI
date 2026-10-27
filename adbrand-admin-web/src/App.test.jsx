@@ -14,6 +14,7 @@ vi.mock('./features/auth/models/authApi', () => ({
 }))
 // Las pantallas reales llaman a Django; aquí basta saber cuál se muestra.
 vi.mock('./features/moderacion/views/BandejaRevisionView', () => ({ default: () => <p>Pantalla de revisión</p> }))
+vi.mock('./features/moderacion/views/HistorialContenidosView', () => ({ default: () => <p>Pantalla de historial de contenidos</p> }))
 vi.mock('./features/admin/views/CrearAdministradorView', () => ({ default: () => <p>Pantalla de crear</p> }))
 vi.mock('./features/admin/views/AdministradoresView', () => ({ default: () => <p>Pantalla de lista</p> }))
 vi.mock('./features/auditoria/views/AuditoriaView', () => ({ default: () => <p>Pantalla de auditoría</p> }))
@@ -60,6 +61,7 @@ describe('App (login y menú por rol)', () => {
     expect(screen.getByText('Superadministrador')).toBeInTheDocument()
     expect(opcionesDelMenu()).toEqual([
       'Revisión de contenido',
+      'Historial de contenidos',
       'Administradores',
       'Lista de administradores',
       'Auditoría',
@@ -70,13 +72,13 @@ describe('App (login y menú por rol)', () => {
     ])
   })
 
-  it('el MODERADOR solo ve la revisión de contenido', async () => {
+  it('el MODERADOR solo ve la revisión y el historial de contenidos', async () => {
     guardarToken('token-guardado')
     obtenerSesion.mockResolvedValue(adminCon('MODERADOR'))
     mostrar()
 
     expect(await screen.findByText('Pantalla de revisión')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Revisión de contenido'])
+    expect(opcionesDelMenu()).toEqual(['Revisión de contenido', 'Historial de contenidos'])
   })
 
   it('FINANZAS entra directo al panel financiero', async () => {
