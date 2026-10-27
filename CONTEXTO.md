@@ -192,11 +192,28 @@ Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y s
 
 Pruebas al cerrar el sprint: Spring 59, Django 170 y admin-web 102, todas en verde.
 
+### Resumen del Sprint 2 de Edu (`rama-edu`)
+
+| HU | Qué quedó | Migración |
+|---|---|---|
+| 25 | Planes Básico, Pro y Premium en `GET /api/planes`; pantalla `Planes` (`features/pagos`) | V20 |
+| 26 | Pago con tarjeta simulado (Luhn, vencimiento y CVV), suscripción de un mes y `POST /api/pagos/tarjeta`; pantalla `PagoTarjetaView` | V21 |
+| 27 | Pago con Yape en dos pasos: `POST /api/pagos/yape`, `POST /api/pagos/yape/{id}/confirmar` y `GET /api/pagos/yape/pendientes`; pantalla `PagoYapeView` con QR (`qrcode`) | V22 |
+| 28 | Comprobante `ADB-000001` con `GET /api/pagos/{id}/comprobante` y envío con `ServicioCorreo`; pantalla `ConfirmacionPagoView` | V23 |
+| 33 | Calendario mensual con `GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`; pantalla `Calendario` (`features/calendario`) | V24 |
+
+Notas del sprint de Edu:
+
+- Cada pago aprobado (tarjeta o Yape) crea una suscripción `ACTIVA` de un mes en `suscripcion` (V7) y una fila en `pago` (V10); el panel financiero de Django los ve sin cambios.
+- El número de comprobante se deriva del id del pago (`ADB-%06d`) y el correo sale solo la primera vez que se pide. Con `MAIL_MOCK=true` el comprobante se escribe en la consola.
+- La pasarela es simulada: la tarjeta `4000 0000 0000 0002` siempre se rechaza. El pago con Yape queda `PENDIENTE` hasta que el usuario pulsa "Ya pagué, confirmar".
+- Pruebas al cerrar el sprint: Spring 37 (pago y calendario) y React 13 (Vitest), todas en verde. La suite completa de Spring y Django necesita la base PostgreSQL local con sus credenciales.
+
 ### Notas para las siguientes historias
 
 - Autenticación de administradores: ver la sección "Inicio de sesión de administradores". Toda vista nueva de la web de administración hereda de `VistaAdmin` y declara sus `roles_permitidos`.
 - El `Panel financiero` (`PanelFinancieroView` y `usePanelFinanciero` en `features/suscripciones`) reúne las HU 5, 6 y 7. Un indicador nuevo del dueño de la aplicación va ahí, con su endpoint en la app Django `suscripciones`.
-- Las HU 25 a 28 (pagos del usuario, en Spring) deben escribir en la tabla `pago` (V10), que es de donde el panel saca los ingresos. Si necesitan más columnas, se agregan con una migración nueva; no se edita V10.
+- Las HU 25 a 28 (pagos del usuario, en Spring) escriben en las tablas `pago` (V10) y `suscripcion` (V7), de donde el panel financiero saca los ingresos. Las columnas nuevas se agregaron con V21 y V23; no se edita V10.
 
 ## Patrón de desarrollo: MVVM (obligatorio)
 
