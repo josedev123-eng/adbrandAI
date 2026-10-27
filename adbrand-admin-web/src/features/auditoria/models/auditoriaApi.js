@@ -3,6 +3,7 @@ import { apiRequest } from '../../../shared/services/apiClient'
 
 // Los mismos valores que guarda Django en auditoria_admin.accion.
 export const NOMBRES_ACCION = {
+  CREAR_ADMIN: 'Creó una cuenta',
   DESACTIVAR_ADMIN: 'Desactivó una cuenta',
   CAMBIAR_ROL: 'Cambió un rol',
   APROBAR_CONTENIDO: 'Aprobó un contenido',
