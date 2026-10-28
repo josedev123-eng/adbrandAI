@@ -8,6 +8,7 @@ import RecuperarContrasenaView from './features/auth/views/RecuperarContrasenaVi
 import MiCuentaView from './features/cuenta/views/MiCuentaView'
 import PlanesView from './features/pagos/views/PlanesView'
 import CalendarioView from './features/calendario/views/CalendarioView'
+import InformeCampanasView from './features/reportes/views/InformeCampanasView'
 import MenuUsuario from './shared/components/MenuUsuario'
 import { useSesion } from './app/context/useSesion'
 
@@ -65,6 +66,7 @@ function App() {
       {pantalla === 'kit' && <SolicitarKitMarcaView />}
       {pantalla === 'planes' && <PlanesView />}
       {pantalla === 'calendario' && <CalendarioView />}
+      {pantalla === 'informes' && <InformeCampanasView />}
       {pantalla === 'cuenta' && <MiCuentaView />}
     </>
   )
