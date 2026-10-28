@@ -1,6 +1,6 @@
 package com.adbrand.core.brandkit.dto;
 
-// La respuesta con el Kit de Marca generado.
+// La respuesta con el Kit de Marca generado. logoDiseno es el logo del editor (HU 29), o null si aún no hay.
 public record KitMarcaGeneradoResponse(
         Long id,
         String nombreNegocio,
@@ -10,6 +10,7 @@ public record KitMarcaGeneradoResponse(
         String tipografiaSecundaria,
         String paletaColores,
         String vozMarca,
+        LogoDiseno logoDiseno,
         boolean simulado) {
 
     public static KitMarcaGeneradoResponse desde(com.adbrand.core.brandkit.entity.KitMarca kit, boolean simulado) {
@@ -22,6 +23,7 @@ public record KitMarcaGeneradoResponse(
                 kit.getTipografiaSecundaria(),
                 kit.getPaletaColores(),
                 kit.getVozMarca(),
+                LogoDisenoJson.desdeTexto(kit.getLogoDiseno()),
                 simulado);
     }
 }

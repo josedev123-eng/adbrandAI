@@ -4,6 +4,7 @@ import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.GenerarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
 import com.adbrand.core.brandkit.dto.KitMarcaVersionResponse;
+import com.adbrand.core.brandkit.dto.LogoDiseno;
 import com.adbrand.core.brandkit.service.EdicionKitMarcaService;
 import com.adbrand.core.brandkit.service.KitMarcaService;
 import jakarta.validation.Valid;
@@ -52,6 +53,13 @@ public class KitMarcaController {
     public KitMarcaGeneradoResponse editar(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id,
                                            @Valid @RequestBody EditarKitMarcaRequest datos) {
         return edicion.editar(usuarioId, id, datos);
+    }
+
+    // HU 29: guarda el logo diseñado en el editor interactivo como una versión nueva del kit.
+    @PutMapping("/{id}/logo")
+    public KitMarcaGeneradoResponse guardarLogo(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id,
+                                                @Valid @RequestBody LogoDiseno logo) {
+        return edicion.guardarLogo(usuarioId, id, logo);
     }
 
     // HU 32: historial de ediciones, la más reciente primero.

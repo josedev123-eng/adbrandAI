@@ -4,6 +4,8 @@ import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest.ColorKit;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
 import com.adbrand.core.brandkit.dto.KitMarcaVersionResponse;
+import com.adbrand.core.brandkit.dto.LogoDiseno;
+import com.adbrand.core.brandkit.dto.LogoDisenoJson;
 import com.adbrand.core.brandkit.entity.KitMarca;
 import com.adbrand.core.brandkit.entity.KitMarcaVersion;
 import com.adbrand.core.brandkit.repository.KitMarcaRepository;
@@ -40,6 +42,8 @@ public class EdicionKitMarcaService {
         version.setTipografiaPrimaria(datos.tipografiaPrimaria());
         version.setTipografiaSecundaria(secundaria);
         version.setLogoConcepto(datos.logoConcepto());
+        // HU 29: la versión también guarda el logo diseñado que el kit tenía en ese momento.
+        version.setLogoDiseno(kit.getLogoDiseno());
         versiones.save(version);
 
         // El kit queda con lo último guardado; @PreUpdate cambia fecha_actualizacion.
@@ -47,6 +51,25 @@ public class EdicionKitMarcaService {
         kit.setTipografiaPrimaria(datos.tipografiaPrimaria());
         kit.setTipografiaSecundaria(secundaria);
         kit.setLogoConcepto(datos.logoConcepto());
+        return KitMarcaGeneradoResponse.desde(kits.saveAndFlush(kit), false);
+    }
+
+    // HU 29: guarda el logo diseñado en el editor. Queda como una versión más del kit, con el resto de datos tal cual.
+    @Transactional
+    public KitMarcaGeneradoResponse guardarLogo(Long usuarioId, Long kitId, LogoDiseno logo) {
+        KitMarca kit = buscarDelUsuario(usuarioId, kitId);
+        String diseno = LogoDisenoJson.aTexto(logo);
+
+        KitMarcaVersion version = new KitMarcaVersion();
+        version.setKitMarcaId(kit.getId());
+        version.setPaletaColores(kit.getPaletaColores());
+        version.setTipografiaPrimaria(kit.getTipografiaPrimaria());
+        version.setTipografiaSecundaria(kit.getTipografiaSecundaria());
+        version.setLogoConcepto(kit.getLogoConcepto());
+        version.setLogoDiseno(diseno);
+        versiones.save(version);
+
+        kit.setLogoDiseno(diseno);
         return KitMarcaGeneradoResponse.desde(kits.saveAndFlush(kit), false);
     }
 

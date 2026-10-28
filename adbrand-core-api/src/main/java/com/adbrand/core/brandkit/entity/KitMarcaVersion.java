@@ -33,6 +33,10 @@ public class KitMarcaVersion {
     @Column(name = "logo_concepto", columnDefinition = "TEXT")
     private String logoConcepto;
 
+    // HU 29: el logo diseñado en el editor, como JSON (V36).
+    @Column(name = "logo_diseno", columnDefinition = "TEXT")
+    private String logoDiseno;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -57,6 +61,9 @@ public class KitMarcaVersion {
 
     public String getLogoConcepto() { return logoConcepto; }
     public void setLogoConcepto(String logoConcepto) { this.logoConcepto = logoConcepto; }
+
+    public String getLogoDiseno() { return logoDiseno; }
+    public void setLogoDiseno(String logoDiseno) { this.logoDiseno = logoDiseno; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }
