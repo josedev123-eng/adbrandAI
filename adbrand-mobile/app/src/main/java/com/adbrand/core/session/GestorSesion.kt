@@ -8,7 +8,7 @@ import okhttp3.Interceptor
 
 // HU 42: guarda el token de acceso y el de renovación cifrados en el teléfono.
 // Es un Singleton porque lo usan el cliente HTTP, el login y el cierre de sesión.
-object GestorSesion {
+object GestorSesion : AlmacenSesion {
 
     private const val ARCHIVO = "adbrand_sesion"
     private const val CLAVE_TOKEN = "token_acceso"
@@ -37,20 +37,20 @@ object GestorSesion {
     private fun prefs(): SharedPreferences = preferencias
         ?: error("GestorSesion.inicializar(context) debe llamarse antes de usar la sesión.")
 
-    fun guardarSesion(tokenAcceso: String, tokenRenovacion: String?) {
+    override fun guardarSesion(tokenAcceso: String, tokenRenovacion: String?) {
         prefs().edit()
             .putString(CLAVE_TOKEN, tokenAcceso)
             .putString(CLAVE_RENOVACION, tokenRenovacion)
             .apply()
     }
 
-    fun tokenAcceso(): String? = prefs().getString(CLAVE_TOKEN, null)
+    override fun tokenAcceso(): String? = prefs().getString(CLAVE_TOKEN, null)
 
-    fun tokenRenovacion(): String? = prefs().getString(CLAVE_RENOVACION, null)
+    override fun tokenRenovacion(): String? = prefs().getString(CLAVE_RENOVACION, null)
 
-    fun haySesion(): Boolean = !tokenAcceso().isNullOrBlank()
+    override fun haySesion(): Boolean = !tokenAcceso().isNullOrBlank()
 
-    fun limpiar() {
+    override fun limpiar() {
         prefs().edit().clear().apply()
     }
 
