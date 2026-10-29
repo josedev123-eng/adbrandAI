@@ -1,5 +1,6 @@
 package com.adbrand.core.brandkit.service;
 
+import com.adbrand.core.brandkit.dto.EditarColoresRequest;
 import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest.ColorKit;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
@@ -11,8 +12,11 @@ import com.adbrand.core.brandkit.entity.KitMarcaVersion;
 import com.adbrand.core.brandkit.repository.KitMarcaRepository;
 import com.adbrand.core.brandkit.repository.KitMarcaVersionRepository;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
+import com.adbrand.core.shared.error.SolicitudInvalidaException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,19 +62,41 @@ public class EdicionKitMarcaService {
     @Transactional
     public KitMarcaGeneradoResponse guardarLogo(Long usuarioId, Long kitId, LogoDiseno logo) {
         KitMarca kit = buscarDelUsuario(usuarioId, kitId);
-        String diseno = LogoDisenoJson.aTexto(logo);
+        kit.setLogoDiseno(LogoDisenoJson.aTexto(logo));
+        return guardarComoVersion(kit);
+    }
 
+    // HU 30: guarda solo la paleta elegida en el editor de colores, como una versión nueva del kit.
+    @Transactional
+    public KitMarcaGeneradoResponse guardarColores(Long usuarioId, Long kitId, EditarColoresRequest datos) {
+        KitMarca kit = buscarDelUsuario(usuarioId, kitId);
+        sinColoresRepetidos(datos.colores());
+        kit.setPaletaColores(paletaComoTexto(datos.colores()));
+        return guardarComoVersion(kit);
+    }
+
+    // Deja en el historial una foto del kit tal como queda y lo guarda.
+    private KitMarcaGeneradoResponse guardarComoVersion(KitMarca kit) {
         KitMarcaVersion version = new KitMarcaVersion();
         version.setKitMarcaId(kit.getId());
         version.setPaletaColores(kit.getPaletaColores());
         version.setTipografiaPrimaria(kit.getTipografiaPrimaria());
         version.setTipografiaSecundaria(kit.getTipografiaSecundaria());
         version.setLogoConcepto(kit.getLogoConcepto());
-        version.setLogoDiseno(diseno);
+        version.setLogoDiseno(kit.getLogoDiseno());
         versiones.save(version);
-
-        kit.setLogoDiseno(diseno);
         return KitMarcaGeneradoResponse.desde(kits.saveAndFlush(kit), false);
+    }
+
+    // HU 30: el mismo color dos veces no aporta nada a la paleta (#c62828 y #C62828 cuentan como iguales).
+    private static void sinColoresRepetidos(List<ColorKit> colores) {
+        Set<String> vistos = new HashSet<>();
+        for (ColorKit color : colores) {
+            String hex = color.hex().toUpperCase(Locale.ROOT);
+            if (!vistos.add(hex)) {
+                throw new SolicitudInvalidaException("COLOR_REPETIDO", "El color " + hex + " está repetido.");
+            }
+        }
     }
 
     @Transactional(readOnly = true)
