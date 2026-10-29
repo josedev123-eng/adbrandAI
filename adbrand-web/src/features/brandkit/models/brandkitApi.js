@@ -46,3 +46,17 @@ export function leerPaleta(texto) {
       return { hex: hex.trim(), nombre: resto.join(' - ').trim() }
     })
 }
+// HU-29: guarda el logo diseñado en el editor; queda como una versión nueva del kit.
+// 400 con "campos" si un color o el texto están mal; 404 si el kit no es de la empresa.
+export function guardarLogoKitMarca(id, logo) {
+  return apiRequest(`/kit-marca/${id}/logo`, { method: 'PUT', body: logo })
+}
+
+export const FORMAS_LOGO = [
+  { valor: 'CIRCULO', nombre: 'Círculo' },
+  { valor: 'CUADRADO', nombre: 'Cuadrado' },
+  { valor: 'REDONDEADO', nombre: 'Redondeado' },
+]
+
+// Tipografías que la web ya carga (index.css) más dos genéricas que tiene cualquier navegador.
+export const TIPOGRAFIAS_LOGO = ['Bricolage Grotesque', 'Plus Jakarta Sans', 'JetBrains Mono', 'Georgia', 'Arial']

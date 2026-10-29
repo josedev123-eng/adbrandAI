@@ -28,6 +28,8 @@ export function useSolicitarKitMarca() {
   // HU-32: kits ya guardados de la empresa y si se está editando el kit abierto.
   const [kitsGuardados, setKitsGuardados] = useState([])
   const [editando, setEditando] = useState(false)
+  // HU-29: el editor del logo se abre aparte del editor de la HU-32.
+  const [editandoLogo, setEditandoLogo] = useState(false)
 
   useEffect(() => {
     listarKitsMarca()
@@ -117,6 +119,23 @@ export function useSolicitarKitMarca() {
     setAviso({ tipo: 'exito', texto: 'Cambios guardados' })
   }
 
+  // HU-29: editor interactivo del logo.
+  function empezarEdicionLogo() {
+    setAviso(null)
+    setEditandoLogo(true)
+  }
+
+  function cancelarEdicionLogo() {
+    setEditandoLogo(false)
+  }
+
+  function terminarEdicionLogo(actualizado) {
+    setKit(actualizado)
+    setKitsGuardados((actuales) => actuales.map((k) => (k.id === actualizado.id ? actualizado : k)))
+    setEditandoLogo(false)
+    setAviso({ tipo: 'exito', texto: 'Logo guardado como una versión nueva del kit' })
+  }
+
   function reiniciar() {
     setFormulario(FORMULARIO_VACIO)
     setErrores({})
@@ -145,5 +164,9 @@ export function useSolicitarKitMarca() {
     empezarEdicion,
     cancelarEdicion,
     terminarEdicion,
+    editandoLogo,
+    empezarEdicionLogo,
+    cancelarEdicionLogo,
+    terminarEdicionLogo,
   }
 }

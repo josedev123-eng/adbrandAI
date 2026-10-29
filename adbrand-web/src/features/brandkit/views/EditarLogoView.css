@@ -1,0 +1,50 @@
+/* EditarLogoView.css: editor interactivo del logo (HU-29).
+   El formulario usa las clases comunes .tarjeta, .formulario y .campo. */
+.pagina.pagina-logo { max-width: 960px; }
+
+.logo-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  align-items: start;
+}
+
+.logo-formas { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.logo-formas legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+
+.logo-forma {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.logo-forma.activa { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+.logo-color { display: flex; gap: 8px; align-items: center; }
+.logo-color input[type='color'] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; }
+.logo-color input[type='text'] { flex: 1; font-family: var(--f-mono); text-transform: uppercase; }
+
+.logo-vista-previa {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.logo-vista-previa h2 { margin: 0; align-self: flex-start; font-size: 1rem; }
+.logo-vista-previa small { color: var(--muted); }
+.logo-tamanos { display: flex; align-items: center; gap: 16px; }
+
+.logo-marca { display: block; max-width: 100%; height: auto; }
+
+@media (max-width: 760px) {
+  .logo-editor { grid-template-columns: 1fr; }
+  .logo-vista-previa { position: static; }
+}
