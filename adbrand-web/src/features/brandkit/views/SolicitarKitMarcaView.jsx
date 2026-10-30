@@ -3,6 +3,7 @@ import { useSolicitarKitMarca } from '../viewmodels/useSolicitarKitMarca'
 import KitMarcaResultadoView from './KitMarcaResultadoView'
 import EditarKitMarcaView from './EditarKitMarcaView'
 import EditarLogoView from './EditarLogoView'
+import EditarColoresView from './EditarColoresView'
 import './SolicitarKitMarcaView.css'
 
 function Campo({ etiqueta, error, children, ayuda }) {
@@ -57,11 +58,20 @@ export default function SolicitarKitMarcaView() {
     empezarEdicionLogo,
     cancelarEdicionLogo,
     terminarEdicionLogo,
+    editandoColores,
+    empezarEdicionColores,
+    cancelarEdicionColores,
+    terminarEdicionColores,
   } = useSolicitarKitMarca()
 
   function alEnviar(evento) {
     evento.preventDefault()
     generar()
+  }
+
+  // HU-30: cambiar los colores del kit abierto.
+  if (mostrarResultado && kit && editandoColores) {
+    return <EditarColoresView kit={kit} alGuardar={terminarEdicionColores} alCancelar={cancelarEdicionColores} />
   }
 
   // HU-29: diseñar el logo del kit abierto.
@@ -85,6 +95,7 @@ export default function SolicitarKitMarcaView() {
         alVolver={volverAlFormulario}
         alEditar={empezarEdicion}
         alDisenarLogo={empezarEdicionLogo}
+        alEditarColores={empezarEdicionColores}
       />
     )
   }

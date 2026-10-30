@@ -52,7 +52,7 @@ function Tipografia({ primaria, secundaria }) {
 }
 
 // HU-32: "alEditar" abre la edición manual de colores, tipografías y logotipo.
-// HU-29: "alDisenarLogo" abre el editor interactivo del logo.
+// HU-29: "alDisenarLogo" abre el editor interactivo del logo. HU-30: "alEditarColores" abre el editor de colores.
 export default function KitMarcaResultadoView({
   kit,
   aviso,
@@ -62,6 +62,7 @@ export default function KitMarcaResultadoView({
   alVolver,
   alEditar,
   alDisenarLogo,
+  alEditarColores,
 }) {
   const [copiado, setCopiado] = useState(null)
 
@@ -132,6 +133,11 @@ export default function KitMarcaResultadoView({
         {alEditar && (
           <button type="button" className="boton-secundario" onClick={alEditar} disabled={generando}>
             ✏️ Editar
+          </button>
+        )}
+        {alEditarColores && (
+          <button type="button" className="boton-secundario" onClick={alEditarColores} disabled={generando}>
+            🎨 Colores
           </button>
         )}
         {alDisenarLogo && (

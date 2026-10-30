@@ -60,3 +60,9 @@ export const FORMAS_LOGO = [
 
 // Tipografías que la web ya carga (index.css) más dos genéricas que tiene cualquier navegador.
 export const TIPOGRAFIAS_LOGO = ['Bricolage Grotesque', 'Plus Jakarta Sans', 'JetBrains Mono', 'Georgia', 'Arial']
+
+// HU-30: guarda solo la paleta como una versión nueva del kit.
+// 400 con "campos" (colores[i].hex) si un color está mal escrito, o con codigo COLOR_REPETIDO si se repite uno.
+export function guardarColoresKitMarca(id, colores) {
+  return apiRequest(`/kit-marca/${id}/colores`, { method: 'PUT', body: { colores } })
+}

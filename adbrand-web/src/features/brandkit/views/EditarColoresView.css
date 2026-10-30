@@ -1,0 +1,10 @@
+/* EditarColoresView.css: editor de colores de la marca (HU-30).
+   Las filas de colores usan las clases del editor de la HU-32 (.editar-color, .editar-franja...). */
+.pagina.pagina-colores { max-width: 960px; }
+
+.colores-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}

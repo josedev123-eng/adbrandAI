@@ -30,6 +30,8 @@ export function useSolicitarKitMarca() {
   const [editando, setEditando] = useState(false)
   // HU-29: el editor del logo se abre aparte del editor de la HU-32.
   const [editandoLogo, setEditandoLogo] = useState(false)
+  // HU-30: el editor de colores también se abre aparte.
+  const [editandoColores, setEditandoColores] = useState(false)
 
   useEffect(() => {
     listarKitsMarca()
@@ -136,6 +138,23 @@ export function useSolicitarKitMarca() {
     setAviso({ tipo: 'exito', texto: 'Logo guardado como una versión nueva del kit' })
   }
 
+  // HU-30: editor de colores.
+  function empezarEdicionColores() {
+    setAviso(null)
+    setEditandoColores(true)
+  }
+
+  function cancelarEdicionColores() {
+    setEditandoColores(false)
+  }
+
+  function terminarEdicionColores(actualizado) {
+    setKit(actualizado)
+    setKitsGuardados((actuales) => actuales.map((k) => (k.id === actualizado.id ? actualizado : k)))
+    setEditandoColores(false)
+    setAviso({ tipo: 'exito', texto: 'Colores guardados como una versión nueva del kit' })
+  }
+
   function reiniciar() {
     setFormulario(FORMULARIO_VACIO)
     setErrores({})
@@ -168,5 +187,9 @@ export function useSolicitarKitMarca() {
     empezarEdicionLogo,
     cancelarEdicionLogo,
     terminarEdicionLogo,
+    editandoColores,
+    empezarEdicionColores,
+    cancelarEdicionColores,
+    terminarEdicionColores,
   }
 }
