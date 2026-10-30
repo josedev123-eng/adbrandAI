@@ -24,15 +24,18 @@ public class LoginService {
     private final UsuarioRepository usuarios;
     private final PasswordEncoder codificador;
     private final ServicioJwt jwt;
+    private final TokenRenovacionService renovaciones;
 
     // Hash de una contraseña que nadie usa: si el correo no existe se compara igual,
     // así la respuesta tarda lo mismo y no revela qué correos están registrados.
     private final String hashDeRelleno;
 
-    public LoginService(UsuarioRepository usuarios, PasswordEncoder codificador, ServicioJwt jwt) {
+    public LoginService(UsuarioRepository usuarios, PasswordEncoder codificador, ServicioJwt jwt,
+                        TokenRenovacionService renovaciones) {
         this.usuarios = usuarios;
         this.codificador = codificador;
         this.jwt = jwt;
+        this.renovaciones = renovaciones;
         this.hashDeRelleno = codificador.encode("cuenta-que-no-existe");
     }
 
@@ -53,7 +56,9 @@ public class LoginService {
         }
 
         usuario.setUltimoAcceso(LocalDateTime.now());
-        return new LoginResponse(jwt.generar(usuario), UsuarioResponse.desde(usuario));
+        // HU 43: además del JWT de acceso se entrega un token de renovación de larga duración.
+        return new LoginResponse(jwt.generar(usuario), renovaciones.crear(usuario.getId()),
+                UsuarioResponse.desde(usuario));
     }
 
     // El usuario del token. Si la cuenta ya no existe o se desactivó, la sesión deja de servir.

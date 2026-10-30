@@ -74,6 +74,7 @@ class LoginTest {
         MvcResult resultado = iniciarSesion(CORREO, CONTRASENA)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.tokenRenovacion").isString())
                 .andExpect(jsonPath("$.usuario.id").value(usuario.getId()))
                 .andExpect(jsonPath("$.usuario.nombreEmpresa").value("Bodega San Martín"))
                 .andExpect(jsonPath("$.usuario.contrasenaHash").doesNotExist())

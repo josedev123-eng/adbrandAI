@@ -1,15 +1,19 @@
 package com.adbrand.core.auth.controller;
 
 import com.adbrand.core.auth.dto.CambiarContrasenaRequest;
+import com.adbrand.core.auth.dto.CerrarSesionRequest;
 import com.adbrand.core.auth.dto.LoginRequest;
 import com.adbrand.core.auth.dto.LoginResponse;
 import com.adbrand.core.auth.dto.MensajeResponse;
 import com.adbrand.core.auth.dto.RegistroRequest;
+import com.adbrand.core.auth.dto.RenovarRequest;
+import com.adbrand.core.auth.dto.RenovarResponse;
 import com.adbrand.core.auth.dto.SolicitarCodigoRequest;
 import com.adbrand.core.auth.dto.UsuarioResponse;
 import com.adbrand.core.auth.service.LoginService;
 import com.adbrand.core.auth.service.RecuperacionService;
 import com.adbrand.core.auth.service.RegistroService;
+import com.adbrand.core.auth.service.TokenRenovacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,11 +32,14 @@ public class AuthController {
     private final RegistroService registro;
     private final LoginService login;
     private final RecuperacionService recuperacion;
+    private final TokenRenovacionService renovaciones;
 
-    public AuthController(RegistroService registro, LoginService login, RecuperacionService recuperacion) {
+    public AuthController(RegistroService registro, LoginService login, RecuperacionService recuperacion,
+                          TokenRenovacionService renovaciones) {
         this.registro = registro;
         this.login = login;
         this.recuperacion = recuperacion;
+        this.renovaciones = renovaciones;
     }
 
     // HU 21: 201 con la cuenta creada, 400 si falta algo y 409 si el correo ya existe.
@@ -52,6 +59,20 @@ public class AuthController {
     @GetMapping("/sesion")
     public UsuarioResponse sesion(@RequestAttribute("usuarioId") Long usuarioId) {
         return login.sesion(usuarioId);
+    }
+
+    // HU 43: ruta pública; la app cambia un token de renovación vigente por un par nuevo.
+    @PostMapping("/renovar")
+    public RenovarResponse renovar(@Valid @RequestBody RenovarRequest datos) {
+        TokenRenovacionService.Renovacion renovada = renovaciones.renovar(datos.tokenRenovacion());
+        return new RenovarResponse(renovada.token(), renovada.tokenRenovacion());
+    }
+
+    // HU 43: ruta pública e idempotente; revoca el token de renovación al cerrar sesión.
+    @PostMapping("/cerrar-sesion")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cerrarSesion(@Valid @RequestBody CerrarSesionRequest datos) {
+        renovaciones.revocar(datos.tokenRenovacion());
     }
 
     // HU 24: siempre 200 con el mismo mensaje, exista o no el correo.
