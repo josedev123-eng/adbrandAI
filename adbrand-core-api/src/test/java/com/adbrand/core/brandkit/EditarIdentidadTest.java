@@ -129,4 +129,14 @@ class EditarIdentidadTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("KIT_MARCA_NO_ENCONTRADO"));
     }
+
+    @Test
+    void losAnunciosNuevosTomanElKitEditadoMasReciente() throws Exception {
+        guardarIdentidad(duenio, IDENTIDAD).andExpect(status().isOk());
+
+        assertThat(kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(duenio.getId()))
+                .get().extracting(KitMarca::getVozMarca)
+                .isEqualTo("Elegante y sobria, trata de usted al cliente.");
+        assertThat(kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(otraEmpresa.getId())).isEmpty();
+    }
 }

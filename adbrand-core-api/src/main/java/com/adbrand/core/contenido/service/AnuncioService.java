@@ -1,7 +1,9 @@
 package com.adbrand.core.contenido.service;
 
+import com.adbrand.core.brandkit.repository.KitMarcaRepository;
 import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.GenerarAnuncioRequest;
+import com.adbrand.core.contenido.dto.IdentidadMarca;
 import com.adbrand.core.contenido.dto.PromptAnuncio;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.entity.EstadoContenido;
@@ -24,20 +26,30 @@ public class AnuncioService {
     private final ServicioIa ia;
     private final FiltroContenido filtro;
     private final ContenidoRepository contenidos;
+    private final KitMarcaRepository kits;
 
     public AnuncioService(PerfilNegocioService perfilService, PlantillaPromptAnuncio plantilla, ServicioIa ia,
-            FiltroContenido filtro, ContenidoRepository contenidos) {
+            FiltroContenido filtro, ContenidoRepository contenidos, KitMarcaRepository kits) {
         this.perfilService = perfilService;
         this.plantilla = plantilla;
         this.ia = ia;
         this.filtro = filtro;
         this.contenidos = contenidos;
+        this.kits = kits;
+    }
+
+    // HU 31: la identidad del kit editado más reciente; null si el negocio aún no tiene kit.
+    private IdentidadMarca identidadActual(Long usuarioId) {
+        return kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(usuarioId)
+                .map(IdentidadMarca::desde)
+                .orElse(null);
     }
 
     public AnuncioGeneradoResponse generar(Long usuarioId, GenerarAnuncioRequest datos) {
         // HU 10, criterio 1: sin perfil registrado no se puede generar (responde 404 PERFIL_NO_ENCONTRADO).
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
-        PromptAnuncio prompt = plantilla.construir(perfil, datos.oferta(), datos.redSocial());
+        PromptAnuncio prompt = plantilla.construir(perfil, datos.oferta(), datos.redSocial(),
+                identidadActual(usuarioId));
         // HU 17: los tokens usados se suman a la empresa que pidió el anuncio.
         String texto = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.ANUNCIO);
 
@@ -75,7 +87,8 @@ public class AnuncioService {
 
         // Reutilizar los parámetros originales: redSocial, tono, oferta
         // Pero usar el perfil actual (puede haber cambiado el tono)
-        PromptAnuncio prompt = plantilla.construir(perfil, original.getOferta(), original.getRedSocial());
+        PromptAnuncio prompt = plantilla.construir(perfil, original.getOferta(), original.getRedSocial(),
+                identidadActual(usuarioId));
         String texto = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.REGENERAR_ANUNCIO);
 
         // Pasar por el filtro nuevamente

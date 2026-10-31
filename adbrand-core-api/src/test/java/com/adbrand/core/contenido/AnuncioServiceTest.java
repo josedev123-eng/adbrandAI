@@ -11,6 +11,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.adbrand.core.brandkit.entity.KitMarca;
+import com.adbrand.core.brandkit.repository.KitMarcaRepository;
 import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.GenerarAnuncioRequest;
 import com.adbrand.core.contenido.dto.RedSocial;
@@ -44,6 +46,7 @@ class AnuncioServiceTest {
     private ServicioIa ia;
     private FiltroContenido filtro;
     private ContenidoRepository contenidos;
+    private KitMarcaRepository kits;
     private AnuncioService servicio;
 
     @BeforeEach
@@ -52,7 +55,8 @@ class AnuncioServiceTest {
         ia = mock(ServicioIa.class);
         filtro = mock(FiltroContenido.class);
         contenidos = mock(ContenidoRepository.class);
-        servicio = new AnuncioService(perfilService, new PlantillaPromptAnuncio(), ia, filtro, contenidos);
+        kits = mock(KitMarcaRepository.class);
+        servicio = new AnuncioService(perfilService, new PlantillaPromptAnuncio(), ia, filtro, contenidos, kits);
 
         // Por defecto el filtro aprueba y "guardar" devuelve lo mismo que recibe.
         when(filtro.revisar(anyString())).thenReturn(ResultadoRevision.sinObservaciones());
@@ -237,5 +241,36 @@ class AnuncioServiceTest {
 
         verify(ia).generarTexto(anyString(), anyString(), eq(1L), eq(OrigenConsumo.ANUNCIO));
         verify(ia).generarTexto(anyString(), anyString(), eq(1L), eq(OrigenConsumo.REGENERAR_ANUNCIO));
+    }
+
+    // HU 31, criterio 2: después de guardar la identidad, el anuncio nuevo usa la voz del kit.
+    @Test
+    void usaLaVozDelKitGuardadoAlGenerar() {
+        perfilConTono(Tono.CERCANO);
+        KitMarca kit = new KitMarca();
+        kit.setTipografiaPrimaria("Georgia");
+        kit.setVozMarca("Elegante y sobria, trata de usted al cliente.");
+        when(kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(1L)).thenReturn(Optional.of(kit));
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Texto del anuncio");
+
+        servicio.generar(1L, new GenerarAnuncioRequest("2 panetones por S/ 35", RedSocial.INSTAGRAM));
+
+        ArgumentCaptor<String> promptUsuario = ArgumentCaptor.forClass(String.class);
+        verify(ia).generarTexto(anyString(), promptUsuario.capture(), eq(1L), eq(OrigenConsumo.ANUNCIO));
+        assertThat(promptUsuario.getValue())
+                .contains("Voz de la marca: Elegante y sobria, trata de usted al cliente.")
+                .contains("Escribe con la voz de la marca");
+    }
+
+    @Test
+    void sinKitElPromptSoloLlevaElTonoDelPerfil() {
+        perfilConTono(Tono.CERCANO);
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Texto del anuncio");
+
+        servicio.generar(1L, new GenerarAnuncioRequest("2 panetones por S/ 35", RedSocial.INSTAGRAM));
+
+        ArgumentCaptor<String> promptUsuario = ArgumentCaptor.forClass(String.class);
+        verify(ia).generarTexto(anyString(), promptUsuario.capture(), eq(1L), eq(OrigenConsumo.ANUNCIO));
+        assertThat(promptUsuario.getValue()).contains("tutea al cliente").doesNotContain("Voz de la marca");
     }
 }
