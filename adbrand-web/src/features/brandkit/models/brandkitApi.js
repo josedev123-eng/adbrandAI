@@ -66,3 +66,11 @@ export const TIPOGRAFIAS_LOGO = ['Bricolage Grotesque', 'Plus Jakarta Sans', 'Je
 export function guardarColoresKitMarca(id, colores) {
   return apiRequest(`/kit-marca/${id}/colores`, { method: 'PUT', body: { colores } })
 }
+
+// HU-30: texto negro o blanco según qué se lea mejor sobre un color #RRGGBB (luminancia relativa, como en WCAG).
+export function textoLegible(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+  const canal = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  const luminancia = 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b)
+  return luminancia > 0.4 ? '#1A1A1A' : '#FFFFFF'
+}

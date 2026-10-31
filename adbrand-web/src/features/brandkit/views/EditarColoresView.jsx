@@ -1,6 +1,8 @@
 // View: editor de los colores de la marca con selector (HU-30). La lógica está en useEditarColores.
 // Usa los estilos del editor de la HU-32 (EditarKitMarcaView.css) para que se vean igual.
+// Criterio 1: al lado, un anuncio de ejemplo pintado con los colores, que cambia mientras se editan.
 import { useEditarColores } from '../viewmodels/useEditarColores'
+import AnuncioVistaPrevia from './AnuncioVistaPrevia'
 import './EditarKitMarcaView.css'
 import './EditarColoresView.css'
 
@@ -103,6 +105,12 @@ export default function EditarColoresView({ kit, alGuardar, alCancelar }) {
             </button>
           </div>
         </form>
+
+        <section className="tarjeta colores-vista-previa" aria-label="Vista previa en un anuncio">
+          <h2>Así se ve en un anuncio</h2>
+          <AnuncioVistaPrevia colores={coloresValidos} nombreNegocio={kit.nombreNegocio} logoDiseno={kit.logoDiseno} />
+          <small>Color 1: fondo · Color 2: botón · Color 3: detalle de la oferta.</small>
+        </section>
       </div>
     </main>
   )

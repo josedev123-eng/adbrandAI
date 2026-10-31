@@ -4,7 +4,33 @@
 
 .colores-editor {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 20px;
   align-items: start;
+}
+
+.colores-vista-previa { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.colores-vista-previa h2 { margin: 0; font-size: 1rem; }
+.colores-vista-previa small { color: var(--muted); }
+
+/* Anuncio de ejemplo (AnuncioVistaPrevia) */
+.anuncio-vista-previa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.anuncio-cabecera { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+.anuncio-oferta { margin: 0; font-size: 1.25rem; font-weight: 800; line-height: 1.3; }
+.anuncio-oferta span { padding: 0 6px; border-radius: 6px; white-space: nowrap; }
+.anuncio-texto { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+.anuncio-boton { align-self: flex-start; padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 0.9rem; }
+.anuncio-vacio { margin: 0; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .colores-editor { grid-template-columns: 1fr; }
+  .colores-vista-previa { position: static; }
 }
