@@ -1,6 +1,7 @@
 package com.adbrand.core.network
 
 import com.adbrand.core.session.GestorSesion
+import com.adbrand.data.remote.RenovadorSesionRemoto
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,10 +24,11 @@ object ClienteApi {
             .build()
     }
 
-    // Cliente de la app: agrega el Bearer y, más adelante, el Authenticator de HU 43.
+    // Cliente de la app: agrega el Bearer y renueva la sesión automáticamente ante un 401 (HU 43).
     val cliente: OkHttpClient by lazy {
         clienteSinSesion.newBuilder()
             .addInterceptor(GestorSesion.interceptorToken())
+            .authenticator(AutenticadorRenovacion(RenovadorSesionRemoto(), GestorSesion))
             .build()
     }
 
