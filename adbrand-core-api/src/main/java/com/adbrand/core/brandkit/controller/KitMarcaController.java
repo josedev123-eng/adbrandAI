@@ -1,6 +1,7 @@
 package com.adbrand.core.brandkit.controller;
 
 import com.adbrand.core.brandkit.dto.EditarColoresRequest;
+import com.adbrand.core.brandkit.dto.EditarIdentidadRequest;
 import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.GenerarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
@@ -68,6 +69,14 @@ public class KitMarcaController {
     public KitMarcaGeneradoResponse guardarColores(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id,
                                                    @Valid @RequestBody EditarColoresRequest datos) {
         return edicion.guardarColores(usuarioId, id, datos);
+    }
+
+    // HU 31: guarda las tipografías y la voz de marca como una versión nueva del kit.
+    @PutMapping("/{id}/identidad")
+    public KitMarcaGeneradoResponse guardarIdentidad(@RequestAttribute("usuarioId") Long usuarioId,
+                                                     @PathVariable Long id,
+                                                     @Valid @RequestBody EditarIdentidadRequest datos) {
+        return edicion.guardarIdentidad(usuarioId, id, datos);
     }
 
     // HU 32: historial de ediciones, la más reciente primero.

@@ -1,6 +1,7 @@
 package com.adbrand.core.brandkit.service;
 
 import com.adbrand.core.brandkit.dto.EditarColoresRequest;
+import com.adbrand.core.brandkit.dto.EditarIdentidadRequest;
 import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest;
 import com.adbrand.core.brandkit.dto.EditarKitMarcaRequest.ColorKit;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
@@ -46,8 +47,9 @@ public class EdicionKitMarcaService {
         version.setTipografiaPrimaria(datos.tipografiaPrimaria());
         version.setTipografiaSecundaria(secundaria);
         version.setLogoConcepto(datos.logoConcepto());
-        // HU 29: la versión también guarda el logo diseñado que el kit tenía en ese momento.
+        // HU 29 y HU 31: la versión también guarda el logo diseñado y la voz que el kit tenía en ese momento.
         version.setLogoDiseno(kit.getLogoDiseno());
+        version.setVozMarca(kit.getVozMarca());
         versiones.save(version);
 
         // El kit queda con lo último guardado; @PreUpdate cambia fecha_actualizacion.
@@ -75,6 +77,17 @@ public class EdicionKitMarcaService {
         return guardarComoVersion(kit);
     }
 
+    // HU 31: guarda las tipografías y la voz de marca como una versión nueva del kit.
+    // Los anuncios que se generen después usan esta identidad (ver PlantillaPromptAnuncio).
+    @Transactional
+    public KitMarcaGeneradoResponse guardarIdentidad(Long usuarioId, Long kitId, EditarIdentidadRequest datos) {
+        KitMarca kit = buscarDelUsuario(usuarioId, kitId);
+        kit.setTipografiaPrimaria(datos.tipografiaPrimaria());
+        kit.setTipografiaSecundaria(datos.tipografiaSecundaria());
+        kit.setVozMarca(datos.vozMarca());
+        return guardarComoVersion(kit);
+    }
+
     // Deja en el historial una foto del kit tal como queda y lo guarda.
     private KitMarcaGeneradoResponse guardarComoVersion(KitMarca kit) {
         KitMarcaVersion version = new KitMarcaVersion();
@@ -84,6 +97,7 @@ public class EdicionKitMarcaService {
         version.setTipografiaSecundaria(kit.getTipografiaSecundaria());
         version.setLogoConcepto(kit.getLogoConcepto());
         version.setLogoDiseno(kit.getLogoDiseno());
+        version.setVozMarca(kit.getVozMarca());
         versiones.save(version);
         return KitMarcaGeneradoResponse.desde(kits.saveAndFlush(kit), false);
     }
