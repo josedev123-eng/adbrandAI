@@ -74,4 +74,45 @@ describe('EditarIdentidadView (HU-31)', () => {
     expect(screen.getByText('Describe la voz de tu marca.')).toBeInTheDocument()
     expect(guardarIdentidadKitMarca).not.toHaveBeenCalled()
   })
+
+  it('la tipografía secundaria va en el texto del anuncio; si está vacía se usa la principal', () => {
+    render(<EditarIdentidadView kit={KIT} alGuardar={vi.fn()} alCancelar={vi.fn()} />)
+    const texto = () => screen.getByText(/Ven a visitarnos/)
+    expect(texto()).toHaveStyle({ fontFamily: "'Bricolage Grotesque', sans-serif" })
+
+    fireEvent.change(screen.getByLabelText('Tipografía secundaria (textos)'), { target: { value: 'Arial' } })
+
+    expect(texto()).toHaveStyle({ fontFamily: "'Arial', sans-serif" })
+    expect(screen.getByText(/Oferta de la semana/)).toHaveStyle({ fontFamily: "'Bricolage Grotesque', sans-serif" })
+  })
+
+  it('muestra en su campo los errores que devuelve Spring', async () => {
+    guardarIdentidadKitMarca.mockRejectedValue({ status: 400, campos: { vozMarca: 'Máximo 1000 caracteres.' } })
+    const alGuardar = vi.fn()
+    render(<EditarIdentidadView kit={KIT} alGuardar={alGuardar} alCancelar={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar identidad' }))
+
+    expect(await screen.findByText('Máximo 1000 caracteres.')).toBeInTheDocument()
+    expect(alGuardar).not.toHaveBeenCalled()
+  })
+
+  it('si el kit ya no existe lo dice', async () => {
+    guardarIdentidadKitMarca.mockRejectedValue({ status: 404 })
+    render(<EditarIdentidadView kit={KIT} alGuardar={vi.fn()} alCancelar={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar identidad' }))
+
+    expect(await screen.findByText('Este kit ya no existe.')).toBeInTheDocument()
+  })
+
+  it('Cancelar vuelve al kit sin guardar', () => {
+    const alCancelar = vi.fn()
+    render(<EditarIdentidadView kit={KIT} alGuardar={vi.fn()} alCancelar={alCancelar} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(alCancelar).toHaveBeenCalled()
+    expect(guardarIdentidadKitMarca).not.toHaveBeenCalled()
+  })
 })

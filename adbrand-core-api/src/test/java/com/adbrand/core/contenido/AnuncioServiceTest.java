@@ -273,4 +273,22 @@ class AnuncioServiceTest {
         verify(ia).generarTexto(anyString(), promptUsuario.capture(), eq(1L), eq(OrigenConsumo.ANUNCIO));
         assertThat(promptUsuario.getValue()).contains("tutea al cliente").doesNotContain("Voz de la marca");
     }
+
+    // HU 31, criterio 2: regenerar también usa la voz guardada más reciente, no la del día del anuncio original.
+    @Test
+    void regenerarUsaLaVozActualDelKit() {
+        perfilConTono(Tono.CERCANO);
+        KitMarca kit = new KitMarca();
+        kit.setVozMarca("Divertida, con juegos de palabras.");
+        when(kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(1L)).thenReturn(Optional.of(kit));
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Versión regenerada");
+        when(contenidos.findById(10L)).thenReturn(Optional.of(contenidoDe(10L, "Promo", RedSocial.FACEBOOK)));
+
+        servicio.regenerar(1L, 10L);
+
+        ArgumentCaptor<String> promptUsuario = ArgumentCaptor.forClass(String.class);
+        verify(ia).generarTexto(anyString(), promptUsuario.capture(), eq(1L), eq(OrigenConsumo.REGENERAR_ANUNCIO));
+        assertThat(promptUsuario.getValue()).contains("Voz de la marca: Divertida, con juegos de palabras.");
+        assertThat(contenidoGuardado().getPromptOriginal()).contains("Voz de la marca: Divertida");
+    }
 }
