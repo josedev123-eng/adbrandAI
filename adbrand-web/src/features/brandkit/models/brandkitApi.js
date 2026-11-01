@@ -67,6 +67,15 @@ export function guardarColoresKitMarca(id, colores) {
   return apiRequest(`/kit-marca/${id}/colores`, { method: 'PUT', body: { colores } })
 }
 
+// HU-31: guarda tipografías y voz de marca como una versión nueva del kit.
+// Los anuncios que se generen después escriben con esa voz. 400 con "campos" si falta algo.
+export function guardarIdentidadKitMarca(id, identidad) {
+  return apiRequest(`/kit-marca/${id}/identidad`, { method: 'PUT', body: identidad })
+}
+
+// HU-31: tipografías sugeridas en el editor de identidad (se puede escribir otra).
+export const TIPOGRAFIAS_SUGERIDAS = [...TIPOGRAFIAS_LOGO, 'Verdana', 'Times New Roman', 'Trebuchet MS']
+
 // HU-30: texto negro o blanco según qué se lea mejor sobre un color #RRGGBB (luminancia relativa, como en WCAG).
 export function textoLegible(hex) {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)

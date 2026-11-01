@@ -32,6 +32,7 @@ export function useSolicitarKitMarca() {
   const [editandoLogo, setEditandoLogo] = useState(false)
   // HU-30: el editor de colores también se abre aparte.
   const [editandoColores, setEditandoColores] = useState(false)
+  const [editandoIdentidad, setEditandoIdentidad] = useState(false)
 
   useEffect(() => {
     listarKitsMarca()
@@ -155,6 +156,23 @@ export function useSolicitarKitMarca() {
     setAviso({ tipo: 'exito', texto: 'Colores guardados como una versión nueva del kit' })
   }
 
+  // HU-31: editor de identidad visual (tipografías y voz de marca).
+  function empezarEdicionIdentidad() {
+    setAviso(null)
+    setEditandoIdentidad(true)
+  }
+
+  function cancelarEdicionIdentidad() {
+    setEditandoIdentidad(false)
+  }
+
+  function terminarEdicionIdentidad(actualizado) {
+    setKit(actualizado)
+    setKitsGuardados((actuales) => actuales.map((k) => (k.id === actualizado.id ? actualizado : k)))
+    setEditandoIdentidad(false)
+    setAviso({ tipo: 'exito', texto: 'Identidad guardada: tus próximos anuncios usarán esta voz' })
+  }
+
   function reiniciar() {
     setFormulario(FORMULARIO_VACIO)
     setErrores({})
@@ -191,5 +209,9 @@ export function useSolicitarKitMarca() {
     empezarEdicionColores,
     cancelarEdicionColores,
     terminarEdicionColores,
+    editandoIdentidad,
+    empezarEdicionIdentidad,
+    cancelarEdicionIdentidad,
+    terminarEdicionIdentidad,
   }
 }

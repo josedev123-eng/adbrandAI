@@ -1,0 +1,10 @@
+/* EditarIdentidadView.css: editor de tipografías y voz de marca (HU-31).
+   El diseño en dos columnas y el anuncio de ejemplo vienen de EditarColoresView.css. */
+.identidad-voz {
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.identidad-voz p { margin: 6px 0 0; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }

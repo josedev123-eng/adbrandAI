@@ -4,6 +4,7 @@ import KitMarcaResultadoView from './KitMarcaResultadoView'
 import EditarKitMarcaView from './EditarKitMarcaView'
 import EditarLogoView from './EditarLogoView'
 import EditarColoresView from './EditarColoresView'
+import EditarIdentidadView from './EditarIdentidadView'
 import './SolicitarKitMarcaView.css'
 
 function Campo({ etiqueta, error, children, ayuda }) {
@@ -62,11 +63,22 @@ export default function SolicitarKitMarcaView() {
     empezarEdicionColores,
     cancelarEdicionColores,
     terminarEdicionColores,
+    editandoIdentidad,
+    empezarEdicionIdentidad,
+    cancelarEdicionIdentidad,
+    terminarEdicionIdentidad,
   } = useSolicitarKitMarca()
 
   function alEnviar(evento) {
     evento.preventDefault()
     generar()
+  }
+
+  // HU-31: cambiar tipografías y voz de marca del kit abierto.
+  if (mostrarResultado && kit && editandoIdentidad) {
+    return (
+      <EditarIdentidadView kit={kit} alGuardar={terminarEdicionIdentidad} alCancelar={cancelarEdicionIdentidad} />
+    )
   }
 
   // HU-30: cambiar los colores del kit abierto.
@@ -96,6 +108,7 @@ export default function SolicitarKitMarcaView() {
         alEditar={empezarEdicion}
         alDisenarLogo={empezarEdicionLogo}
         alEditarColores={empezarEdicionColores}
+        alEditarIdentidad={empezarEdicionIdentidad}
       />
     )
   }
