@@ -1,4 +1,5 @@
 // View: informe consolidado de las campañas de la empresa (HU-37). La lógica está en useInformeCampanas.
+// HU-38: botón para descargar el mismo informe en PDF (solo si hay campañas).
 import { formatearFecha, NOMBRES_ESTADO, NOMBRES_RED } from '../models/reportesApi'
 import { useInformeCampanas } from '../viewmodels/useInformeCampanas'
 import './InformeCampanasView.css'
@@ -13,7 +14,7 @@ function Total({ etiqueta, valor, clase }) {
 }
 
 export default function InformeCampanasView() {
-  const { informe, error, cargando, sinCampanas } = useInformeCampanas()
+  const { informe, error, cargando, sinCampanas, descargando, descargarPdf } = useInformeCampanas()
 
   if (cargando) {
     return <main className="pagina"><p className="cargando">Cargando tu informe...</p></main>
@@ -24,6 +25,13 @@ export default function InformeCampanasView() {
       <header className="pagina-cabecera">
         <h1>Informes</h1>
         <p>El registro de todas las campañas que generaste, para guardarlo o presentarlo.</p>
+        {informe && !sinCampanas && (
+          <div className="informe-descargas">
+            <button type="button" className="boton-primario" onClick={descargarPdf} disabled={descargando}>
+              {descargando ? 'Preparando PDF...' : '📄 Descargar PDF'}
+            </button>
+          </div>
+        )}
       </header>
 
       {error && <div className="aviso aviso-error">{error}</div>}

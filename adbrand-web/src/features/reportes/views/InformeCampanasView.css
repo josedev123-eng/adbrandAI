@@ -49,3 +49,6 @@
   .informe-resumen { grid-template-columns: 1fr 1fr; }
   .informe-total-empresa { grid-column: 1 / -1; }
 }
+
+/* HU-38: botones de descarga del informe. */
+.informe-descargas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

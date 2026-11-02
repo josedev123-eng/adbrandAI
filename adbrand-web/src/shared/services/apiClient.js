@@ -20,20 +20,33 @@ export async function apiRequest(ruta, { method = 'GET', body } = {}) {
 
   const datos = await respuesta.json().catch(() => null)
 
-  if (!respuesta.ok) {
-    // HU-22: un 401 con token significa que la sesión venció o se alteró. El 401 del propio
-    // inicio de sesión (sin token) no cierra nada: solo es una contraseña equivocada.
-    if (respuesta.status === 401 && token) {
-      borrarToken()
-      window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
-    }
-
-    // Spring devuelve { codigo, mensaje, campos } (ver shared/error/ErrorResponse.java)
-    const error = new Error(datos?.mensaje ?? 'La solicitud no se pudo completar')
-    error.status = respuesta.status
-    error.codigo = datos?.codigo
-    error.campos = datos?.campos ?? {}
-    throw error
-  }
+  if (!respuesta.ok) lanzarError(respuesta, datos, token)
   return datos
+}
+
+// HU-38: para descargar archivos (PDF, Word). Devuelve un Blob en lugar de JSON.
+export async function apiDescargar(ruta) {
+  const token = leerToken()
+  const respuesta = await fetch(`${BASE_URL}${ruta}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+
+  if (!respuesta.ok) lanzarError(respuesta, await respuesta.json().catch(() => null), token)
+  return respuesta.blob()
+}
+
+function lanzarError(respuesta, datos, token) {
+  // HU-22: un 401 con token significa que la sesión venció o se alteró. El 401 del propio
+  // inicio de sesión (sin token) no cierra nada: solo es una contraseña equivocada.
+  if (respuesta.status === 401 && token) {
+    borrarToken()
+    window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
+  }
+
+  // Spring devuelve { codigo, mensaje, campos } (ver shared/error/ErrorResponse.java)
+  const error = new Error(datos?.mensaje ?? 'La solicitud no se pudo completar')
+  error.status = respuesta.status
+  error.codigo = datos?.codigo
+  error.campos = datos?.campos ?? {}
+  throw error
 }
