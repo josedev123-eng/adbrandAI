@@ -46,6 +46,10 @@ public class PublicacionProgramada {
     @Column(name = "campana_id")
     private Long campanaId;
 
+    // HU 34: anuncio que se va a publicar (V19). Las publicaciones de la HU 33 no tienen anuncio.
+    @Column(name = "contenido_id")
+    private Long contenidoId;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -76,6 +80,9 @@ public class PublicacionProgramada {
 
     public Long getCampanaId() { return campanaId; }
     public void setCampanaId(Long campanaId) { this.campanaId = campanaId; }
+
+    public Long getContenidoId() { return contenidoId; }
+    public void setContenidoId(Long contenidoId) { this.contenidoId = contenidoId; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }
