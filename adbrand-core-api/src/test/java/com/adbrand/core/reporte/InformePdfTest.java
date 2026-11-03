@@ -15,7 +15,13 @@ import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
 import com.adbrand.core.negocio.entity.Tono;
+import com.jayway.jsonpath.JsonPath;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,6 +124,40 @@ class InformePdfTest {
         String texto = PlantillaInformePdfTest.texto(descargar(empresaB));
 
         assertThat(texto).contains("Café PDF B").contains("Promo de B").doesNotContain("Promo de A");
+    }
+
+    // Criterio 2: cada dato que muestra la pantalla de informes (el JSON de /api/reportes/campanas) está en el PDF.
+    @Test
+    void losDatosDelPdfCoincidenConLosDeLaPantalla() throws Exception {
+        anuncio(empresaA, "2 panetones por S/ 35", RedSocial.INSTAGRAM, EstadoContenido.APROBADO);
+        anuncio(empresaA, "Cigarrillos importados", RedSocial.FACEBOOK, EstadoContenido.RECHAZADO);
+        anuncio(empresaA, "Té milagroso", RedSocial.INSTAGRAM, EstadoContenido.DUDOSO);
+
+        String json = mvc.perform(get("/api/reportes/campanas")
+                        .header("Authorization", "Bearer " + jwt.generar(empresaA)))
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String pdf = ContenidoInformePdfTest.compacto(PlantillaInformePdfTest.texto(descargar(empresaA)));
+
+        Map<String, String> redes = Map.of("INSTAGRAM", "Instagram", "FACEBOOK", "Facebook");
+        Map<String, String> estados = Map.of("APROBADO", "Aprobado", "DUDOSO", "En revisión", "RECHAZADO", "Rechazado");
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        assertThat(pdf).contains(ContenidoInformePdfTest.compacto("Empresa: " + JsonPath.read(json, "$.empresa")));
+        assertThat(pdf).contains(ContenidoInformePdfTest.compacto("Campañas Aprobadas En revisión Rechazadas "
+                + JsonPath.read(json, "$.total") + " " + JsonPath.read(json, "$.aprobados") + " "
+                + JsonPath.read(json, "$.dudosos") + " " + JsonPath.read(json, "$.rechazados")));
+
+        List<Map<String, Object>> campanas = JsonPath.read(json, "$.campanas");
+        assertThat(campanas).hasSize(3);
+        StringBuilder filas = new StringBuilder();
+        for (Map<String, Object> campana : campanas) {
+            filas.append(LocalDateTime.parse((String) campana.get("fecha")).format(formato))
+                    .append(redes.get(campana.get("redSocial")))
+                    .append(campana.get("oferta"))
+                    .append(estados.get(campana.get("estado")));
+        }
+        // Las mismas filas y en el mismo orden que la pantalla.
+        assertThat(pdf).contains(ContenidoInformePdfTest.compacto(filas.toString()));
     }
 
     @Test
