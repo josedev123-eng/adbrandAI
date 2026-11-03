@@ -105,6 +105,30 @@ public class CalendarioService {
         return PublicacionResponse.desde(publicacion, campana, contenido);
     }
 
+    // HU 36: mueve la publicación a otro día (al arrastrarla en el calendario). La hora se mantiene.
+    @Transactional
+    public PublicacionResponse reprogramar(Long usuarioId, Long publicacionId, LocalDate fecha) {
+        PublicacionProgramada publicacion = repositorio.findByIdAndUsuarioId(publicacionId, usuarioId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("PUBLICACION_NO_ENCONTRADA",
+                        "La publicación no existe."));
+
+        // Una publicación ya publicada o cancelada se queda en su día.
+        if (publicacion.getEstado() != EstadoPublicacion.PROGRAMADA) {
+            throw new SolicitudInvalidaException("PUBLICACION_NO_MOVIBLE",
+                    "Solo se pueden mover las publicaciones programadas.");
+        }
+
+        // HU 36, criterio 2: no se mueve a un día (con su hora) que ya pasó.
+        if (LocalDateTime.of(fecha, publicacion.getHora()).isBefore(LocalDateTime.now())) {
+            throw new SolicitudInvalidaException("FECHA_PASADA",
+                    "No puedes mover una publicación a un día que ya pasó.");
+        }
+
+        publicacion.setFecha(fecha);
+        repositorio.saveAndFlush(publicacion);
+        return conDetalle(usuarioId, List.of(publicacion)).get(0);
+    }
+
     // Agrega la campaña (nombre y color) y el anuncio (oferta) de cada publicación.
     // Solo consulta lo que hace falta: si ninguna publicación tiene campaña o anuncio, no se consulta.
     private List<PublicacionResponse> conDetalle(Long usuarioId, List<PublicacionProgramada> publicaciones) {
