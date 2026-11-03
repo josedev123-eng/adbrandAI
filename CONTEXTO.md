@@ -79,8 +79,13 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 26 | Pagar la suscripción con tarjeta (pasarela simulada) | Spring `pago` (`POST /api/pagos/tarjeta`) + web `features/pagos` (`PagoTarjetaView`) |
 | 27 | Pagar la suscripción con Yape (QR y confirmación) | Spring `pago` (`/api/pagos/yape`) + web `features/pagos` (`PagoYapeView`) |
 | 28 | Comprobante del pago por correo | Spring `pago` y `notificacion` (`GET /api/pagos/{id}/comprobante`) + web `features/pagos` (`ConfirmacionPagoView`) |
+| 29 | Diseñar el logotipo del kit con vista previa | Spring `brandkit` (`PUT /api/kit-marca/{id}/logo`, columna `logo_diseno`, V36) + web `features/brandkit` (botón Diseñar logo en el kit; `EditarLogoView` y `LogoMarca`) |
+| 30 | Elegir los colores de la marca con selector y verlos en un anuncio | Spring `brandkit` (`PUT /api/kit-marca/{id}/colores`) + web `features/brandkit` (botón Colores en el kit; `EditarColoresView` y `AnuncioVistaPrevia`) |
+| 31 | Personalizar la identidad visual (tipografías y voz de marca); los anuncios nuevos usan esa voz | Spring `brandkit` (`PUT /api/kit-marca/{id}/identidad`, V37) y `contenido` (`PlantillaPromptAnuncio`) + web `features/brandkit` (botón Identidad en el kit; `EditarIdentidadView`) |
 | 32 | Editar a mano colores, tipografías y logotipo del kit de marca | Spring `brandkit` (`EdicionKitMarcaService`) + web `features/brandkit` (lista Tus kits guardados y botón Editar en el kit) |
 | 33 | Calendario mensual de publicaciones | Spring `calendario` (`GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`) + web `features/calendario` (entrada en el menú `Calendario`) |
+| 37 | Informe consolidado de las campañas de la empresa | Spring `reporte` (`GET /api/reportes/campanas`, índice V35) + web `features/reportes` (entrada en el menú `Informes`) |
+| 38 | Descargar el informe de campañas en PDF | Spring `reporte` (`GET /api/reportes/campanas/pdf`, OpenPDF) + web `features/reportes` (botón Descargar PDF en `Informes`) |
 
 Inicio de sesión del usuario PYME (HU 21, 22 y 24):
 - La web guarda el token en `localStorage` con la clave `adbrand-token` y lo manda en cada petición como `Authorization: Bearer <token>` (`apiClient.js`). Si Spring responde 401, la web borra el token y vuelve al inicio de sesión.
@@ -101,7 +106,12 @@ Spring Boot (`http://localhost:8080/api`):
 - `POST /kit-marca/generar`: genera Kit de Marca (logo, tipografías, paleta, voz) (HU 11).
 - `GET /kit-marca/{id}` y `GET /kit-marca`: consulta kits (HU 11). El kit de otra empresa responde 404 `KIT_MARCA_NO_ENCONTRADO`.
 - `PUT /kit-marca/{id}` con `{colores: [{hex, nombre}], tipografiaPrimaria, tipografiaSecundaria, logoConcepto}`: guarda los cambios en el kit y una versión en el historial. Colores en formato `#RRGGBB` (HU 32).
-- `GET /kit-marca/{id}/versiones`: historial de ediciones del kit, la más reciente primero (HU 32).
+- `GET /kit-marca/{id}/versiones`: historial de ediciones del kit, la más reciente primero (HU 32). Cada versión trae también `logoDiseno` y `vozMarca`.
+- `PUT /kit-marca/{id}/logo` con `{texto, forma, colorFondo, colorTexto, tipografia}`: guarda el logo diseñado y una versión nueva. `texto` hasta 20 caracteres, `forma` CIRCULO, CUADRADO o REDONDEADO, colores `#RRGGBB` (HU 29). El kit lo devuelve como `logoDiseno` (null si no tiene).
+- `PUT /kit-marca/{id}/colores` con `{colores: [{hex, nombre}]}`: cambia solo la paleta (1 a 8 colores `#RRGGBB`) y guarda una versión nueva; 400 `COLOR_REPETIDO` si un color se repite (HU 30).
+- `PUT /kit-marca/{id}/identidad` con `{tipografiaPrimaria, tipografiaSecundaria, vozMarca}`: cambia tipografías y voz (la principal y la voz son obligatorias; la secundaria es opcional) y guarda una versión nueva (HU 31).
+- `GET /reportes/campanas`: informe de la empresa del token, sin id en la URL. Responde `{empresa, total, aprobados, dudosos, rechazados, campanas: [{id, fecha, redSocial, oferta, estado}]}`, del más reciente al más antiguo (HU 37).
+- `GET /reportes/campanas/pdf`: el mismo informe en PDF (`application/pdf`), que se descarga como `informe-campanas-AAAA-MM-DD.pdf` (HU 38).
 - `POST /auth/registro`: crea la cuenta con `{nombre, nombreEmpresa, correo, contrasena}`; 201, o 409 `CORREO_REPETIDO` (HU 21).
 - `POST /auth/login` con `{correo, contrasena}`: responde `{token, usuario}`; 401 `CREDENCIALES_INVALIDAS` o 403 `CUENTA_INACTIVA` (HU 22).
 - `GET /auth/sesion`: el usuario del token, para recuperar la sesión al recargar la página (HU 22).
@@ -183,8 +193,11 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V32 | vista `vista_consumo_token_mensual` (tokens y generaciones por mes, con la hora de Lima, y por `usuario_id`; solo lectura) | 20 |
 | V33 | `verificacion_servidor` (servicio BACKEND, BASE_DATOS o IA; estado ACTIVO o CAIDO; tiempo_ms, detalle y fecha de cada verificación) | 18 |
 | V34 | vista `vista_historial_contenido` (contenidos APROBADO o RECHAZADO con el nombre del moderador o "Filtro automático", el motivo y la fecha de la decisión; solo lectura) | 16 |
+| V35 | índice de `contenido` por `usuario_id` y `fecha_creacion` (para el informe de campañas) | 37 |
+| V36 | `logo_diseno` (TEXT con el JSON del logo) en `kit_marca` y `kit_marca_version` | 29 |
+| V37 | `kit_marca_version.voz_marca` | 31 |
 
-Si la base local ya tenía una versión mayor cuando llegaron V13 a V17 o V30 a V34, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
+Si la base local ya tenía una versión mayor cuando llegaron V13 a V17 o V30 a V37, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
 
@@ -200,6 +213,25 @@ Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y s
 | 16 | Historial de contenidos aprobados y rechazados (`Historial de contenidos`) | V34 |
 
 Pruebas al cerrar el sprint: Spring 59, Django 170 y admin-web 102, todas en verde.
+
+### Resumen del Sprint 3 de Jose (`rama-jose`)
+
+| HU | Qué quedó | Migración |
+|---|---|---|
+| 37 | Informe consolidado de campañas (`Informes`): empresa, totales por estado y una fila por anuncio | V35 |
+| 29 | Editor del logo con vista previa; el logo se guarda como parámetros en JSON, no como imagen ni SVG | V36 |
+| 30 | Editor de colores con selector y un anuncio de ejemplo pintado con la paleta | — |
+| 31 | Editor de tipografías y voz de marca con vista previa; generar y regenerar anuncios usan la voz del kit editado más reciente | V37 |
+| 38 | Descargar el informe en PDF con la empresa, los totales y la tabla de campañas | — |
+
+Notas del sprint de Jose:
+
+- Cada editor del kit (logo, colores, identidad) guarda el cambio como una versión nueva en `kit_marca_version` con `EdicionKitMarcaService.guardarComoVersion`. Un editor nuevo debe usar el mismo método.
+- `logoDiseno` (HU 29) es `{texto, forma, colorFondo, colorTexto, tipografia}`; la web lo dibuja con `LogoMarca.jsx`. Lo puede usar la app móvil (HU 45) para mostrar el logo del kit.
+- HU 31: `PlantillaPromptAnuncio.construir(perfil, oferta, red, identidad)` agrega "Voz de la marca" al prompt si el kit tiene voz. El kit que cuenta es el editado más reciente (`KitMarcaRepository.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc`). Sin kit, el prompt queda igual que antes.
+- HU 38: el PDF se arma con OpenPDF (`reporte/pdf/PlantillaInformePdf`) a partir de `InformeService.campanas`, el mismo que usa la pantalla, para que los datos coincidan. El Word (HU 39) y el filtro por periodo (HU 40) deben partir del mismo `InformeService`.
+- En la web, `apiDescargar(ruta)` de `shared/services/apiClient.js` descarga archivos con el token (devuelve un Blob), y `guardarArchivo` y `nombreArchivoInforme` de `features/reportes/models/reportesApi.js` los guardan con su nombre.
+- Pruebas al cerrar el sprint: Spring 219 y web del usuario 45, todas en verde.
 
 ### Resumen del Sprint 2 de Edu (`rama-edu`)
 
@@ -287,7 +319,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 |---|---|---|
 | Spring Boot | JUnit 6, AssertJ, Mockito, `@WebMvcTest` | `.\mvnw test` (o `.\mvnw test -Dtest="NombreDeLaPrueba"`) |
 | Django | `APITestCase` de DRF | `python manage.py test <app>` |
-| Web de administración | Vitest y Testing Library | `npm test` |
+| Las dos webs | Vitest y Testing Library | `npm test` |
 | Las dos webs | ESLint | `npm run lint` |
 
 - En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA. Las pruebas de `auth`, `cuenta` y `EditarKitMarcaTest` usan `@SpringBootTest` con `@Transactional` para pasar por `FiltroJwt` con tokens reales: usan la base local y todo se deshace al terminar cada prueba.
@@ -325,7 +357,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17, V20 a V24 y V30 a V34). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
+- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17, V20 a V24 y V30 a V37). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.

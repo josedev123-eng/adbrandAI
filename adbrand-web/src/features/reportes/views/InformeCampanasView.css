@@ -1,0 +1,54 @@
+/* InformeCampanasView.css: informe consolidado de campañas (HU-37).
+   Usa las clases comunes .pagina, .tarjeta y .aviso. */
+.pagina.pagina-informe { max-width: 960px; }
+
+.pagina-informe .tarjeta { overflow-x: auto; }
+
+.aviso-info { background: var(--warn-soft); color: var(--warn); }
+
+.informe-resumen {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 12px 16px;
+}
+
+.informe-total { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.informe-total span { font-size: 0.78rem; color: var(--muted); }
+.informe-total b { font-size: 1.3rem; overflow-wrap: anywhere; }
+.informe-total-empresa b { font-size: 1.05rem; }
+.informe-total.estado-aprobado b { color: var(--ok); }
+.informe-total.estado-dudoso b { color: var(--warn); }
+.informe-total.estado-rechazado b { color: var(--bad); }
+
+.tabla-informe { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+
+.tabla-informe th,
+.tabla-informe td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla-informe th {
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.informe-fecha { white-space: nowrap; color: var(--muted); }
+
+.etiqueta-estado { font-size: 0.8rem; font-weight: 700; padding: 3px 12px; border-radius: 999px; white-space: nowrap; }
+.etiqueta-estado.estado-aprobado { background: var(--ok-soft); color: var(--ok); }
+.etiqueta-estado.estado-dudoso { background: var(--warn-soft); color: var(--warn); }
+.etiqueta-estado.estado-rechazado { background: var(--bad-soft); color: var(--bad); }
+
+@media (max-width: 640px) {
+  .informe-resumen { grid-template-columns: 1fr 1fr; }
+  .informe-total-empresa { grid-column: 1 / -1; }
+}
+
+/* HU-38: botones de descarga del informe. */
+.informe-descargas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

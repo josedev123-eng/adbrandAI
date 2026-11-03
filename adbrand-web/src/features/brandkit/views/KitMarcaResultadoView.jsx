@@ -1,5 +1,6 @@
 // View: visualización del Kit de Marca generado con opción a descargar (HU-11).
 import { useState } from 'react'
+import LogoMarca from './LogoMarca'
 import './KitMarcaResultadoView.css'
 
 function Seccion({ titulo, children, icono }) {
@@ -51,7 +52,20 @@ function Tipografia({ primaria, secundaria }) {
 }
 
 // HU-32: "alEditar" abre la edición manual de colores, tipografías y logotipo.
-export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar, alPedirOtra, alVolver, alEditar }) {
+// HU-29: "alDisenarLogo" abre el editor interactivo del logo. HU-30: "alEditarColores" abre el editor de colores.
+// HU-31: "alEditarIdentidad" abre el editor de tipografías y voz de marca.
+export default function KitMarcaResultadoView({
+  kit,
+  aviso,
+  generando,
+  alAceptar,
+  alPedirOtra,
+  alVolver,
+  alEditar,
+  alDisenarLogo,
+  alEditarColores,
+  alEditarIdentidad,
+}) {
   const [copiado, setCopiado] = useState(null)
 
   async function copiarJson() {
@@ -97,6 +111,7 @@ export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar
 
       <div className="kit-grid">
         <Seccion titulo="Concepto de Logo" icono="🎨">
+          {kit.logoDiseno && <LogoMarca diseno={kit.logoDiseno} tamano={120} />}
           <p className="kit-texto">{kit.logoConcepto || 'No disponible'}</p>
         </Seccion>
 
@@ -120,6 +135,21 @@ export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar
         {alEditar && (
           <button type="button" className="boton-secundario" onClick={alEditar} disabled={generando}>
             ✏️ Editar
+          </button>
+        )}
+        {alEditarColores && (
+          <button type="button" className="boton-secundario" onClick={alEditarColores} disabled={generando}>
+            🎨 Colores
+          </button>
+        )}
+        {alEditarIdentidad && (
+          <button type="button" className="boton-secundario" onClick={alEditarIdentidad} disabled={generando}>
+            🔤 Identidad
+          </button>
+        )}
+        {alDisenarLogo && (
+          <button type="button" className="boton-secundario" onClick={alDisenarLogo} disabled={generando}>
+            {kit.logoDiseno ? '🖌️ Editar logo' : '🖌️ Diseñar logo'}
           </button>
         )}
         <button type="button" className="boton-secundario" onClick={alPedirOtra} disabled={generando}>

@@ -40,6 +40,10 @@ public class KitMarca {
     @Column(name = "logo_concepto", columnDefinition = "TEXT")
     private String logoConcepto;
 
+    // HU 29: el logo diseñado en el editor, como JSON (V36).
+    @Column(name = "logo_diseno", columnDefinition = "TEXT")
+    private String logoDiseno;
+
     @Column(name = "tipografia_primaria", length = 200)
     private String tipografiaPrimaria;
 
@@ -91,6 +95,9 @@ public class KitMarca {
 
     public String getLogoConcepto() { return logoConcepto; }
     public void setLogoConcepto(String logoConcepto) { this.logoConcepto = logoConcepto; }
+
+    public String getLogoDiseno() { return logoDiseno; }
+    public void setLogoDiseno(String logoDiseno) { this.logoDiseno = logoDiseno; }
 
     public String getTipografiaPrimaria() { return tipografiaPrimaria; }
     public void setTipografiaPrimaria(String tipografiaPrimaria) { this.tipografiaPrimaria = tipografiaPrimaria; }

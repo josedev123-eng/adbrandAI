@@ -1,5 +1,6 @@
 package com.adbrand.core.contenido.service;
 
+import com.adbrand.core.contenido.dto.IdentidadMarca;
 import com.adbrand.core.contenido.dto.PromptAnuncio;
 import com.adbrand.core.contenido.dto.RedSocial;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
@@ -18,6 +19,14 @@ public class PlantillaPromptAnuncio {
             Responde solo con el texto del anuncio, sin títulos ni explicaciones.""";
 
     public PromptAnuncio construir(PerfilNegocioResponse perfil, String oferta, RedSocial red) {
+        return construir(perfil, oferta, red, null);
+    }
+
+    // HU 31, criterio 2: si el negocio guardó su identidad en el kit, el anuncio sigue esa voz de marca.
+    // identidad puede ser null (el negocio aún no tiene kit) y entonces solo manda el tono del perfil.
+    public PromptAnuncio construir(PerfilNegocioResponse perfil, String oferta, RedSocial red,
+                                   IdentidadMarca identidad) {
+        boolean conVoz = identidad != null && identidad.tieneVoz();
         String usuario = """
                 Escribe un anuncio para %s.
 
@@ -25,7 +34,7 @@ public class PlantillaPromptAnuncio {
                 Rubro: %s
                 Qué vende: %s
                 Público objetivo: %s
-                Tono: %s
+                Tono: %s%s
                 Oferta a anunciar: %s
 
                 Reglas:
@@ -33,7 +42,7 @@ public class PlantillaPromptAnuncio {
                 - Empieza con una frase que llame la atención de ese público.
                 - Incluye la oferta tal como está escrita, sin cambiar precios ni fechas.
                 - Termina invitando a comprar o a visitar el negocio.
-                - Agrega %d hashtags al final."""
+                - Agrega %d hashtags al final.%s"""
                 .formatted(
                         nombreDeRed(red),
                         perfil.nombreComercial(),
@@ -41,9 +50,11 @@ public class PlantillaPromptAnuncio {
                         perfil.descripcion() == null ? "No indicado" : perfil.descripcion(),
                         perfil.publicoObjetivo(),
                         instruccionDeTono(perfil.tono()),
+                        conVoz ? "\nVoz de la marca: " + identidad.vozMarca().trim() : "",
                         oferta.trim(),
                         red.getMaximoPalabras(),
-                        red.getHashtags());
+                        red.getHashtags(),
+                        conVoz ? "\n- Escribe con la voz de la marca; si choca con el tono, manda la voz." : "");
         return new PromptAnuncio(SISTEMA, usuario);
     }
 
