@@ -11,6 +11,7 @@ import com.adbrand.core.auth.repository.UsuarioRepository;
 import com.adbrand.core.auth.service.ServicioJwt;
 import com.adbrand.core.calendario.repository.CampanaRepository;
 import com.adbrand.core.calendario.repository.PublicacionProgramadaRepository;
+import java.time.YearMonth;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,11 @@ class CampanaTest {
     private static final String NAVIDAD = """
             {"nombre": "  Navidad 2026  ", "color": "#c62828", "tipo": "CAMPANA",
              "fechaInicio": "2026-12-01", "fechaFin": "2026-12-25"}""";
+
+    // Las publicaciones van en el mes siguiente: no se puede programar en el pasado (HU 34).
+    private static final YearMonth MES = YearMonth.now().plusMonths(1);
+    private static final String DIA_20 = MES.atDay(20).toString();
+    private static final String DIA_21 = MES.atDay(21).toString();
 
     @Autowired
     private MockMvc mvc;
@@ -142,13 +148,13 @@ class CampanaTest {
     void laPublicacionDeUnaCampanaLlevaSuNombreYColor() throws Exception {
         Long navidad = idDe(crearCampana(duenio, NAVIDAD));
 
-        programar(duenio, "Oferta de Navidad", "2026-12-20", navidad)
+        programar(duenio, "Oferta de Navidad", DIA_20, navidad)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.campanaId").value(navidad))
                 .andExpect(jsonPath("$.campanaNombre").value("Navidad 2026"))
                 .andExpect(jsonPath("$.campanaColor").value("#C62828"));
 
-        programar(duenio, "Post sin campaña", "2026-12-21", null)
+        programar(duenio, "Post sin campaña", DIA_21, null)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.campanaId").doesNotExist())
                 .andExpect(jsonPath("$.campanaColor").doesNotExist());
@@ -157,15 +163,15 @@ class CampanaTest {
     @Test
     void elFiltroPorCampanaSoloMuestraSusPublicaciones() throws Exception {
         Long navidad = idDe(crearCampana(duenio, NAVIDAD));
-        programar(duenio, "Oferta de Navidad", "2026-12-20", navidad).andExpect(status().isCreated());
-        programar(duenio, "Post sin campaña", "2026-12-21", null).andExpect(status().isCreated());
+        programar(duenio, "Oferta de Navidad", DIA_20, navidad).andExpect(status().isCreated());
+        programar(duenio, "Post sin campaña", DIA_21, null).andExpect(status().isCreated());
 
-        mvc.perform(get("/api/calendario").param("mes", "2026-12").header("Authorization", bearer(duenio)))
+        mvc.perform(get("/api/calendario").param("mes", MES.toString()).header("Authorization", bearer(duenio)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].campanaColor").value("#C62828"));
 
-        mvc.perform(get("/api/calendario").param("mes", "2026-12").param("campanaId", navidad.toString())
+        mvc.perform(get("/api/calendario").param("mes", MES.toString()).param("campanaId", navidad.toString())
                         .header("Authorization", bearer(duenio)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -176,17 +182,17 @@ class CampanaTest {
     void laCampanaDeOtraEmpresaDa404AlFiltrarYAlProgramar() throws Exception {
         Long ajena = idDe(crearCampana(otraEmpresa, NAVIDAD));
 
-        mvc.perform(get("/api/calendario").param("mes", "2026-12").param("campanaId", ajena.toString())
+        mvc.perform(get("/api/calendario").param("mes", MES.toString()).param("campanaId", ajena.toString())
                         .header("Authorization", bearer(duenio)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("CAMPANA_NO_ENCONTRADA"));
 
-        programar(duenio, "Intento", "2026-12-20", ajena)
+        programar(duenio, "Intento", DIA_20, ajena)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("CAMPANA_NO_ENCONTRADA"));
 
         assertThat(publicaciones.findByUsuarioIdAndFechaBetweenOrderByFechaAscHoraAsc(duenio.getId(),
-                java.time.LocalDate.of(2026, 12, 1), java.time.LocalDate.of(2026, 12, 31))).isEmpty();
+                MES.atDay(1), MES.atEndOfMonth())).isEmpty();
     }
 
     @Test
