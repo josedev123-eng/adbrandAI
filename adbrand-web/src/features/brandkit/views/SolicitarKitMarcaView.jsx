@@ -1,6 +1,7 @@
 // View: formulario para solicitar el Kit de Marca. La lógica está en useSolicitarKitMarca.
 import { useSolicitarKitMarca } from '../viewmodels/useSolicitarKitMarca'
 import KitMarcaResultadoView from './KitMarcaResultadoView'
+import EditarKitMarcaView from './EditarKitMarcaView'
 import './SolicitarKitMarcaView.css'
 
 function Campo({ etiqueta, error, children, ayuda }) {
@@ -45,11 +46,22 @@ export default function SolicitarKitMarcaView() {
     aceptarKit,
     volverAlFormulario,
     reiniciar,
+    kitsGuardados,
+    editando,
+    abrirKit,
+    empezarEdicion,
+    cancelarEdicion,
+    terminarEdicion,
   } = useSolicitarKitMarca()
 
   function alEnviar(evento) {
     evento.preventDefault()
     generar()
+  }
+
+  // HU-32: editar el kit abierto.
+  if (mostrarResultado && kit && editando) {
+    return <EditarKitMarcaView kit={kit} alGuardar={terminarEdicion} alCancelar={cancelarEdicion} />
   }
 
   if (mostrarResultado && kit) {
@@ -61,6 +73,7 @@ export default function SolicitarKitMarcaView() {
         alAceptar={aceptarKit}
         alPedirOtra={pedirOtraVersion}
         alVolver={volverAlFormulario}
+        alEditar={empezarEdicion}
       />
     )
   }
@@ -73,6 +86,27 @@ export default function SolicitarKitMarcaView() {
       </header>
 
       {aviso && <div className={`aviso aviso-${aviso.tipo}`}>{aviso.texto}</div>}
+
+      {kitsGuardados.length > 0 && (
+        <section className="tarjeta kits-guardados" aria-label="Tus kits guardados">
+          <h2>Tus kits guardados</h2>
+          <ul>
+            {kitsGuardados.map((guardado) => (
+              <li key={guardado.id}>
+                <button type="button" className="kit-guardado" onClick={() => abrirKit(guardado.id)}>
+                  <span className="kit-guardado-colores">
+                    {(guardado.paletaColores ?? '').split('\n').filter(Boolean).slice(0, 5).map((linea, i) => (
+                      <span key={i} style={{ background: linea.split(' - ')[0].trim() }} />
+                    ))}
+                  </span>
+                  <span className="kit-guardado-nombre">{guardado.nombreNegocio}</span>
+                  <span className="kit-guardado-sector">{guardado.sector}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="tarjeta">
         <h2>Datos de tu marca</h2>

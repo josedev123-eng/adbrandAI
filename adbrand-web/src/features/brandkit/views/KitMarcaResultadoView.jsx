@@ -50,7 +50,8 @@ function Tipografia({ primaria, secundaria }) {
   )
 }
 
-export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar, alPedirOtra, alVolver }) {
+// HU-32: "alEditar" abre la edición manual de colores, tipografías y logotipo.
+export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar, alPedirOtra, alVolver, alEditar }) {
   const [copiado, setCopiado] = useState(null)
 
   async function copiarJson() {
@@ -116,6 +117,11 @@ export default function KitMarcaResultadoView({ kit, aviso, generando, alAceptar
         <button type="button" className="boton-primario" onClick={alAceptar} disabled={generando}>
           ✓ Aceptar kit
         </button>
+        {alEditar && (
+          <button type="button" className="boton-secundario" onClick={alEditar} disabled={generando}>
+            ✏️ Editar
+          </button>
+        )}
         <button type="button" className="boton-secundario" onClick={alPedirOtra} disabled={generando}>
           {generando ? '✦ Generando otra versión...' : '🔁 Pedir otra versión'}
         </button>

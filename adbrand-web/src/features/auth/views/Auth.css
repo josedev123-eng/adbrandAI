@@ -1,0 +1,37 @@
+/* Auth.css: pantallas de registro, inicio de sesión y recuperar contraseña (HU-21, 22 y 24) */
+.pagina.pagina-auth { max-width: 460px; padding-top: 56px; }
+
+.auth-marca {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.auth-marca b { color: var(--ia); }
+
+.auth-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.boton-enlace {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-enlace:hover { text-decoration: underline; }
+
+/* HU-24: el código de 6 dígitos se lee mejor con letra de ancho fijo y separado */
+.campo .campo-codigo {
+  font-family: var(--f-mono);
+  font-size: 1.2rem;
+  letter-spacing: 0.4em;
+}

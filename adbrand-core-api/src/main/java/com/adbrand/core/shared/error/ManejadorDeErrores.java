@@ -42,4 +42,32 @@ public class ManejadorDeErrores {
         return new ErrorResponse("IA_NO_DISPONIBLE",
                 "El servicio de IA no responde en este momento. Intenta de nuevo en unos minutos.", Map.of());
     }
+
+    // HU 21: un dato único que ya existe, por ejemplo CORREO_REPETIDO.
+    @ExceptionHandler(ConflictoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse conflicto(ConflictoException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
+
+    // HU 22: credenciales incorrectas o sesión que ya no sirve.
+    @ExceptionHandler(NoAutenticadoException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse noAutenticado(NoAutenticadoException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
+
+    // HU 22: por ejemplo CUENTA_INACTIVA.
+    @ExceptionHandler(AccesoDenegadoException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse accesoDenegado(AccesoDenegadoException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
+
+    // HU 24: por ejemplo CODIGO_INVALIDO.
+    @ExceptionHandler(SolicitudInvalidaException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse solicitudInvalida(SolicitudInvalidaException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
 }

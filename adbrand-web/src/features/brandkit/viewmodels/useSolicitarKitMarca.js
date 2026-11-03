@@ -1,6 +1,6 @@
 // ViewModel: estado del formulario, validaciones y envío (HU-11).
-import { useState } from 'react'
-import { generarKitMarca, ESTILOS_VISUALES } from '../models/brandkitApi'
+import { useEffect, useState } from 'react'
+import { generarKitMarca, listarKitsMarca, obtenerKitMarca, ESTILOS_VISUALES } from '../models/brandkitApi'
 
 const FORMULARIO_VACIO = {
   nombreNegocio: '',
@@ -25,6 +25,15 @@ export function useSolicitarKitMarca() {
   const [mostrarResultado, setMostrarResultado] = useState(false)
   const [aviso, setAviso] = useState(null)
   const [generando, setGenerando] = useState(false)
+  // HU-32: kits ya guardados de la empresa y si se está editando el kit abierto.
+  const [kitsGuardados, setKitsGuardados] = useState([])
+  const [editando, setEditando] = useState(false)
+
+  useEffect(() => {
+    listarKitsMarca()
+      .then(setKitsGuardados)
+      .catch(() => setKitsGuardados([]))
+  }, [])
 
   function cambiarCampo(campo, valor) {
     setFormulario((actual) => ({ ...actual, [campo]: valor }))
@@ -41,6 +50,7 @@ export function useSolicitarKitMarca() {
     try {
       const creado = await generarKitMarca({ ...formulario })
       setKit(creado)
+      setKitsGuardados((actuales) => [...actuales, creado])
       setMostrarResultado(true)
       setAviso({ tipo: 'exito', texto: '¡Kit de Marca generado correctamente!' })
     } catch (error) {
@@ -78,6 +88,35 @@ export function useSolicitarKitMarca() {
     setAviso(null)
   }
 
+  // HU-32: abre un kit guardado; se pide otra vez a Spring para mostrar lo último que se guardó.
+  async function abrirKit(id) {
+    setAviso(null)
+    try {
+      setKit(await obtenerKitMarca(id))
+      setEditando(false)
+      setMostrarResultado(true)
+    } catch {
+      setAviso({ tipo: 'error', texto: 'No se pudo abrir el Kit de Marca.' })
+    }
+  }
+
+  function empezarEdicion() {
+    setAviso(null)
+    setEditando(true)
+  }
+
+  function cancelarEdicion() {
+    setEditando(false)
+  }
+
+  // HU-32: vuelve al kit con los cambios que devolvió Spring.
+  function terminarEdicion(actualizado) {
+    setKit(actualizado)
+    setKitsGuardados((actuales) => actuales.map((k) => (k.id === actualizado.id ? actualizado : k)))
+    setEditando(false)
+    setAviso({ tipo: 'exito', texto: 'Cambios guardados' })
+  }
+
   function reiniciar() {
     setFormulario(FORMULARIO_VACIO)
     setErrores({})
@@ -100,5 +139,11 @@ export function useSolicitarKitMarca() {
     aceptarKit,
     volverAlFormulario,
     reiniciar,
+    kitsGuardados,
+    editando,
+    abrirKit,
+    empezarEdicion,
+    cancelarEdicion,
+    terminarEdicion,
   }
 }

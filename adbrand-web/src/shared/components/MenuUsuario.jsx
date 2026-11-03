@@ -5,9 +5,11 @@ const OPCIONES = [
   { id: 'perfil', nombre: 'Mi negocio' },
   { id: 'anuncio', nombre: 'Crear anuncio' },
   { id: 'kit', nombre: 'Kit de Marca' },
+  { id: 'cuenta', nombre: 'Mi cuenta' },
 ]
 
-export default function MenuUsuario({ actual, alCambiar }) {
+// HU-22: "empresa" es el nombre de la empresa que inició sesión y "alSalir" cierra la sesión.
+export default function MenuUsuario({ actual, alCambiar, empresa, alSalir }) {
   return (
     <nav className="menu-usuario">
       <span className="menu-marca">
@@ -25,6 +27,14 @@ export default function MenuUsuario({ actual, alCambiar }) {
           </button>
         ))}
       </div>
+      {alSalir && (
+        <div className="menu-sesion">
+          {empresa && <span className="menu-empresa">{empresa}</span>}
+          <button type="button" className="menu-salir" onClick={alSalir}>
+            Cerrar sesión
+          </button>
+        </div>
+      )}
     </nav>
   )
 }

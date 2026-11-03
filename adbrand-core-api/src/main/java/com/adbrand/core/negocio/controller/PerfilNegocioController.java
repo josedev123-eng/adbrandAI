@@ -6,17 +6,16 @@ import com.adbrand.core.negocio.service.PerfilNegocioService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 // Controller: solo recibe la petición y llama al service. Sin lógica.
+// HU 22: el usuario es el que inició sesión; FiltroJwt deja su id en "usuarioId".
 @RestController
 @RequestMapping("/api/negocio/perfil")
 public class PerfilNegocioController {
-
-    // Temporal: hasta que exista el inicio de sesión (HU 21), todo se guarda para el usuario 1.
-    private static final Long USUARIO_DE_PRUEBA = 1L;
 
     private final PerfilNegocioService servicio;
 
@@ -25,12 +24,13 @@ public class PerfilNegocioController {
     }
 
     @GetMapping
-    public PerfilNegocioResponse obtener() {
-        return servicio.obtener(USUARIO_DE_PRUEBA);
+    public PerfilNegocioResponse obtener(@RequestAttribute("usuarioId") Long usuarioId) {
+        return servicio.obtener(usuarioId);
     }
 
     @PutMapping
-    public PerfilNegocioResponse guardar(@Valid @RequestBody PerfilNegocioRequest datos) {
-        return servicio.guardar(USUARIO_DE_PRUEBA, datos);
+    public PerfilNegocioResponse guardar(@RequestAttribute("usuarioId") Long usuarioId,
+                                         @Valid @RequestBody PerfilNegocioRequest datos) {
+        return servicio.guardar(usuarioId, datos);
     }
 }

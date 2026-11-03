@@ -4,3 +4,8 @@
 .menu-opciones { display: flex; gap: 4px; }
 .menu-opcion { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); cursor: pointer; }
 .menu-opcion-activa { background: var(--primary-soft); color: var(--primary); }
+/* HU-22: empresa que inició sesión y botón para cerrar la sesión, a la derecha */
+.menu-sesion { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.menu-empresa { font-weight: 600; font-size: 0.9rem; }
+.menu-salir { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 999px; font-weight: 600; color: var(--fg); cursor: pointer; }
+.menu-salir:hover { border-color: var(--bad); color: var(--bad); }
