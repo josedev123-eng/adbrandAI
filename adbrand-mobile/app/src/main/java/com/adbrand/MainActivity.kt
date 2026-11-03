@@ -9,9 +9,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.adbrand.core.theme.AdbrandTheme
-import com.adbrand.ui.auth.screens.LoginScreen
+import com.adbrand.ui.AppAdbrand
 
-// HU 42: punto de entrada de la app.
+// HU 42: punto de entrada de la app. La navegación vive en AppAdbrand.
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AdbrandTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    LoginScreen()
+                    AppAdbrand()
                 }
             }
         }

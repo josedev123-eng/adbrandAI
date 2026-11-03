@@ -86,6 +86,11 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 33 | Calendario mensual de publicaciones | Spring `calendario` (`GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`) + web `features/calendario` (entrada en el menú `Calendario`) |
 | 37 | Informe consolidado de las campañas de la empresa | Spring `reporte` (`GET /api/reportes/campanas`, índice V35) + web `features/reportes` (entrada en el menú `Informes`) |
 | 38 | Descargar el informe de campañas en PDF | Spring `reporte` (`GET /api/reportes/campanas/pdf`, OpenPDF) + web `features/reportes` (botón Descargar PDF en `Informes`) |
+| 41 | Datos de la empresa en la app móvil, con RUC y teléfono validados y cierre de sesión | Spring `cuenta` (`GET/PUT /api/cuenta/empresa`) + móvil `ui/perfil` (`DatosEmpresaScreen`, `DatosEmpresaViewModel`) |
+| 42 | Inicio de sesión en la app móvil y guardado cifrado de la sesión | Spring `auth` (`POST /api/auth/login`) + móvil `ui/auth`, `core/network` (`ClienteApi`) y `core/session` (`GestorSesion`) |
+| 43 | Renovación automática de la sesión móvil sin volver a pedir la contraseña | Spring `auth` (`POST /api/auth/renovar`, `POST /api/auth/cerrar-sesion`, V18) + móvil `core/network` (`AutenticadorRenovacion`) |
+| 44 | Perfil del negocio editable desde la app (rubro, tono y contacto) | Spring `negocio` (`GET/PUT /api/negocio/perfil`) + móvil `ui/perfil` (`PerfilNegocioScreen`, `PerfilNegocioViewModel`) |
+| 45 | Previsualización de publicaciones con el kit de marca o aviso si no hay kit | Spring `previsualizacion` (`GET /api/previsualizacion`) + móvil `ui/previsualizacion` (`PrevisualizacionScreen`, `PrevisualizacionViewModel`) |
 
 Inicio de sesión del usuario PYME (HU 21, 22 y 24):
 - La web guarda el token en `localStorage` con la clave `adbrand-token` y lo manda en cada petición como `Authorization: Bearer <token>` (`apiClient.js`). Si Spring responde 401, la web borra el token y vuelve al inicio de sesión.
@@ -113,7 +118,10 @@ Spring Boot (`http://localhost:8080/api`):
 - `GET /reportes/campanas`: informe de la empresa del token, sin id en la URL. Responde `{empresa, total, aprobados, dudosos, rechazados, campanas: [{id, fecha, redSocial, oferta, estado}]}`, del más reciente al más antiguo (HU 37).
 - `GET /reportes/campanas/pdf`: el mismo informe en PDF (`application/pdf`), que se descarga como `informe-campanas-AAAA-MM-DD.pdf` (HU 38).
 - `POST /auth/registro`: crea la cuenta con `{nombre, nombreEmpresa, correo, contrasena}`; 201, o 409 `CORREO_REPETIDO` (HU 21).
-- `POST /auth/login` con `{correo, contrasena}`: responde `{token, usuario}`; 401 `CREDENCIALES_INVALIDAS` o 403 `CUENTA_INACTIVA` (HU 22).
+- `POST /auth/login` con `{correo, contrasena}`: responde `{token, tokenRenovacion, usuario}`; 401 `CREDENCIALES_INVALIDAS` o 403 `CUENTA_INACTIVA` (HU 22). El `tokenRenovacion` lo usa la app móvil (HU 43); la web puede ignorarlo.
+- `POST /auth/renovar` con `{tokenRenovacion}`: ruta pública. Si el token existe, no está revocado y no venció, devuelve `{token, tokenRenovacion}` nuevo y revoca el anterior (rotación). Si no sirve, 401 `TOKEN_RENOVACION_INVALIDO` (HU 43).
+- `POST /auth/cerrar-sesion` con `{tokenRenovacion}`: ruta pública e idempotente; revoca el token y responde 204 (HU 43).
+- `GET /previsualizacion`: kit de marca más reciente de la empresa del token (o `null`) y hasta 20 anuncios, del más reciente al más antiguo (HU 45). Responde `{kit, anuncios}`.
 - `GET /auth/sesion`: el usuario del token, para recuperar la sesión al recargar la página (HU 22).
 - `POST /auth/recuperar/solicitar` con `{correo}`: envía un código de 6 dígitos que vence en 15 minutos; responde 200 con el mismo mensaje exista o no el correo (HU 24).
 - `POST /auth/recuperar/cambiar` con `{correo, codigo, contrasenaNueva}`: cambia la contraseña; 400 `CODIGO_INVALIDO` si el código está mal, venció o ya se usó (HU 24).
@@ -162,7 +170,7 @@ Primer superadministrador: en `adbrand-admin-api` correr `python manage.py crear
 
 ### Migraciones Flyway aplicadas
 
-Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose V30 a V39. Por eso cada uno pone `spring.flyway.out-of-order=true` en su `adbrand-core-api/.env`, así Flyway aplica una versión menor que llega después de una mayor. V12 es del login de administradores.
+Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose V30 a V39. Por eso cada uno pone `spring.flyway.out-of-order=true` en su `adbrand-core-api/.env`, así Flyway aplica una versión menor que llega después de una mayor. V12 es del login de administradores. En el Sprint 3, V18 quedó reservada para `token_renovacion` (HU 43).
 
 | Versión | Tablas | HU |
 |---|---|---|
@@ -183,6 +191,7 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V15 | `codigo_recuperacion` (hash del código, vencimiento y si ya se usó) | 24 |
 | V16 | `usuario.ruc` (único), `razon_social`, `telefono` y `direccion` | 23 |
 | V17 | `kit_marca_version` (cada edición del kit de marca) | 32 |
+| V18 | `token_renovacion` (`usuario_id`, `token_hash`, `fecha_vencimiento`, `revocado`, `fecha_creacion`; solo se guarda el hash SHA-256) | 43 |
 | V20 | `plan` (planes de suscripción Básico, Pro y Premium) | 25 |
 | V21 | `pago`: datos de la operación y del plan pagado | 26 |
 | V22 | `operacion_yape` (pago con Yape en dos pasos) | 27 |
@@ -250,6 +259,25 @@ Notas del sprint de Edu:
 - La pasarela es simulada: la tarjeta `4000 0000 0000 0002` siempre se rechaza. El pago con Yape queda `PENDIENTE` hasta que el usuario pulsa "Ya pagué, confirmar".
 - Pruebas al cerrar el sprint: Spring 37 (pago y calendario) y React 13 (Vitest), todas en verde. La suite completa de Spring y Django necesita la base PostgreSQL local con sus credenciales.
 
+### Resumen del Sprint 3 de Edu (`rama-edu`)
+
+| HU | Qué quedó | Migración |
+|---|---|---|
+| 41 | Datos de la empresa en la app: `GET/PUT /api/cuenta/empresa`, validación de RUC (11 dígitos que empiezan en 10 o 20) y teléfono (celular de 9 o fijo de 7), y cierre de sesión; pantalla `DatosEmpresaScreen` | — |
+| 42 | Proyecto Android Kotlin + Compose (`adbrand-mobile`), `ClienteApi` con `http://10.0.2.2:8080/api/`, `GestorSesion` con `EncryptedSharedPreferences` y login con mensaje para el 401; pantalla `LoginScreen` | — |
+| 43 | Tokens de renovación con rotación y revocación: `POST /api/auth/renovar` y `POST /api/auth/cerrar-sesion`; en la app, `AutenticadorRenovacion` de OkHttp reintenta una vez y limpia la sesión si falla | V18 |
+| 44 | Perfil del negocio editable: `GET/PUT /api/negocio/perfil` (rubro, público, tono y descripción) más el teléfono de contacto guardado en `/api/cuenta/empresa`; pantalla `PerfilNegocioScreen` | — |
+| 45 | `GET /api/previsualizacion` devuelve `{kit, anuncios}`; la app dibuja logo, colores y tipografía del kit, o muestra un aviso si `kit` es `null`; pantalla `PrevisualizacionScreen` | — |
+
+Notas del sprint de Edu:
+
+- La app móvil está en `adbrand-mobile` con Gradle 9.5.0, AGP 9.3.3, Kotlin 2.2.10, Compose BOM 2026.02.01, `compileSdk 37`, `minSdk 26` y paquete `com.adbrand`. La navegación está en `ui/AppAdbrand.kt` y la entrada en `MainActivity`.
+- `GestorSesion` guarda `token_acceso` y `token_renovacion` cifrados. `ClienteApi` usa un cliente sin sesión para `POST /api/auth/renovar` y otro con el interceptor Bearer y el `Authenticator` para el resto.
+- `TokenRenovacionService` guarda solo el hash SHA-256 del token, rota el token en cada renovación y revoca al cerrar sesión. El token de acceso sigue siendo el JWT de `ServicioJwt`; el de renovación dura `jwt.renovacion.dias` (30 por defecto).
+- La migración V18 se creó después de que la base local ya tenía V20 a V37, por eso `application.properties` incluye `spring.flyway.out-of-order=true`. En una base nueva se aplica en orden.
+- Pruebas del sprint: móvil 19 (Authenticator 5, Login 3, Datos de Empresa 5, Perfil del Negocio 3 y Previsualización 3) y backend 9 nuevas (tokens 6 y previsualización 3), todas en verde. `assembleDebug` también compila.
+- Las pruebas backend con `@SpringBootTest` necesitan PostgreSQL local con credenciales válidas; las de este sprint usan Mockito y no dependen de la base.
+
 ### Notas para las siguientes historias
 
 - Autenticación de administradores: ver la sección "Inicio de sesión de administradores". Toda vista nueva de la web de administración hereda de `VistaAdmin` y declara sus `roles_permitidos`.
@@ -310,6 +338,7 @@ Los archivos `.env` NO se suben a GitHub (están en `.gitignore`). Cada uno crea
 | Django | `adbrand-admin-api` | `venv\Scripts\activate` y luego `python manage.py runserver 8000` |
 | Web del usuario | `adbrand-web` | `npm install` (la primera vez) y `npm run dev` |
 | Web de administración | `adbrand-admin-web` | `npm install` (la primera vez) y `npm run dev` |
+| App móvil | `adbrand-mobile` | Abrir en Android Studio, o `.\gradlew.bat :app:assembleDebug`; el emulador llega a Spring por `http://10.0.2.2:8080/api/` |
 
 Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si ocupado).
 
@@ -321,6 +350,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 | Django | `APITestCase` de DRF | `python manage.py test <app>` |
 | Las dos webs | Vitest y Testing Library | `npm test` |
 | Las dos webs | ESLint | `npm run lint` |
+| App móvil | JUnit 4, coroutines-test | `.\gradlew.bat :app:testDebugUnitTest` (desde `adbrand-mobile`) |
 
 - En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA. Las pruebas de `auth`, `cuenta` y `EditarKitMarcaTest` usan `@SpringBootTest` con `@Transactional` para pasar por `FiltroJwt` con tokens reales: usan la base local y todo se deshace al terminar cada prueba.
 - En Django, el runner `core/test_runner.py` crea las tablas de Flyway en la base temporal de pruebas, así que las pruebas no necesitan Spring.

@@ -83,6 +83,7 @@ src/main/java/com/adbrand/core/
 ├── brandkit/        HU 29 a 32: logo, colores e identidad visual
 ├── calendario/      HU 33 a 36: calendario de publicaciones
 ├── reporte/         HU 37 a 40: informes en PDF y Word
+├── previsualizacion/ HU 45: kit de marca y anuncios para la app móvil
 └── notificacion/    HU 49 a 52: alertas push
 src/main/resources/db/migration/   Migraciones Flyway de TODA la base de datos
 src/test/java/com/adbrand/core/    Pruebas, una carpeta por módulo
@@ -111,7 +112,7 @@ src/
 
 ```
 app/src/main/java/com/adbrand/
-├── core/{network, theme}        network/ = cliente HTTP hacia Spring Boot
+├── core/{network, session, theme}  network/ = cliente HTTP hacia Spring Boot; session/ = GestorSesion cifrado
 ├── data/{remote, repository}
 ├── domain/model/
 ├── notifications/               HU 49 a 52
@@ -124,7 +125,7 @@ app/src/main/java/com/adbrand/
     └── calendario/
 ```
 
-La app móvil usa los mismos endpoints de `adbrand-core-api`.
+La app móvil usa los mismos endpoints de `adbrand-core-api`. La navegación principal y la barra inferior están en `ui/AppAdbrand.kt`; `MainActivity` solo monta el tema y `AppAdbrand`. Comandos: `.\gradlew.bat :app:testDebugUnitTest` y `.\gradlew.bat :app:assembleDebug` desde `adbrand-mobile`.
 
 ## adbrand-docs
 
