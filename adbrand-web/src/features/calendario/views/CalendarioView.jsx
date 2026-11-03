@@ -1,9 +1,11 @@
 // View: calendario mensual de publicaciones. La lógica está en useCalendario (HU 33).
 // HU 35: campañas con su color, filtro por campaña y formulario para crear campañas.
+// HU 34: al programar se elige uno de los anuncios aprobados.
 import { useState } from 'react'
 import {
   diasDelMes,
   fechaDeDia,
+  hoyIso,
   primerDiaSemana,
   etiquetaMes,
   useCalendario,
@@ -20,9 +22,11 @@ const TIPOS = [
   { id: 'EVENTO', nombre: 'Evento especial' },
 ]
 
-function hoyIso() {
-  const hoy = new Date()
-  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
+// "Oferta 2x1 en café" → "Instagram · Oferta 2x1 en café", corto para que entre en la lista.
+function etiquetaAnuncio(anuncio) {
+  const red = REDES.find((item) => item.id === anuncio.redSocial)?.nombre ?? anuncio.redSocial
+  const oferta = anuncio.oferta.length > 60 ? `${anuncio.oferta.slice(0, 60)}…` : anuncio.oferta
+  return `${red} · ${oferta}`
 }
 
 function campanaVacia() {
@@ -44,6 +48,8 @@ export default function CalendarioView() {
     agregarCampana,
     erroresCampana,
     guardandoCampana,
+    anuncios,
+    errorProgramar,
   } = useCalendario()
   const [formulario, setFormulario] = useState({
     titulo: '',
@@ -51,6 +57,7 @@ export default function CalendarioView() {
     fecha: hoyIso(),
     hora: '10:00',
     campanaId: '',
+    contenidoId: '',
   })
   const [aviso, setAviso] = useState(null)
   const [nuevaCampana, setNuevaCampana] = useState(campanaVacia())
@@ -62,6 +69,17 @@ export default function CalendarioView() {
 
   function cambiarCampo(campo, valor) {
     setFormulario((actual) => ({ ...actual, [campo]: valor }))
+  }
+
+  // HU 34: al elegir un anuncio se completan el título (su oferta) y la red social; el título se puede cambiar.
+  function elegirAnuncio(contenidoId) {
+    const anuncio = anuncios.find((item) => String(item.id) === contenidoId)
+    setFormulario((actual) => ({
+      ...actual,
+      contenidoId,
+      titulo: anuncio ? anuncio.oferta.slice(0, 150) : actual.titulo,
+      redSocial: anuncio ? anuncio.redSocial : actual.redSocial,
+    }))
   }
 
   function cambiarCampoCampana(campo, valor) {
@@ -76,10 +94,11 @@ export default function CalendarioView() {
       titulo: formulario.titulo.trim(),
       hora: `${formulario.hora}:00`,
       campanaId: formulario.campanaId ? Number(formulario.campanaId) : null,
+      contenidoId: formulario.contenidoId ? Number(formulario.contenidoId) : null,
     })
     if (guardado) {
       setAviso('Publicación programada.')
-      setFormulario((actual) => ({ ...actual, titulo: '' }))
+      setFormulario((actual) => ({ ...actual, titulo: '', contenidoId: '' }))
     }
   }
 
@@ -167,11 +186,9 @@ export default function CalendarioView() {
                             : `calendario-chip calendario-chip-${publicacion.redSocial.toLowerCase()}`
                         }
                         style={publicacion.campanaColor ? { '--color-campana': publicacion.campanaColor } : undefined}
-                        title={
-                          publicacion.campanaNombre
-                            ? `${publicacion.titulo} · ${publicacion.hora} · ${publicacion.campanaNombre}`
-                            : `${publicacion.titulo} · ${publicacion.hora}`
-                        }
+                        title={[publicacion.titulo, publicacion.hora, publicacion.campanaNombre, publicacion.contenidoOferta]
+                          .filter(Boolean)
+                          .join(' · ')}
                       >
                         <strong>{publicacion.hora.slice(0, 5)}</strong> {publicacion.titulo}
                       </span>
@@ -186,6 +203,20 @@ export default function CalendarioView() {
 
       <form className="tarjeta formulario" onSubmit={alProgramar}>
         <h2>Programar una publicación</h2>
+
+        <label className="campo">
+          <span>Anuncio aprobado</span>
+          <select value={formulario.contenidoId} onChange={(evento) => elegirAnuncio(evento.target.value)}>
+            <option value="">
+              {anuncios.length > 0 ? 'Elige un anuncio aprobado' : 'No tienes anuncios aprobados todavía'}
+            </option>
+            {anuncios.map((anuncio) => (
+              <option key={anuncio.id} value={anuncio.id}>
+                {etiquetaAnuncio(anuncio)}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="campo">
           <span>Título</span>
@@ -252,6 +283,7 @@ export default function CalendarioView() {
           </label>
         </div>
 
+        {errorProgramar && <p className="aviso aviso-error">{errorProgramar}</p>}
         {aviso && <p className="aviso aviso-ok">{aviso}</p>}
 
         <div className="pago-acciones">

@@ -1,8 +1,20 @@
 // ViewModel: carga el calendario del mes, navega entre meses y programa publicaciones (HU 33).
 // HU 35: también carga las campañas, crea campañas nuevas y filtra el calendario por campaña.
+// HU 34: carga los anuncios aprobados para elegir cuál programar y no deja programar en un día que ya pasó.
 import { useEffect, useState } from 'react'
+import { listarAnuncios } from '../models/anunciosApi'
 import { crearPublicacion, obtenerCalendario } from '../models/calendarioApi'
 import { crearCampana, listarCampanas } from '../models/campanasApi'
+
+export function hoyIso() {
+  const hoy = new Date()
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
+}
+
+// HU 34: aquí solo se revisa el día; la hora exacta la revisa Spring (FECHA_PASADA).
+export function esDiaPasado(fecha) {
+  return Boolean(fecha) && fecha < hoyIso()
+}
 
 export function mesActual() {
   const hoy = new Date()
@@ -68,6 +80,10 @@ export function useCalendario() {
   const [erroresCampana, setErroresCampana] = useState({})
   const [guardandoCampana, setGuardandoCampana] = useState(false)
 
+  // HU 34: solo los anuncios aprobados se pueden programar.
+  const [anuncios, setAnuncios] = useState([])
+  const [errorProgramar, setErrorProgramar] = useState(null)
+
   useEffect(() => {
     let activo = true
     pedirCalendario(mes, campanaFiltro)
@@ -98,6 +114,19 @@ export function useCalendario() {
     }
   }, [])
 
+  // Si los anuncios no cargan, se puede programar sin elegir uno, como en la HU 33.
+  useEffect(() => {
+    let activo = true
+    listarAnuncios()
+      .then((lista) => {
+        if (activo && Array.isArray(lista)) setAnuncios(lista.filter((anuncio) => anuncio.estado === 'APROBADO'))
+      })
+      .catch(() => {})
+    return () => {
+      activo = false
+    }
+  }, [])
+
   function cambiarMes(delta) {
     setCargando(true)
     setError(null)
@@ -110,15 +139,22 @@ export function useCalendario() {
     setCampanaFiltro(campanaId)
   }
 
+  // HU 34: el error se muestra junto al formulario (errorProgramar), no arriba del calendario.
   async function programar(datos) {
-    setGuardando(true)
     setError(null)
+    setErrorProgramar(null)
+    if (esDiaPasado(datos.fecha)) {
+      setErrorProgramar('No puedes programar en una fecha u hora que ya pasó.')
+      return false
+    }
+
+    setGuardando(true)
     try {
       await crearPublicacion(datos)
       setPublicaciones(await pedirCalendario(mes, campanaFiltro))
       return true
     } catch (fallo) {
-      setError(fallo.message)
+      setErrorProgramar(fallo.message)
       return false
     } finally {
       setGuardando(false)
@@ -160,5 +196,7 @@ export function useCalendario() {
     agregarCampana,
     erroresCampana,
     guardandoCampana,
+    anuncios,
+    errorProgramar,
   }
 }
