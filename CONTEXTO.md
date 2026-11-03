@@ -75,17 +75,21 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 22 | Inicio de sesión del usuario PYME con JWT | Spring `auth` (`FiltroJwt`) + web `features/auth` y `app/context` (`SesionProvider`, `useSesion`); botón Cerrar sesión en el menú |
 | 23 | Datos de la empresa (RUC, razón social, teléfono, dirección) | Spring `cuenta` + web `features/cuenta` (entrada en el menú `Mi cuenta`) |
 | 24 | Recuperar la contraseña con un código de 6 dígitos por correo | Spring `auth` y `notificacion` + web `features/auth` (enlace ¿Olvidaste tu contraseña? en el inicio de sesión) |
+| 25 | Ver los planes de suscripción | Spring `pago` (`GET /api/planes`, ruta pública) + web `features/pagos` (entrada en el menú `Planes`) |
+| 26 | Pagar la suscripción con tarjeta (pasarela simulada) | Spring `pago` (`POST /api/pagos/tarjeta`) + web `features/pagos` (`PagoTarjetaView`) |
+| 27 | Pagar la suscripción con Yape (QR y confirmación) | Spring `pago` (`/api/pagos/yape`) + web `features/pagos` (`PagoYapeView`) |
+| 28 | Comprobante del pago por correo | Spring `pago` y `notificacion` (`GET /api/pagos/{id}/comprobante`) + web `features/pagos` (`ConfirmacionPagoView`) |
 | 32 | Editar a mano colores, tipografías y logotipo del kit de marca | Spring `brandkit` (`EdicionKitMarcaService`) + web `features/brandkit` (lista Tus kits guardados y botón Editar en el kit) |
+| 33 | Calendario mensual de publicaciones | Spring `calendario` (`GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`) + web `features/calendario` (entrada en el menú `Calendario`) |
 
 Inicio de sesión del usuario PYME (HU 21, 22 y 24):
 - La web guarda el token en `localStorage` con la clave `adbrand-token` y lo manda en cada petición como `Authorization: Bearer <token>` (`apiClient.js`). Si Spring responde 401, la web borra el token y vuelve al inicio de sesión.
 - `FiltroJwt` (`auth/config`) revisa el token y deja el id del usuario en el atributo `usuarioId`. Los controllers lo reciben con `@RequestAttribute("usuarioId") Long usuarioId`; ya no existe el usuario fijo `USUARIO_DE_PRUEBA`.
-- Rutas públicas (sin token): `/api/auth/**` menos `GET /api/auth/sesion`, `GET /api/planes`, `GET /api/estado` y las peticiones `OPTIONS`. Las demás responden 401 `{"codigo":"NO_AUTENTICADO","mensaje":"Inicia sesión para continuar."}`.
+- Rutas públicas (sin token): `/api/auth/**` menos `GET /api/auth/sesion`, `GET /api/planes`, `GET /api/estado` (lo usa Django para la HU 18) y las peticiones `OPTIONS`. Las demás responden 401 `{"codigo":"NO_AUTENTICADO","mensaje":"Inicia sesión para continuar."}`.
 - Las contraseñas se guardan solo con BCrypt (`spring-security-crypto`): mínimo 8 caracteres, una mayúscula, una minúscula y un número, sin espacios. El token se firma con `jwt.secreto`, que sale de `JWT_SECRET` en el `.env`.
 - `ServicioCorreo` (`notificacion/service`) envía los correos. Con `MAIL_MOCK=true` no envía nada y escribe el correo en la consola de Spring como `[CORREO SIMULADO]`, así se puede leer el código de recuperación sin servidor de correo.
 
 Pendiente conocido:
-- La web de administración ya pide login (ver "Inicio de sesión de administradores"); el criterio "solo el superadmin crea cuentas" de la HU 1 queda completo con las HU 2 y 3.
 - Con `AI_MOCK=true` generar un kit (HU 11) falla, porque el modo simulado devuelve un anuncio y no el JSON del kit. Para probar la HU 32 se carga `adbrand-docs/datos-prueba/kit-marca.sql`.
 
 ### Endpoints que ya existen
@@ -169,6 +173,11 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V15 | `codigo_recuperacion` (hash del código, vencimiento y si ya se usó) | 24 |
 | V16 | `usuario.ruc` (único), `razon_social`, `telefono` y `direccion` | 23 |
 | V17 | `kit_marca_version` (cada edición del kit de marca) | 32 |
+| V20 | `plan` (planes de suscripción Básico, Pro y Premium) | 25 |
+| V21 | `pago`: datos de la operación y del plan pagado | 26 |
+| V22 | `operacion_yape` (pago con Yape en dos pasos) | 27 |
+| V23 | `pago.numero_comprobante` | 28 |
+| V24 | `publicacion_programada` (publicaciones del calendario) | 33 |
 | V30 | `consumo_token` (tokens de entrada, salida y total de cada generación con IA, por `usuario_id` y `origen`; `simulado` si se estimaron) | 17 |
 | V31 | `limite_tokens` (límite mensual y porcentaje de aviso; `usuario_id` NULL es el de por defecto: 100 000 tokens y aviso al 80 %; una fila por empresa) | 19 |
 | V32 | vista `vista_consumo_token_mensual` (tokens y generaciones por mes, con la hora de Lima, y por `usuario_id`; solo lectura) | 20 |
@@ -260,7 +269,7 @@ Spring Boot genera el anuncio, lo revisa con las reglas de `regla_revision` y lo
 ## Configuración local y cómo arrancar
 
 Los archivos `.env` NO se suben a GitHub (están en `.gitignore`). Cada uno crea los suyos:
-- `adbrand-core-api/.env`: `DB_PASSWORD`, las variables `AI_*`, `JWT_SECRET` (texto largo al azar, mínimo 32 caracteres) y `MAIL_MOCK=true`. Para enviar correos de verdad: `MAIL_MOCK=false` con `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` y `MAIL_FROM`.
+- `adbrand-core-api/.env`: `DB_PASSWORD`, las variables `AI_*`, `spring.flyway.out-of-order=true`, `JWT_SECRET` (texto largo al azar, mínimo 32 caracteres) y `MAIL_MOCK=true`. Para enviar correos de verdad: `MAIL_MOCK=false` con `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` y `MAIL_FROM`.
 - `adbrand-admin-api/.env`: `DB_PASSWORD`. Opcional: `CORE_API_URL` (dirección de Spring para el panel del estado del servidor, por defecto `http://localhost:8080`).
 
 | Parte | Carpeta | Comando |
@@ -316,7 +325,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17 y V30 a V34). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
+- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17, V20 a V24 y V30 a V34). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.

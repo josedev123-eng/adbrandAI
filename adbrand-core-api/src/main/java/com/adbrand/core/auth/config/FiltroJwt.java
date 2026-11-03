@@ -27,8 +27,8 @@ public class FiltroJwt extends OncePerRequestFilter {
     }
 
     // Rutas que no piden token: registro, inicio de sesión y recuperar contraseña (/api/auth/**, salvo la sesión),
-    // el estado del servidor que consulta Django (HU 18), la lista de planes (HU 25 de Edu)
-    // y las peticiones OPTIONS que hace el navegador antes de cada llamada.
+    // la lista de planes (HU 25 de Edu), el estado del servidor que consulta Django (HU 18) y las peticiones
+    // OPTIONS que hace el navegador antes de cada llamada.
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String ruta = request.getRequestURI().substring(request.getContextPath().length());
@@ -40,11 +40,7 @@ public class FiltroJwt extends OncePerRequestFilter {
         if (ruta.startsWith("/api/auth/") && !ruta.equals("/api/auth/sesion")) {
             return true;
         }
-        // HU 18: Django consulta el estado del backend y de la IA sin token.
-        if ("GET".equals(metodo) && ruta.equals("/api/estado")) {
-            return true;
-        }
-        return "GET".equals(metodo) && ruta.equals("/api/planes");
+        return "GET".equals(metodo) && (ruta.equals("/api/planes") || ruta.equals("/api/estado"));
     }
 
     @Override
