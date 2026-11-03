@@ -1,4 +1,5 @@
 // View: calendario mensual de publicaciones. La lógica está en useCalendario (HU 33).
+// HU 35: campañas con su color, filtro por campaña y formulario para crear campañas.
 import { useState } from 'react'
 import {
   diasDelMes,
@@ -14,21 +15,46 @@ const REDES = [
   { id: 'INSTAGRAM', nombre: 'Instagram' },
   { id: 'FACEBOOK', nombre: 'Facebook' },
 ]
+const TIPOS = [
+  { id: 'CAMPANA', nombre: 'Campaña' },
+  { id: 'EVENTO', nombre: 'Evento especial' },
+]
 
 function hoyIso() {
   const hoy = new Date()
   return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
 }
 
+function campanaVacia() {
+  return { nombre: '', color: '#4F46E5', tipo: 'CAMPANA', fechaInicio: hoyIso(), fechaFin: hoyIso() }
+}
+
 export default function CalendarioView() {
-  const { mes, publicaciones, cargando, guardando, error, cambiarMes, programar } = useCalendario()
+  const {
+    mes,
+    publicaciones,
+    cargando,
+    guardando,
+    error,
+    cambiarMes,
+    programar,
+    campanas,
+    campanaFiltro,
+    filtrarPorCampana,
+    agregarCampana,
+    erroresCampana,
+    guardandoCampana,
+  } = useCalendario()
   const [formulario, setFormulario] = useState({
     titulo: '',
     redSocial: 'INSTAGRAM',
     fecha: hoyIso(),
     hora: '10:00',
+    campanaId: '',
   })
   const [aviso, setAviso] = useState(null)
+  const [nuevaCampana, setNuevaCampana] = useState(campanaVacia())
+  const [avisoCampana, setAvisoCampana] = useState(null)
 
   const totalDias = diasDelMes(mes)
   const huecos = primerDiaSemana(mes)
@@ -38,6 +64,10 @@ export default function CalendarioView() {
     setFormulario((actual) => ({ ...actual, [campo]: valor }))
   }
 
+  function cambiarCampoCampana(campo, valor) {
+    setNuevaCampana((actual) => ({ ...actual, [campo]: valor }))
+  }
+
   async function alProgramar(evento) {
     evento.preventDefault()
     setAviso(null)
@@ -45,10 +75,21 @@ export default function CalendarioView() {
       ...formulario,
       titulo: formulario.titulo.trim(),
       hora: `${formulario.hora}:00`,
+      campanaId: formulario.campanaId ? Number(formulario.campanaId) : null,
     })
     if (guardado) {
       setAviso('Publicación programada.')
       setFormulario((actual) => ({ ...actual, titulo: '' }))
+    }
+  }
+
+  async function alCrearCampana(evento) {
+    evento.preventDefault()
+    setAvisoCampana(null)
+    const guardada = await agregarCampana(nuevaCampana)
+    if (guardada) {
+      setAvisoCampana('Campaña creada.')
+      setNuevaCampana(campanaVacia())
     }
   }
 
@@ -69,6 +110,31 @@ export default function CalendarioView() {
             →
           </button>
         </div>
+
+        {campanas.length > 0 && (
+          <div className="calendario-filtro">
+            <label className="campo">
+              <span>Ver campaña</span>
+              <select value={campanaFiltro} onChange={(evento) => filtrarPorCampana(evento.target.value)}>
+                <option value="">Todas las publicaciones</option>
+                {campanas.map((campana) => (
+                  <option key={campana.id} value={campana.id}>
+                    {campana.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <ul className="calendario-leyenda" aria-label="Campañas">
+              {campanas.map((campana) => (
+                <li key={campana.id}>
+                  <span className="calendario-leyenda-color" style={{ background: campana.color }} />
+                  {campana.nombre}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {error && <p className="aviso aviso-error">{error}</p>}
         {cargando ? (
@@ -95,8 +161,17 @@ export default function CalendarioView() {
                     {delDia.map((publicacion) => (
                       <span
                         key={publicacion.id}
-                        className={`calendario-chip calendario-chip-${publicacion.redSocial.toLowerCase()}`}
-                        title={`${publicacion.titulo} · ${publicacion.hora}`}
+                        className={
+                          publicacion.campanaColor
+                            ? 'calendario-chip calendario-chip-campana'
+                            : `calendario-chip calendario-chip-${publicacion.redSocial.toLowerCase()}`
+                        }
+                        style={publicacion.campanaColor ? { '--color-campana': publicacion.campanaColor } : undefined}
+                        title={
+                          publicacion.campanaNombre
+                            ? `${publicacion.titulo} · ${publicacion.hora} · ${publicacion.campanaNombre}`
+                            : `${publicacion.titulo} · ${publicacion.hora}`
+                        }
                       >
                         <strong>{publicacion.hora.slice(0, 5)}</strong> {publicacion.titulo}
                       </span>
@@ -150,21 +225,115 @@ export default function CalendarioView() {
           </label>
         </div>
 
-        <label className="campo">
-          <span>Hora</span>
-          <input
-            type="time"
-            value={formulario.hora}
-            onChange={(evento) => cambiarCampo('hora', evento.target.value)}
-            required
-          />
-        </label>
+        <div className="fila">
+          <label className="campo">
+            <span>Hora</span>
+            <input
+              type="time"
+              value={formulario.hora}
+              onChange={(evento) => cambiarCampo('hora', evento.target.value)}
+              required
+            />
+          </label>
+
+          <label className="campo">
+            <span>Campaña (opcional)</span>
+            <select
+              value={formulario.campanaId}
+              onChange={(evento) => cambiarCampo('campanaId', evento.target.value)}
+            >
+              <option value="">Sin campaña</option>
+              {campanas.map((campana) => (
+                <option key={campana.id} value={campana.id}>
+                  {campana.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {aviso && <p className="aviso aviso-ok">{aviso}</p>}
 
         <div className="pago-acciones">
           <button type="submit" className="boton-primario" disabled={guardando}>
             {guardando ? 'Guardando…' : 'Programar publicación'}
+          </button>
+        </div>
+      </form>
+
+      <form className="tarjeta formulario" onSubmit={alCrearCampana} noValidate>
+        <h2>Nueva campaña o evento</h2>
+
+        <div className="fila">
+          <label className="campo">
+            <span>Nombre</span>
+            <input
+              type="text"
+              maxLength={100}
+              placeholder="Navidad 2026"
+              value={nuevaCampana.nombre}
+              onChange={(evento) => cambiarCampoCampana('nombre', evento.target.value)}
+              aria-invalid={Boolean(erroresCampana.nombre)}
+            />
+            {erroresCampana.nombre && <small className="campo-error">{erroresCampana.nombre}</small>}
+          </label>
+
+          <label className="campo">
+            <span>Tipo</span>
+            <select value={nuevaCampana.tipo} onChange={(evento) => cambiarCampoCampana('tipo', evento.target.value)}>
+              {TIPOS.map((tipo) => (
+                <option key={tipo.id} value={tipo.id}>
+                  {tipo.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="fila">
+          <label className="campo">
+            <span>Desde</span>
+            <input
+              type="date"
+              value={nuevaCampana.fechaInicio}
+              onChange={(evento) => cambiarCampoCampana('fechaInicio', evento.target.value)}
+              aria-invalid={Boolean(erroresCampana.fechaInicio)}
+            />
+            {erroresCampana.fechaInicio && <small className="campo-error">{erroresCampana.fechaInicio}</small>}
+          </label>
+
+          <label className="campo">
+            <span>Hasta</span>
+            <input
+              type="date"
+              value={nuevaCampana.fechaFin}
+              onChange={(evento) => cambiarCampoCampana('fechaFin', evento.target.value)}
+              aria-invalid={Boolean(erroresCampana.fechaFin)}
+            />
+            {erroresCampana.fechaFin && <small className="campo-error">{erroresCampana.fechaFin}</small>}
+          </label>
+        </div>
+
+        <label className="campo campo-color">
+          <span>Color</span>
+          <span className="campo-color-fila">
+            <input
+              type="color"
+              value={nuevaCampana.color}
+              onChange={(evento) => cambiarCampoCampana('color', evento.target.value.toUpperCase())}
+              aria-label="Elegir color"
+            />
+            <code>{nuevaCampana.color}</code>
+          </span>
+          {erroresCampana.color && <small className="campo-error">{erroresCampana.color}</small>}
+        </label>
+
+        {erroresCampana.general && <p className="aviso aviso-error">{erroresCampana.general}</p>}
+        {avisoCampana && <p className="aviso aviso-ok">{avisoCampana}</p>}
+
+        <div className="pago-acciones">
+          <button type="submit" className="boton-primario" disabled={guardandoCampana}>
+            {guardandoCampana ? 'Guardando…' : 'Crear campaña'}
           </button>
         </div>
       </form>
