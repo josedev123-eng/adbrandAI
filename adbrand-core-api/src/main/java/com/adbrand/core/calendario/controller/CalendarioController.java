@@ -32,8 +32,12 @@ public class CalendarioController {
     @GetMapping
     public List<PublicacionResponse> listar(
             @RequestAttribute(value = "usuarioId", required = false) Long usuarioId,
-            @RequestParam(required = false) String mes) {
-        return servicio.listar(usuario(usuarioId), mes);
+            @RequestParam(required = false) String mes,
+            @RequestParam(required = false) Long campanaId) {
+        // HU 35: sin campanaId se pide el calendario completo, como en la HU 33.
+        return campanaId == null
+                ? servicio.listar(usuario(usuarioId), mes)
+                : servicio.listar(usuario(usuarioId), mes, campanaId);
     }
 
     @PostMapping

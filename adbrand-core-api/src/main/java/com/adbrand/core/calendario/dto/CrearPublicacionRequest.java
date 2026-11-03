@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 // HU 33: datos para programar una publicación desde el calendario.
+// HU 35: campanaId es opcional; si llega, la publicación queda dentro de esa campaña.
 public record CrearPublicacionRequest(
         @NotBlank(message = "Escribe un título para la publicación.")
         @Size(max = 150, message = "El título tiene como máximo 150 caracteres.")
@@ -20,5 +21,12 @@ public record CrearPublicacionRequest(
         LocalDate fecha,
 
         @NotNull(message = "Selecciona la hora.")
-        LocalTime hora) {
+        LocalTime hora,
+
+        Long campanaId) {
+
+    // Publicación sin campaña (la usan las pruebas de la HU 33).
+    public CrearPublicacionRequest(String titulo, RedSocialPublicacion redSocial, LocalDate fecha, LocalTime hora) {
+        this(titulo, redSocial, fecha, hora, null);
+    }
 }

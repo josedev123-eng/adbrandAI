@@ -10,4 +10,8 @@ public interface PublicacionProgramadaRepository extends JpaRepository<Publicaci
     // HU 33: publicaciones del mes pedido, ordenadas como se ven en el calendario.
     List<PublicacionProgramada> findByUsuarioIdAndFechaBetweenOrderByFechaAscHoraAsc(
             Long usuarioId, LocalDate desde, LocalDate hasta);
+
+    // HU 35: lo mismo, pero solo las publicaciones de una campaña.
+    List<PublicacionProgramada> findByUsuarioIdAndCampanaIdAndFechaBetweenOrderByFechaAscHoraAsc(
+            Long usuarioId, Long campanaId, LocalDate desde, LocalDate hasta);
 }
