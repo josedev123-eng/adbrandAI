@@ -4,6 +4,8 @@
 import { formatearFecha, formatearMes, formatearPorcentaje, formatearTokens } from '../models/tokensApi'
 import { useConsumoTokens } from '../viewmodels/useConsumoTokens'
 import './ConsumoTokensView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 function AlertasConsumo({ alertas }) {
   if (!alertas?.length) return null
@@ -41,7 +43,7 @@ export default function ConsumoTokensView() {
 
       {error && <div className="aviso aviso-error">{error}</div>}
 
-      {cargando && <p className="consumo-vacio">Cargando consumo...</p>}
+      {cargando && <Cargando texto="Cargando consumo..." />}
 
       {consumo && (
         <>
@@ -57,7 +59,7 @@ export default function ConsumoTokensView() {
             <h2>Por empresa</h2>
 
             {consumo.empresas.length === 0 ? (
-              <p className="consumo-vacio">Ninguna empresa ha usado la IA este mes.</p>
+              <SinResultados>Ninguna empresa ha usado la IA este mes.</SinResultados>
             ) : (
               <table className="tabla-consumo">
                 <thead>

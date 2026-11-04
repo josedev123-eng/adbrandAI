@@ -7,7 +7,8 @@
 .menu-secciones { display: flex; flex-direction: column; gap: 16px; flex: 1; }
 .menu-seccion { display: flex; flex-direction: column; gap: 2px; }
 .menu-seccion-titulo { padding: 0 10px 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.menu-opcion { border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; text-align: left; font-weight: 600; font-size: 0.9rem; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; }
+.menu-opcion { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; text-align: left; font-weight: 600; font-size: 0.9rem; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; }
+.menu-icono { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .menu-opcion:hover { background: var(--surface-2); color: var(--fg); }
 .menu-opcion-activa, .menu-opcion-activa:hover { background: var(--primary-soft); color: var(--primary); border-left-color: var(--primary); }
 

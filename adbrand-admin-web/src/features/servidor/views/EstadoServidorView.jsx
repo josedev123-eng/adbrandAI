@@ -3,6 +3,7 @@
 import { formatearHora } from '../models/servidorApi'
 import { useEstadoServidor } from '../viewmodels/useEstadoServidor'
 import './EstadoServidorView.css'
+import Cargando from '../../../shared/components/Cargando'
 
 function TarjetaServicio({ servicio }) {
   const activo = servicio.estado === 'ACTIVO'
@@ -41,7 +42,7 @@ export default function EstadoServidorView() {
       </header>
 
       {error && <div className="aviso aviso-error">{error}</div>}
-      {cargando && <p className="estado-cargando">Verificando servicios...</p>}
+      {cargando && <Cargando texto="Verificando servicios..." />}
 
       {caidos.length > 0 && (
         <div className="aviso aviso-error" role="alert">

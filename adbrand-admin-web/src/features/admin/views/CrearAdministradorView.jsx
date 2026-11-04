@@ -23,7 +23,7 @@ export default function CrearAdministradorView() {
   return (
     <main className="pagina">
       <header className="pagina-cabecera">
-        <h1>Administradores</h1>
+        <h1>Crear administrador</h1>
         <p>Solo el superadmin puede crear cuentas y asignar roles.</p>
       </header>
 

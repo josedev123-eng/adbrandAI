@@ -2,6 +2,7 @@
 import { formatearMes, formatearSoles } from '../models/suscripcionesApi'
 import { usePanelFinanciero } from '../viewmodels/usePanelFinanciero'
 import './PanelFinancieroView.css'
+import Cargando from '../../../shared/components/Cargando'
 
 export default function PanelFinancieroView() {
   const {
@@ -99,7 +100,7 @@ export default function PanelFinancieroView() {
 
         {errorRango && <p className="campo-error panel-rango-error">{errorRango}</p>}
 
-        {cargando && <p className="panel-vacio">Cargando ingresos...</p>}
+        {cargando && <Cargando texto="Cargando ingresos..." />}
 
         {!cargando && !error && (
           <ul className="panel-ingresos">

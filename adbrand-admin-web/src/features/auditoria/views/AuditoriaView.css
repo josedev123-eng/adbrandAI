@@ -85,3 +85,9 @@
 @media (max-width: 760px) {
   .auditoria-filtros { grid-template-columns: 1fr; }
 }
+
+/* Color según la acción: crear y aprobar en verde, desactivar y rechazar en rojo, cambiar rol en índigo. */
+.auditoria-accion.accion-crear_admin,
+.auditoria-accion.accion-aprobar_contenido { background: var(--ok-soft); color: var(--ok); }
+.auditoria-accion.accion-desactivar_admin,
+.auditoria-accion.accion-rechazar_contenido { background: var(--bad-soft); color: var(--bad); }

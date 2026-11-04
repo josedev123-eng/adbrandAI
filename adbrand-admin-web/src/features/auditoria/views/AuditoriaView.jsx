@@ -2,6 +2,8 @@
 import { formatearFecha, NOMBRES_ACCION, NOMBRES_ENTIDAD } from '../models/auditoriaApi'
 import { useAuditoria } from '../viewmodels/useAuditoria'
 import './AuditoriaView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 export default function AuditoriaView() {
   const {
@@ -74,12 +76,12 @@ export default function AuditoriaView() {
           {!cargando && !error && <span className="auditoria-contador">{registros.length}</span>}
         </div>
 
-        {cargando && <p className="auditoria-vacia">Cargando historial...</p>}
+        {cargando && <Cargando texto="Cargando historial..." />}
 
         {!cargando && !error && registros.length === 0 && (
-          <p className="auditoria-vacia">
+          <SinResultados>
             {hayFiltros ? 'Ninguna acción coincide con los filtros.' : 'Todavía no hay acciones registradas.'}
-          </p>
+          </SinResultados>
         )}
 
         {!cargando && registros.length > 0 && (
@@ -102,7 +104,7 @@ export default function AuditoriaView() {
                     <small className="auditoria-correo">{registro.admin.correo}</small>
                   </td>
                   <td>
-                    <span className="auditoria-accion">{NOMBRES_ACCION[registro.accion] ?? registro.accion}</span>
+                    <span className={`auditoria-accion accion-${registro.accion.toLowerCase()}`}>{NOMBRES_ACCION[registro.accion] ?? registro.accion}</span>
                   </td>
                   <td>
                     {NOMBRES_ENTIDAD[registro.entidad] ?? registro.entidad}

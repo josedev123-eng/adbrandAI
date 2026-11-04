@@ -13,6 +13,11 @@ import ConsumoTokensView from './features/tokens/views/ConsumoTokensView'
 import HistorialTokensView from './features/tokens/views/HistorialTokensView'
 import MenuAdmin from './shared/components/MenuAdmin'
 
+// Fecha de hoy para la barra superior, por ejemplo "martes, 10 de noviembre de 2026".
+function fechaDeHoy() {
+  return new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 function App() {
   const { admin, cargando, salir } = useSesion()
   const [pantalla, setPantalla] = useState(null)
@@ -24,6 +29,7 @@ function App() {
   const opciones = pantallasDelRol(rol)
   // Si la pantalla elegida no es de este rol (o aún no eligió), se abre la primera que sí le toca.
   const actual = opciones.some((opcion) => opcion.id === pantalla) ? pantalla : opciones[0]?.id
+  const seccionActual = opciones.find((opcion) => opcion.id === actual)?.seccion
 
   function cerrarSesion() {
     setPantalla(null)
@@ -41,6 +47,18 @@ function App() {
         alSalir={cerrarSesion}
       />
       <div className="layout-contenido">
+        <div className="barra-superior">
+          <span>
+            Panel de administración
+            {seccionActual && (
+              <>
+                {' · '}
+                <strong>{seccionActual}</strong>
+              </>
+            )}
+          </span>
+          <span className="barra-fecha">{fechaDeHoy()}</span>
+        </div>
       {actual === 'revision' && <BandejaRevisionView />}
       {actual === 'historial-contenidos' && <HistorialContenidosView />}
       {actual === 'administradores' && <CrearAdministradorView />}
