@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from core.pruebas import crear_admin, iniciar_sesion
 
 from .models import VerificacionServidor
-from .services import IA_SIN_BACKEND
+from .services import ESPERA_BACKEND, IA_SIN_BACKEND, pedir_estado_a_spring
 
 URL = "/api/servidor/estado/"
 SPRING = "servidor.services.pedir_estado_a_spring"
@@ -129,3 +129,19 @@ class EstadoServidorTests(APITestCase):
         self.assertEqual(respuesta.status_code, 403)
         spring.assert_not_called()
         self.assertFalse(VerificacionServidor.objects.exists())
+
+
+class EsperaBackendTests(APITestCase):
+    """Django espera a Spring más que los 5 s que Spring espera a la IA, así no marca un falso "Backend caído"."""
+
+    def test_la_espera_a_spring_es_mayor_que_la_espera_a_la_ia(self):
+        self.assertGreater(ESPERA_BACKEND, 5)
+
+    @patch("servidor.services.urllib.request.urlopen")
+    def test_pide_el_estado_a_spring_con_esa_espera(self, urlopen):
+        respuesta = MagicMock()
+        respuesta.read.return_value = b'{"backend": "ACTIVO"}'
+        urlopen.return_value.__enter__.return_value = respuesta
+
+        self.assertEqual(pedir_estado_a_spring(), {"backend": "ACTIVO"})
+        self.assertEqual(urlopen.call_args.kwargs["timeout"], ESPERA_BACKEND)
