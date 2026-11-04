@@ -42,7 +42,7 @@ function iniciales(admin) {
   return `${admin.nombres?.[0] ?? ''}${admin.apellidos?.[0] ?? ''}`.toUpperCase()
 }
 
-export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRol, alSalir }) {
+export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRol, alSalir, contadores = {} }) {
   return (
     <aside className="menu-admin">
       <span className="menu-marca">
@@ -62,6 +62,11 @@ export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRo
               >
                 <IconoOpcion id={opcion.id} />
                 {opcion.nombre}
+                {contadores[opcion.id] > 0 && (
+                  <span className="menu-contador" aria-label={`${contadores[opcion.id]} pendientes`}>
+                    {contadores[opcion.id]}
+                  </span>
+                )}
               </button>
             ))}
           </div>

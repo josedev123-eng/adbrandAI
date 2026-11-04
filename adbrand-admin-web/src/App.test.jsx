@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { SesionProvider } from './app/context/SesionProvider'
 import { obtenerSesion } from './features/auth/models/authApi'
+import { listarDudosos } from './features/moderacion/models/moderacionApi'
 import { EVENTO_SESION_VENCIDA } from './shared/services/apiClient'
 import { guardarToken, leerToken } from './shared/services/sesionToken'
 
+vi.mock('./features/moderacion/models/moderacionApi', () => ({ listarDudosos: vi.fn() }))
 vi.mock('./features/auth/models/authApi', () => ({
   iniciarSesion: vi.fn(),
   obtenerSesion: vi.fn(),
@@ -42,6 +44,7 @@ function opcionesDelMenu() {
 describe('App (login y menú por rol)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    listarDudosos.mockResolvedValue([])
     localStorage.clear()
   })
 
@@ -131,5 +134,23 @@ describe('App (login y menú por rol)', () => {
 
     expect(screen.getByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(screen.getByText('Tu sesión venció. Vuelve a iniciar sesión.')).toBeInTheDocument()
+  })
+
+  it('muestra cuántos contenidos esperan revisión junto a la opción del menú', async () => {
+    listarDudosos.mockResolvedValue([{ id: 1 }, { id: 2 }, { id: 3 }])
+    guardarToken('token-guardado')
+    obtenerSesion.mockResolvedValue(adminCon('MODERADOR'))
+    mostrar()
+
+    expect(await screen.findByLabelText('3 pendientes')).toBeInTheDocument()
+  })
+
+  it('FINANZAS no ve la revisión, así que no se piden los pendientes', async () => {
+    guardarToken('token-guardado')
+    obtenerSesion.mockResolvedValue(adminCon('FINANZAS'))
+    mostrar()
+
+    await screen.findByText('Pantalla financiera')
+    expect(listarDudosos).not.toHaveBeenCalled()
   })
 })
