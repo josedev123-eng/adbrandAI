@@ -62,7 +62,7 @@ describe('App (login y menú por rol)', () => {
     expect(opcionesDelMenu()).toEqual([
       'Revisión de contenido',
       'Historial de contenidos',
-      'Administradores',
+      'Crear administrador',
       'Lista de administradores',
       'Auditoría',
       'Panel financiero',

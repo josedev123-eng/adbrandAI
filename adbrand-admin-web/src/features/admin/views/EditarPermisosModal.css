@@ -2,7 +2,7 @@
 
 /* La lista con sus dos acciones necesita más ancho que el formulario solo. */
 .pagina.pagina-administradores {
-  max-width: 1040px;
+  max-width: 1200px;
 }
 
 .pagina-administradores .tarjeta {

@@ -31,7 +31,7 @@ function App() {
   }
 
   return (
-    <>
+    <div className="layout-admin">
       <MenuAdmin
         opciones={opciones}
         actual={actual}
@@ -40,6 +40,7 @@ function App() {
         nombreRol={NOMBRES_ROL[rol] ?? rol}
         alSalir={cerrarSesion}
       />
+      <div className="layout-contenido">
       {actual === 'revision' && <BandejaRevisionView />}
       {actual === 'historial-contenidos' && <HistorialContenidosView />}
       {actual === 'administradores' && <CrearAdministradorView />}
@@ -55,7 +56,8 @@ function App() {
           <p>Tu rol todavía no tiene pantallas. Llegan con las historias del Sprint 2.</p>
         </main>
       )}
-    </>
+      </div>
+    </div>
   )
 }
 
