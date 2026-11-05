@@ -114,6 +114,12 @@
   background: var(--primary-soft);
 }
 
+/* Aviso cuando la publicación no se pudo mover y volvió a su día. */
+.calendario-aviso {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
 /* HU 35: publicaciones de una campaña, pintadas con su color. */
 .calendario-chip-campana {
   border-left: 4px solid var(--color-campana);

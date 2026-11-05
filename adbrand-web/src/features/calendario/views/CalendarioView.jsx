@@ -52,6 +52,7 @@ export default function CalendarioView() {
     anuncios,
     errorProgramar,
     moverPublicacion,
+    avisoArrastre,
   } = useCalendario()
   // HU 36: día sobre el que se está arrastrando una publicación, para resaltarlo.
   const [diaDestino, setDiaDestino] = useState(null)
@@ -179,6 +180,11 @@ export default function CalendarioView() {
         )}
 
         {error && <p className="aviso aviso-error">{error}</p>}
+        {avisoArrastre && (
+          <p className="aviso calendario-aviso" role="alert">
+            {avisoArrastre}
+          </p>
+        )}
         {cargando ? (
           <p className="cargando">Cargando calendario…</p>
         ) : (

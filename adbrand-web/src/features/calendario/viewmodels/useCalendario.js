@@ -84,6 +84,9 @@ export function useCalendario() {
   const [anuncios, setAnuncios] = useState([])
   const [errorProgramar, setErrorProgramar] = useState(null)
 
+  // HU 36: aviso cuando una publicación no se pudo mover y volvió a su día.
+  const [avisoArrastre, setAvisoArrastre] = useState(null)
+
   useEffect(() => {
     let activo = true
     pedirCalendario(mes, campanaFiltro)
@@ -162,17 +165,29 @@ export function useCalendario() {
   }
 
   // HU 36: al soltar una publicación en otro día se guarda la fecha nueva y se actualiza esa publicación.
+  // Se mueve en pantalla de inmediato; si Spring no acepta el cambio, vuelve a su día y sale el aviso.
   async function moverPublicacion(id, fecha) {
     const publicacion = publicaciones.find((item) => item.id === id)
     if (!publicacion || publicacion.fecha === fecha) return false
 
-    setError(null)
+    setAvisoArrastre(null)
+    // HU 36, criterio 2: a un día pasado no se mueve; ni siquiera se llama a Spring.
+    if (esDiaPasado(fecha)) {
+      setAvisoArrastre('No puedes mover una publicación a un día que ya pasó.')
+      return false
+    }
+
+    const fechaOriginal = publicacion.fecha
+    setPublicaciones((actuales) => actuales.map((item) => (item.id === id ? { ...item, fecha } : item)))
     try {
       const actualizada = await reprogramarPublicacion(id, fecha)
       setPublicaciones((actuales) => actuales.map((item) => (item.id === id ? actualizada : item)))
       return true
     } catch (fallo) {
-      setError(fallo.message)
+      setPublicaciones((actuales) =>
+        actuales.map((item) => (item.id === id ? { ...item, fecha: fechaOriginal } : item)),
+      )
+      setAvisoArrastre(fallo.message)
       return false
     }
   }
@@ -215,5 +230,6 @@ export function useCalendario() {
     anuncios,
     errorProgramar,
     moverPublicacion,
+    avisoArrastre,
   }
 }
