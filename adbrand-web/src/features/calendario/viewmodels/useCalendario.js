@@ -3,7 +3,7 @@
 // HU 34: carga los anuncios aprobados para elegir cuál programar y no deja programar en un día que ya pasó.
 import { useEffect, useState } from 'react'
 import { listarAnuncios } from '../models/anunciosApi'
-import { crearPublicacion, obtenerCalendario } from '../models/calendarioApi'
+import { crearPublicacion, obtenerCalendario, reprogramarPublicacion } from '../models/calendarioApi'
 import { crearCampana, listarCampanas } from '../models/campanasApi'
 
 export function hoyIso() {
@@ -161,6 +161,22 @@ export function useCalendario() {
     }
   }
 
+  // HU 36: al soltar una publicación en otro día se guarda la fecha nueva y se actualiza esa publicación.
+  async function moverPublicacion(id, fecha) {
+    const publicacion = publicaciones.find((item) => item.id === id)
+    if (!publicacion || publicacion.fecha === fecha) return false
+
+    setError(null)
+    try {
+      const actualizada = await reprogramarPublicacion(id, fecha)
+      setPublicaciones((actuales) => actuales.map((item) => (item.id === id ? actualizada : item)))
+      return true
+    } catch (fallo) {
+      setError(fallo.message)
+      return false
+    }
+  }
+
   async function agregarCampana(datos) {
     const errores = validarCampana(datos)
     setErroresCampana(errores)
@@ -198,5 +214,6 @@ export function useCalendario() {
     guardandoCampana,
     anuncios,
     errorProgramar,
+    moverPublicacion,
   }
 }

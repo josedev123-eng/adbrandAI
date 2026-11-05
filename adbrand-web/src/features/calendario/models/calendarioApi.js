@@ -10,3 +10,8 @@ export function obtenerCalendario(mes, campanaId) {
 export function crearPublicacion(datos) {
   return apiRequest('/calendario', { method: 'POST', body: datos })
 }
+
+// HU 36: mueve la publicación a otro día; la hora no cambia.
+export function reprogramarPublicacion(id, fecha) {
+  return apiRequest(`/calendario/${id}/fecha`, { method: 'PATCH', body: { fecha } })
+}

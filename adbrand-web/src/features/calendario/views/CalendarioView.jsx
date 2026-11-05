@@ -1,6 +1,7 @@
 // View: calendario mensual de publicaciones. La lógica está en useCalendario (HU 33).
 // HU 35: campañas con su color, filtro por campaña y formulario para crear campañas.
 // HU 34: al programar se elige uno de los anuncios aprobados.
+// HU 36: las publicaciones programadas se arrastran a otro día.
 import { useState } from 'react'
 import {
   diasDelMes,
@@ -50,7 +51,10 @@ export default function CalendarioView() {
     guardandoCampana,
     anuncios,
     errorProgramar,
+    moverPublicacion,
   } = useCalendario()
+  // HU 36: día sobre el que se está arrastrando una publicación, para resaltarlo.
+  const [diaDestino, setDiaDestino] = useState(null)
   const [formulario, setFormulario] = useState({
     titulo: '',
     redSocial: 'INSTAGRAM',
@@ -80,6 +84,25 @@ export default function CalendarioView() {
       titulo: anuncio ? anuncio.oferta.slice(0, 150) : actual.titulo,
       redSocial: anuncio ? anuncio.redSocial : actual.redSocial,
     }))
+  }
+
+  // HU 36: arrastrar y soltar. Solo las publicaciones programadas se pueden mover.
+  function alEmpezarArrastre(evento, publicacion) {
+    evento.dataTransfer.setData('text/plain', String(publicacion.id))
+    evento.dataTransfer.effectAllowed = 'move'
+  }
+
+  function alPasarSobreDia(evento, fecha) {
+    evento.preventDefault()
+    evento.dataTransfer.dropEffect = 'move'
+    if (diaDestino !== fecha) setDiaDestino(fecha)
+  }
+
+  function alSoltarEnDia(evento, fecha) {
+    evento.preventDefault()
+    setDiaDestino(null)
+    const id = Number(evento.dataTransfer.getData('text/plain'))
+    if (id) moverPublicacion(id, fecha)
   }
 
   function cambiarCampoCampana(campo, valor) {
@@ -173,13 +196,26 @@ export default function CalendarioView() {
               const fecha = fechaDeDia(mes, dia)
               const delDia = publicaciones.filter((publicacion) => publicacion.fecha === fecha)
               const esHoy = fecha === hoyIso()
+              const clasesCelda = ['calendario-celda']
+              if (esHoy) clasesCelda.push('calendario-hoy')
+              if (diaDestino === fecha) clasesCelda.push('calendario-destino')
               return (
-                <div key={fecha} className={esHoy ? 'calendario-celda calendario-hoy' : 'calendario-celda'}>
+                <div
+                  key={fecha}
+                  className={clasesCelda.join(' ')}
+                  data-fecha={fecha}
+                  onDragOver={(evento) => alPasarSobreDia(evento, fecha)}
+                  onDragLeave={() => setDiaDestino((actual) => (actual === fecha ? null : actual))}
+                  onDrop={(evento) => alSoltarEnDia(evento, fecha)}
+                >
                   <span className="calendario-numero">{dia}</span>
                   <div className="calendario-publicaciones">
                     {delDia.map((publicacion) => (
                       <span
                         key={publicacion.id}
+                        draggable={publicacion.estado === 'PROGRAMADA'}
+                        onDragStart={(evento) => alEmpezarArrastre(evento, publicacion)}
+                        onDragEnd={() => setDiaDestino(null)}
                         className={
                           publicacion.campanaColor
                             ? 'calendario-chip calendario-chip-campana'
