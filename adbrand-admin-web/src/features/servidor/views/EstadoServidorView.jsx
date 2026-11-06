@@ -51,6 +51,16 @@ export default function EstadoServidorView() {
         </div>
       )}
 
+      {estado && caidos.length === 0 && (
+        <div className="estado-resumen" role="status">
+          <span className="servicio-luz" aria-hidden="true" />
+          <span>
+            <strong>Todos los servicios están activos</strong>
+            <small>Última revisión a las {formatearHora(estado.verificado_en)} · se revisa solo cada 15 segundos</small>
+          </span>
+        </div>
+      )}
+
       {estado && (
         <section className="estado-servicios">
           {estado.servicios.map((servicio) => (
