@@ -3,12 +3,7 @@ import { useState } from 'react'
 import QRCode from 'qrcode'
 import { confirmarYape, registrarYape } from '../models/pagosApi'
 
-export function celularValido(valor) {
-  return valor.trim() === '' || /^9\d{8}$/.test(valor.trim())
-}
-
 export function usePagoYape(plan, alConfirmar) {
-  const [celular, setCelular] = useState('')
   const [operacion, setOperacion] = useState(null)
   const [qr, setQr] = useState(null)
   const [cargando, setCargando] = useState(false)
@@ -17,17 +12,9 @@ export function usePagoYape(plan, alConfirmar) {
 
   async function generar() {
     setError(null)
-    if (!celularValido(celular)) {
-      setError('El celular debe tener 9 dígitos y empezar con 9.')
-      return
-    }
-
     setCargando(true)
     try {
-      const nueva = await registrarYape({
-        planId: plan.id,
-        celular: celular.trim() === '' ? null : celular.trim(),
-      })
+      const nueva = await registrarYape({ planId: plan.id })
       setOperacion(nueva)
       setQr(await QRCode.toDataURL(nueva.contenidoQr, { width: 240, margin: 1 }))
     } catch (fallo) {
@@ -51,8 +38,6 @@ export function usePagoYape(plan, alConfirmar) {
   }
 
   return {
-    celular,
-    cambiarCelular: setCelular,
     operacion,
     qr,
     cargando,
