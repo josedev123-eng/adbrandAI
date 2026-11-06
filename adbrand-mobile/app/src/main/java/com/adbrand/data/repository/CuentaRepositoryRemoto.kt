@@ -23,16 +23,18 @@ class CuentaRepositoryRemoto : CuentaRepository {
             val json = JSONObject(respuesta.cuerpo)
             Resultado.Exito(
                 Empresa(
-                    nombreEmpresa = json.optString("nombreEmpresa"),
-                    correo = json.optString("correo"),
-                    ruc = json.optString("ruc"),
-                    razonSocial = json.optString("razonSocial"),
-                    telefono = json.optString("telefono"),
-                    direccion = json.optString("direccion")
+                    nombreEmpresa = texto(json, "nombreEmpresa"),
+                    correo = texto(json, "correo"),
+                    ruc = texto(json, "ruc"),
+                    razonSocial = texto(json, "razonSocial"),
+                    telefono = texto(json, "telefono"),
+                    direccion = texto(json, "direccion")
                 )
             )
         }.getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
     }
+
+    private fun texto(json: JSONObject, clave: String): String = if (json.isNull(clave)) "" else json.optString(clave)
 
     private fun errorDeRed(error: Throwable): Resultado.Error =
         Resultado.Error(

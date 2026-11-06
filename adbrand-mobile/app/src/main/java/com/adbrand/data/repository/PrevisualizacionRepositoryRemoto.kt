@@ -38,34 +38,36 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
     private fun kitDesde(json: JSONObject): KitMarca {
         val logo = json.optJSONObject("logoDiseno")?.let { diseno ->
             LogoMarca(
-                texto = diseno.optString("texto"),
-                forma = diseno.optString("forma", "REDONDEADO"),
-                colorFondo = diseno.optString("colorFondo", "#4F46E5"),
-                colorTexto = diseno.optString("colorTexto", "#FFFFFF"),
-                tipografia = diseno.optString("tipografia")
+                texto = texto(diseno, "texto"),
+                forma = texto(diseno, "forma").ifBlank { "REDONDEADO" },
+                colorFondo = texto(diseno, "colorFondo").ifBlank { "#4F46E5" },
+                colorTexto = texto(diseno, "colorTexto").ifBlank { "#FFFFFF" },
+                tipografia = texto(diseno, "tipografia")
             )
         }
         return KitMarca(
             id = json.optLong("id").takeIf { it > 0 },
-            nombreNegocio = json.optString("nombreNegocio"),
-            sector = json.optString("sector"),
-            logoConcepto = json.optString("logoConcepto"),
-            tipografiaPrimaria = json.optString("tipografiaPrimaria"),
-            tipografiaSecundaria = json.optString("tipografiaSecundaria"),
-            paletaColores = json.optString("paletaColores"),
-            vozMarca = json.optString("vozMarca"),
+            nombreNegocio = texto(json, "nombreNegocio"),
+            sector = texto(json, "sector"),
+            logoConcepto = texto(json, "logoConcepto"),
+            tipografiaPrimaria = texto(json, "tipografiaPrimaria"),
+            tipografiaSecundaria = texto(json, "tipografiaSecundaria"),
+            paletaColores = texto(json, "paletaColores"),
+            vozMarca = texto(json, "vozMarca"),
             logoDiseno = logo
         )
     }
 
     private fun anuncioDesde(json: JSONObject): Anuncio = Anuncio(
         id = json.optLong("id").takeIf { it > 0 },
-        texto = json.optString("texto"),
-        redSocial = json.optString("redSocial", "INSTAGRAM"),
-        tono = json.optString("tono", "CERCANO"),
-        estado = json.optString("estado", "APROBADO"),
-        fechaCreacion = json.optString("fechaCreacion")
+        texto = texto(json, "texto"),
+        redSocial = texto(json, "redSocial").ifBlank { "INSTAGRAM" },
+        tono = texto(json, "tono").ifBlank { "CERCANO" },
+        estado = texto(json, "estado").ifBlank { "APROBADO" },
+        fechaCreacion = texto(json, "fechaCreacion")
     )
+
+    private fun texto(json: JSONObject, clave: String): String = if (json.isNull(clave)) "" else json.optString(clave)
 
     private fun errorDeRed(error: Throwable): Resultado.Error =
         Resultado.Error(
