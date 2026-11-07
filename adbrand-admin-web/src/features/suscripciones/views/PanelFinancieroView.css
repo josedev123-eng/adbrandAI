@@ -39,6 +39,13 @@
   color: var(--muted);
 }
 
+/* Flechita del último mes: verde si sube, rojo si baja, gris si quedó igual */
+.panel-tendencia { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 4px 10px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+.panel-tendencia::first-letter { text-transform: uppercase; }
+.tendencia-sube { background: var(--ok-soft); color: var(--ok); }
+.tendencia-baja { background: var(--bad-soft); color: var(--bad); }
+.tendencia-igual { background: var(--surface-2); color: var(--muted); }
+
 /* HU-07: selector del rango de meses */
 .panel-rango {
   display: grid;
