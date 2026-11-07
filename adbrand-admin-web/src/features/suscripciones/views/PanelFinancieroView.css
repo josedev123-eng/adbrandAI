@@ -121,6 +121,19 @@
   text-align: right;
 }
 
+/* Gráfico de columnas: cada mes es una columna que crece hacia arriba según lo cobrado.
+   En celular vuelve a las barras horizontales de arriba. */
+@media (min-width: 561px) {
+  .panel-ingresos { flex-direction: row; align-items: stretch; gap: 10px; min-height: 240px; padding-top: 8px; }
+  .panel-ingreso { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .panel-ingreso-monto { order: 1; text-align: center; font-size: 0.75rem; color: var(--muted); }
+  .panel-ingreso-barra { order: 2; flex: 1; width: 100%; max-width: 64px; min-height: 160px; height: auto; display: flex; align-items: flex-end; border-radius: 10px 10px 4px 4px; }
+  /* El ancho en línea es de las barras horizontales; en columnas manda la altura. */
+  .panel-ingreso-relleno { width: 100% !important; height: var(--alto); border-radius: 10px 10px 4px 4px; background: linear-gradient(180deg, #6d64f0, var(--primary)); transition: height 0.4s ease; }
+  .panel-ingreso:hover .panel-ingreso-relleno { background: var(--ia); }
+  .panel-ingreso-mes { order: 3; font-size: 0.8rem; text-align: center; color: var(--muted); line-height: 1.2; }
+}
+
 @media (max-width: 560px) {
   .panel-ingreso { grid-template-columns: 1fr auto; }
   .panel-ingreso-barra { grid-column: 1 / -1; grid-row: 2; }

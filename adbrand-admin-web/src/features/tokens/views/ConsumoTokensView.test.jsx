@@ -150,4 +150,14 @@ describe('ConsumoTokensView (HU-17)', () => {
     expect(screen.getByRole('row', { name: /Empresa #2/ })).not.toHaveClass('consumo-fila-alerta')
     expect(screen.getByRole('row', { name: /Empresa #3/ })).toHaveTextContent('—')
   })
+
+  it('dibuja una barra por empresa, de la que más tokens gastó a la que menos', async () => {
+    obtenerConsumoActual.mockResolvedValue(consumoCon(1800, [CAFE, ROSA]))
+    const { container } = render(<ConsumoTokensView />)
+
+    await screen.findByText('Panadería Doña Rosa')
+    const barras = [...container.querySelectorAll('.consumo-barra')]
+    expect(barras.map((barra) => barra.dataset.empresa)).toEqual(['Panadería Doña Rosa', 'Empresa #2'])
+    expect(barras.map((barra) => barra.dataset.tokens)).toEqual([formatearTokens(1500), formatearTokens(300)])
+  })
 })

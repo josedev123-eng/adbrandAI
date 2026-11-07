@@ -145,7 +145,10 @@ export default function PanelFinancieroView() {
               <li key={ingreso.mes} className="panel-ingreso">
                 <span className="panel-ingreso-mes">{formatearMes(ingreso.mes)}</span>
                 <span className="panel-ingreso-barra">
-                  <span className="panel-ingreso-relleno" style={{ width: `${ingreso.porcentaje}%` }} />
+                  <span
+                    className="panel-ingreso-relleno"
+                    style={{ width: `${ingreso.porcentaje}%`, '--alto': `${Math.max(ingreso.porcentaje, 2)}%` }}
+                  />
                 </span>
                 <span className="panel-ingreso-monto">{formatearSoles(ingreso.total)}</span>
               </li>

@@ -34,6 +34,14 @@
   margin: 0;
 }
 
+.consumo-grafico { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 20px; }
+.consumo-barra { display: grid; grid-template-columns: minmax(120px, 200px) 1fr 90px; align-items: center; gap: 12px; font-size: 0.85rem; }
+.consumo-barra::before { content: attr(data-empresa); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.consumo-barra::after { content: attr(data-tokens); grid-column: 3; grid-row: 1; text-align: right; font-family: var(--f-mono); color: var(--muted); }
+.consumo-barra-relleno { grid-column: 2; grid-row: 1; display: block; height: 14px; border-radius: 999px; background: linear-gradient(90deg, var(--primary), #8b84f3); }
+.consumo-barra-alerta .consumo-barra-relleno { background: linear-gradient(90deg, var(--warn), #e0a24a); }
+@media (max-width: 560px) { .consumo-barra { grid-template-columns: 1fr auto; } .consumo-barra-relleno { grid-column: 1 / -1; grid-row: 2; } .consumo-barra::after { grid-column: 2; } }
+
 .tabla-consumo {
   width: 100%;
   border-collapse: collapse;

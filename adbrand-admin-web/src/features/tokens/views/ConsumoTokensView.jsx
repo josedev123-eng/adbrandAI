@@ -26,6 +26,27 @@ function AlertasConsumo({ alertas }) {
   )
 }
 
+// Gráfico de barras de tokens por empresa, de la que más gastó a la que menos.
+// Es solo dibujo (la tabla de abajo tiene los mismos datos), por eso los textos van en atributos y no se repiten.
+function GraficoEmpresas({ empresas }) {
+  const ordenadas = [...empresas].sort((a, b) => b.tokens - a.tokens)
+  const mayor = Math.max(1, ...ordenadas.map((fila) => fila.tokens))
+  return (
+    <div className="consumo-grafico" aria-hidden="true">
+      {ordenadas.map((fila) => (
+        <div
+          key={fila.usuario_id}
+          className={fila.alerta ? 'consumo-barra consumo-barra-alerta' : 'consumo-barra'}
+          data-empresa={fila.empresa}
+          data-tokens={formatearTokens(fila.tokens)}
+        >
+          <span className="consumo-barra-relleno" style={{ width: `${Math.max(Math.round((fila.tokens / mayor) * 100), 2)}%` }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function ConsumoTokensView() {
   const { consumo, cargando, error, actualizando, actualizar } = useConsumoTokens()
 
@@ -61,30 +82,33 @@ export default function ConsumoTokensView() {
             {consumo.empresas.length === 0 ? (
               <SinResultados>Ninguna empresa ha usado la IA este mes.</SinResultados>
             ) : (
-              <table className="tabla-consumo">
-                <thead>
-                  <tr>
-                    <th>Empresa</th>
-                    <th className="consumo-numero">Tokens</th>
-                    <th className="consumo-numero">% del límite</th>
-                    <th className="consumo-numero">Generaciones</th>
-                    <th>Última generación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {consumo.empresas.map((fila) => (
-                    <tr key={fila.usuario_id} className={fila.alerta ? 'consumo-fila-alerta' : undefined}>
-                      <td className="consumo-empresa">{fila.empresa}</td>
-                      <td className="consumo-numero">{formatearTokens(fila.tokens)}</td>
-                      <td className="consumo-numero">
-                        {fila.porcentaje == null ? '—' : `${formatearPorcentaje(fila.porcentaje)}%`}
-                      </td>
-                      <td className="consumo-numero">{fila.generaciones}</td>
-                      <td className="consumo-fecha">{formatearFecha(fila.ultima_generacion)}</td>
+              <>
+                <GraficoEmpresas empresas={consumo.empresas} />
+                <table className="tabla-consumo">
+                  <thead>
+                    <tr>
+                      <th>Empresa</th>
+                      <th className="consumo-numero">Tokens</th>
+                      <th className="consumo-numero">% del límite</th>
+                      <th className="consumo-numero">Generaciones</th>
+                      <th>Última generación</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {consumo.empresas.map((fila) => (
+                      <tr key={fila.usuario_id} className={fila.alerta ? 'consumo-fila-alerta' : undefined}>
+                        <td className="consumo-empresa">{fila.empresa}</td>
+                        <td className="consumo-numero">{formatearTokens(fila.tokens)}</td>
+                        <td className="consumo-numero">
+                          {fila.porcentaje == null ? '—' : `${formatearPorcentaje(fila.porcentaje)}%`}
+                        </td>
+                        <td className="consumo-numero">{fila.generaciones}</td>
+                        <td className="consumo-fecha">{formatearFecha(fila.ultima_generacion)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
             )}
           </section>
         </>
