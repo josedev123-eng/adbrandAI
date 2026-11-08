@@ -2,6 +2,8 @@
 // `seccion` agrupa las opciones en el menú lateral.
 // Django también revisa el rol en cada endpoint (paso 3), esto solo ordena el menú.
 export const PANTALLAS = [
+  // Inicio: tarjetas resumen; cada rol ve solo las tarjetas de sus pantallas.
+  { id: 'inicio', nombre: 'Inicio', roles: ['SUPERADMIN', 'MODERADOR', 'FINANZAS', 'TECNICO'] },
   { id: 'revision', nombre: 'Revisión de contenido', seccion: 'Contenido', roles: ['SUPERADMIN', 'MODERADOR'] },
   { id: 'historial-contenidos', nombre: 'Historial de contenidos', seccion: 'Contenido', roles: ['SUPERADMIN', 'MODERADOR'] },
   { id: 'administradores', nombre: 'Crear administrador', seccion: 'Administradores', roles: ['SUPERADMIN'] },

@@ -1,0 +1,25 @@
+/* Pantalla de Inicio: tarjetas resumen que llevan a cada pantalla */
+.pagina.pagina-inicio { max-width: 1200px; }
+
+.inicio-cabecera { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+
+.inicio-tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+
+.inicio-tarjeta { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 180px; text-align: left; font: inherit; color: inherit; cursor: pointer; border-top: 4px solid var(--primary); transition: transform 0.15s, box-shadow 0.15s; }
+.inicio-tarjeta:hover, .inicio-tarjeta:focus-visible { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(27, 29, 46, 0.08), 0 12px 28px rgba(27, 29, 46, 0.1); }
+.inicio-ok { border-top-color: var(--ok); }
+.inicio-atencion { border-top-color: var(--warn); }
+.inicio-peligro { border-top-color: var(--bad); }
+
+.inicio-titulo { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.inicio-valor { font-family: var(--f-display); font-size: 2.3rem; font-weight: 700; line-height: 1.1; color: var(--primary); }
+.inicio-ok .inicio-valor { color: var(--ok); }
+.inicio-atencion .inicio-valor { color: var(--warn); }
+.inicio-peligro .inicio-valor { color: var(--bad); }
+.inicio-valor-cargando { display: block; width: 60%; height: 2.5rem; border-radius: 8px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: inicio-brillo 1.2s ease-in-out infinite; }
+.inicio-nota { font-size: 0.85rem; color: var(--muted); }
+.inicio-nota::first-letter { text-transform: uppercase; }
+.inicio-ir { margin-top: auto; padding-top: 6px; font-size: 0.8rem; font-weight: 700; color: var(--primary); }
+
+@keyframes inicio-brillo { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .inicio-tarjeta, .inicio-valor-cargando { transition: none; animation: none; } }

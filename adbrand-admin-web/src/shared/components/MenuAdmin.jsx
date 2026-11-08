@@ -3,6 +3,7 @@ import './MenuAdmin.css'
 
 // Trazos de un ícono simple por opción (viewBox 24x24). Se dibujan con línea, sin relleno.
 const ICONOS = {
+  inicio: ['M3 11l9-7 9 7', 'M5 10v10h14V10', 'M10 20v-6h4v6'],
   revision: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z', 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z'],
   'historial-contenidos': ['M12 7v5l3 2', 'M3 12a9 9 0 1 0 3-6.7', 'M3 4v4h4'],
   administradores: ['M15 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1', 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z', 'M19 8v6', 'M16 11h6'],

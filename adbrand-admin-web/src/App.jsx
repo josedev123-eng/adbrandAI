@@ -7,6 +7,8 @@ import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import LoginView from './features/auth/views/LoginView'
 import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
 import HistorialContenidosView from './features/moderacion/views/HistorialContenidosView'
+import InicioView from './features/inicio/views/InicioView'
+import { tarjetasDelRol } from './features/inicio/viewmodels/useInicio'
 import EstadoServidorView from './features/servidor/views/EstadoServidorView'
 import PanelFinancieroView from './features/suscripciones/views/PanelFinancieroView'
 import ConsumoTokensView from './features/tokens/views/ConsumoTokensView'
@@ -64,6 +66,7 @@ function App() {
           </span>
           <span className="barra-fecha">{fechaDeHoy()}</span>
         </div>
+      {actual === 'inicio' && <InicioView admin={admin} claves={tarjetasDelRol(opciones)} alAbrir={setPantalla} />}
       {actual === 'revision' && <BandejaRevisionView />}
       {actual === 'historial-contenidos' && <HistorialContenidosView />}
       {actual === 'administradores' && <CrearAdministradorView />}
