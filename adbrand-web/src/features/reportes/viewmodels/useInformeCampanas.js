@@ -10,6 +10,15 @@ export function hayFiltros(filtros) {
   return Boolean(filtros.desde || filtros.hasta || filtros.campanaId)
 }
 
+// HU-40, criterio 2: la misma regla que revisa Spring (FECHAS_INVALIDAS), para avisar sin consultar.
+// Las fechas llegan como AAAA-MM-DD, así que se pueden comparar como texto.
+export function validarPeriodo(filtros) {
+  if (filtros.desde && filtros.hasta && filtros.desde > filtros.hasta) {
+    return 'La fecha de inicio no puede ser posterior a la fecha de fin.'
+  }
+  return null
+}
+
 export function useInformeCampanas() {
   const [informe, setInforme] = useState(null)
   const [error, setError] = useState(null)
@@ -61,7 +70,13 @@ export function useInformeCampanas() {
     }
   }
 
+  // Con el periodo al revés no se genera el informe: se avisa y el informe anterior queda como estaba.
   function aplicarFiltros() {
+    const problema = validarPeriodo(filtros)
+    if (problema) {
+      setError(problema)
+      return Promise.resolve(false)
+    }
     return consultar(filtros)
   }
 
