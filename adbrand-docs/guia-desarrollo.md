@@ -105,7 +105,7 @@ Inicio de sesión del usuario PYME (HU 21, 22 y 24):
 - `ServicioCorreo` (`notificacion/service`) envía los correos. Con `MAIL_MOCK=true` no envía nada y escribe el correo en la consola de Spring como `[CORREO SIMULADO]`, así se puede leer el código de recuperación sin servidor de correo.
 
 Pendiente conocido:
-- Con `AI_MOCK=true` generar un kit (HU 11) falla, porque el modo simulado devuelve un anuncio y no el JSON del kit. Para probar la HU 32 se carga `adbrand-docs/datos-prueba/kit-marca.sql`.
+- Con `AI_MOCK=true` generar un kit (HU 11) falla, porque el modo simulado devuelve un anuncio y no el JSON del kit. Para probar la HU 32 se carga `scripts/datos-prueba/kit-marca.sql`.
 
 ### Endpoints que ya existen
 
@@ -221,7 +221,7 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 
 Si la base local ya tenía una versión mayor cuando llegaron V13 a V19 o V30 a V37, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
 
-Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
+Los datos de prueba NO van en Flyway: están en `scripts/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
 
 ### Resumen del Sprint 2 de Jose (`rama-jose`)
 

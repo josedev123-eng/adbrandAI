@@ -17,8 +17,9 @@ adbrand/
 ├── adbrand-admin-web/   ADMINISTRACIÓN. React (Vite): panel del superadmin y moderadores
 ├── adbrand-admin-api/   ADMINISTRACIÓN. Django + Django REST Framework
 ├── adbrand-web/         USUARIO. React (Vite): web del dueño de la PYME
-├── adbrand-mobile/      USUARIO. Kotlin + Jetpack Compose (más adelante)
-└── adbrand-core-api/    USUARIO. Spring Boot (Java)
+├── adbrand-mobile/      USUARIO. Kotlin + Jetpack Compose
+├── adbrand-core-api/    USUARIO. Spring Boot (Java)
+└── scripts/             Scripts que se ejecutan a mano (datos-prueba/: datos para la base local)
 ```
 
 ## Qué historia va en qué lado
