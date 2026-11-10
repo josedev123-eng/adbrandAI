@@ -30,6 +30,18 @@ Ninguna pantalla llama a la API directamente; siempre pasa por su ViewModel. La 
 
 ## Comandos
 
+### Probar en un celular conectado por USB
+
+Con el backend ejecutándose en el puerto `8080` y la depuración USB autorizada:
+
+```powershell
+adb reverse tcp:8080 tcp:8080
+.\gradlew.bat :app:assembleDebug -PapiBaseUrl=http://localhost:8080/api/
+adb install -r app\build\outputs\apk\debug\app-debug.apk
+```
+
+La ruta `10.0.2.2` se mantiene como predeterminada para el emulador. El túnel USB se debe activar de nuevo si se desconecta el celular.
+
 ```bash
 .\gradlew.bat :app:testDebugUnitTest   # pruebas
 .\gradlew.bat :app:assembleDebug       # genera el APK

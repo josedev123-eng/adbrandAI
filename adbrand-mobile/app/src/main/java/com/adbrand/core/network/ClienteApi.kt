@@ -1,5 +1,6 @@
 package com.adbrand.core.network
 
+import com.adbrand.BuildConfig
 import com.adbrand.core.session.GestorSesion
 import com.adbrand.data.remote.RenovadorSesionRemoto
 import java.io.IOException
@@ -11,10 +12,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
-// HU 42: un solo cliente HTTP para toda la app. 10.0.2.2 es la PC vista desde el emulador.
+// HU 42: un cliente HTTP configurable para usar la PC desde el emulador o por USB en un móvil.
 object ClienteApi {
 
-    const val URL_BASE = "http://10.0.2.2:8080/api/"
+    val URL_BASE: String = BuildConfig.API_BASE_URL
     private val JSON = "application/json; charset=utf-8".toMediaType()
 
     // Cliente sin sesión: lo usa la renovación para no entrar en un ciclo de 401.
