@@ -1,6 +1,20 @@
 // ViewModel: carga el calendario del mes, navega entre meses y programa publicaciones (HU 33).
+// HU 35: también carga las campañas, crea campañas nuevas y filtra el calendario por campaña.
+// HU 34: carga los anuncios aprobados para elegir cuál programar y no deja programar en un día que ya pasó.
 import { useEffect, useState } from 'react'
-import { crearPublicacion, obtenerCalendario } from '../models/calendarioApi'
+import { listarAnuncios } from '../models/anunciosApi'
+import { crearPublicacion, obtenerCalendario, reprogramarPublicacion } from '../models/calendarioApi'
+import { crearCampana, listarCampanas } from '../models/campanasApi'
+
+export function hoyIso() {
+  const hoy = new Date()
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
+}
+
+// HU 34: aquí solo se revisa el día; la hora exacta la revisa Spring (FECHA_PASADA).
+export function esDiaPasado(fecha) {
+  return Boolean(fecha) && fecha < hoyIso()
+}
 
 export function mesActual() {
   const hoy = new Date()
@@ -35,6 +49,24 @@ export function fechaDeDia(mes, dia) {
   return `${mes}-${String(dia).padStart(2, '0')}`
 }
 
+// HU 35: las mismas reglas que valida Spring, para avisar antes de enviar.
+export function validarCampana(datos) {
+  const errores = {}
+  if (!datos.nombre.trim()) errores.nombre = 'Escribe el nombre de la campaña.'
+  if (!/^#[0-9A-Fa-f]{6}$/.test(datos.color)) errores.color = 'Escribe el color como #RRGGBB.'
+  if (!datos.fechaInicio) errores.fechaInicio = 'Selecciona la fecha de inicio.'
+  if (!datos.fechaFin) errores.fechaFin = 'Selecciona la fecha de fin.'
+  if (datos.fechaInicio && datos.fechaFin && datos.fechaFin < datos.fechaInicio) {
+    errores.fechaFin = 'La fecha de fin no puede ser anterior a la fecha de inicio.'
+  }
+  return errores
+}
+
+// Sin filtro se llama como en la HU 33 (solo con el mes).
+function pedirCalendario(mes, campanaId) {
+  return campanaId ? obtenerCalendario(mes, campanaId) : obtenerCalendario(mes)
+}
+
 export function useCalendario() {
   const [mes, setMes] = useState(mesActual())
   const [publicaciones, setPublicaciones] = useState([])
@@ -42,9 +74,22 @@ export function useCalendario() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
+  // HU 35
+  const [campanas, setCampanas] = useState([])
+  const [campanaFiltro, setCampanaFiltro] = useState('')
+  const [erroresCampana, setErroresCampana] = useState({})
+  const [guardandoCampana, setGuardandoCampana] = useState(false)
+
+  // HU 34: solo los anuncios aprobados se pueden programar.
+  const [anuncios, setAnuncios] = useState([])
+  const [errorProgramar, setErrorProgramar] = useState(null)
+
+  // HU 36: aviso cuando una publicación no se pudo mover y volvió a su día.
+  const [avisoArrastre, setAvisoArrastre] = useState(null)
+
   useEffect(() => {
     let activo = true
-    obtenerCalendario(mes)
+    pedirCalendario(mes, campanaFiltro)
       .then((lista) => {
         if (activo) setPublicaciones(lista)
       })
@@ -57,7 +102,33 @@ export function useCalendario() {
     return () => {
       activo = false
     }
-  }, [mes])
+  }, [mes, campanaFiltro])
+
+  // Si las campañas no cargan, el calendario se sigue usando sin ellas.
+  useEffect(() => {
+    let activo = true
+    listarCampanas()
+      .then((lista) => {
+        if (activo && Array.isArray(lista)) setCampanas(lista)
+      })
+      .catch(() => {})
+    return () => {
+      activo = false
+    }
+  }, [])
+
+  // Si los anuncios no cargan, se puede programar sin elegir uno, como en la HU 33.
+  useEffect(() => {
+    let activo = true
+    listarAnuncios()
+      .then((lista) => {
+        if (activo && Array.isArray(lista)) setAnuncios(lista.filter((anuncio) => anuncio.estado === 'APROBADO'))
+      })
+      .catch(() => {})
+    return () => {
+      activo = false
+    }
+  }, [])
 
   function cambiarMes(delta) {
     setCargando(true)
@@ -65,20 +136,100 @@ export function useCalendario() {
     setMes((actual) => desplazarMes(actual, delta))
   }
 
-  async function programar(datos) {
-    setGuardando(true)
+  function filtrarPorCampana(campanaId) {
+    setCargando(true)
     setError(null)
+    setCampanaFiltro(campanaId)
+  }
+
+  // HU 34: el error se muestra junto al formulario (errorProgramar), no arriba del calendario.
+  async function programar(datos) {
+    setError(null)
+    setErrorProgramar(null)
+    if (esDiaPasado(datos.fecha)) {
+      setErrorProgramar('No puedes programar en una fecha u hora que ya pasó.')
+      return false
+    }
+
+    setGuardando(true)
     try {
       await crearPublicacion(datos)
-      setPublicaciones(await obtenerCalendario(mes))
+      setPublicaciones(await pedirCalendario(mes, campanaFiltro))
       return true
     } catch (fallo) {
-      setError(fallo.message)
+      setErrorProgramar(fallo.message)
       return false
     } finally {
       setGuardando(false)
     }
   }
 
-  return { mes, publicaciones, cargando, guardando, error, cambiarMes, programar }
+  // HU 36: al soltar una publicación en otro día se guarda la fecha nueva y se actualiza esa publicación.
+  // Se mueve en pantalla de inmediato; si Spring no acepta el cambio, vuelve a su día y sale el aviso.
+  async function moverPublicacion(id, fecha) {
+    const publicacion = publicaciones.find((item) => item.id === id)
+    if (!publicacion || publicacion.fecha === fecha) return false
+
+    setAvisoArrastre(null)
+    // HU 36, criterio 2: a un día pasado no se mueve; ni siquiera se llama a Spring.
+    if (esDiaPasado(fecha)) {
+      setAvisoArrastre('No puedes mover una publicación a un día que ya pasó.')
+      return false
+    }
+
+    const fechaOriginal = publicacion.fecha
+    setPublicaciones((actuales) => actuales.map((item) => (item.id === id ? { ...item, fecha } : item)))
+    try {
+      const actualizada = await reprogramarPublicacion(id, fecha)
+      setPublicaciones((actuales) => actuales.map((item) => (item.id === id ? actualizada : item)))
+      return true
+    } catch (fallo) {
+      setPublicaciones((actuales) =>
+        actuales.map((item) => (item.id === id ? { ...item, fecha: fechaOriginal } : item)),
+      )
+      setAvisoArrastre(fallo.message)
+      return false
+    }
+  }
+
+  async function agregarCampana(datos) {
+    const errores = validarCampana(datos)
+    setErroresCampana(errores)
+    if (Object.keys(errores).length > 0) return false
+
+    setGuardandoCampana(true)
+    try {
+      const nueva = await crearCampana({ ...datos, nombre: datos.nombre.trim() })
+      setCampanas((actuales) =>
+        [...actuales, nueva].sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio)),
+      )
+      return true
+    } catch (fallo) {
+      const campos = fallo.campos ?? {}
+      setErroresCampana(Object.keys(campos).length > 0 ? campos : { general: fallo.message })
+      return false
+    } finally {
+      setGuardandoCampana(false)
+    }
+  }
+
+  return {
+    mes,
+    publicaciones,
+    cargando,
+    guardando,
+    error,
+    cambiarMes,
+    programar,
+    campanas,
+    campanaFiltro,
+    filtrarPorCampana,
+    agregarCampana,
+    erroresCampana,
+    guardandoCampana,
+    anuncios,
+    errorProgramar,
+    moverPublicacion,
+    avisoArrastre,
+  }
 }

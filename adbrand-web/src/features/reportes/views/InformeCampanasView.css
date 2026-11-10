@@ -52,3 +52,22 @@
 
 /* HU-38: botones de descarga del informe. */
 .informe-descargas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* HU-40: filtros por periodo y campaña. */
+.informe-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+
+.informe-filtros .campo {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.informe-filtros-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
