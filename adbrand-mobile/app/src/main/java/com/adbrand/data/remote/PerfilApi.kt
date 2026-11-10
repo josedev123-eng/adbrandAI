@@ -8,9 +8,9 @@ import org.json.JSONObject
 // HU 44: GET y PUT /api/negocio/perfil.
 object PerfilApi {
 
-    fun obtener(): Result<RespuestaHttp> = ClienteApi.ejecutar("GET", "negocio/perfil")
+    suspend fun obtener(): Result<RespuestaHttp> = ClienteApi.ejecutarAsync("GET", "negocio/perfil")
 
-    fun guardar(perfil: PerfilNegocio): Result<RespuestaHttp> {
+    suspend fun guardar(perfil: PerfilNegocio): Result<RespuestaHttp> {
         val cuerpo = JSONObject()
             .put("nombreComercial", perfil.nombreComercial)
             .put("rubro", perfil.rubro)
@@ -18,6 +18,6 @@ object PerfilApi {
             .put("tono", perfil.tono.name)
             .put("descripcion", if (perfil.descripcion.isBlank()) JSONObject.NULL else perfil.descripcion)
             .toString()
-        return ClienteApi.ejecutar("PUT", "negocio/perfil", cuerpo)
+        return ClienteApi.ejecutarAsync("PUT", "negocio/perfil", cuerpo)
     }
 }

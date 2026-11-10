@@ -30,6 +30,7 @@ public record OperacionYapeResponse(
     // Texto que la web convierte en QR con la librería qrcode. Yape lo leería para completar el cobro.
     private static String contenidoQr(OperacionYape operacion) {
         return "yape://pagar?codigo=" + operacion.getCodigo()
+                + "&celular=" + operacion.getCelular()
                 + "&monto=" + operacion.getMonto().toPlainString()
                 + "&moneda=PEN";
     }

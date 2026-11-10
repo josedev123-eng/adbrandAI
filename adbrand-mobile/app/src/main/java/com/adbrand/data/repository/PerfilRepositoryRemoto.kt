@@ -26,15 +26,17 @@ class PerfilRepositoryRemoto : PerfilRepository {
             Resultado.Exito(
                 PerfilNegocio(
                     id = json.optLong("id").takeIf { it > 0 },
-                    nombreComercial = json.optString("nombreComercial"),
-                    rubro = json.optString("rubro"),
-                    publicoObjetivo = json.optString("publicoObjetivo"),
-                    tono = runCatching { Tono.valueOf(json.optString("tono")) }.getOrDefault(Tono.CERCANO),
-                    descripcion = json.optString("descripcion")
+                    nombreComercial = texto(json, "nombreComercial"),
+                    rubro = texto(json, "rubro"),
+                    publicoObjetivo = texto(json, "publicoObjetivo"),
+                    tono = runCatching { Tono.valueOf(texto(json, "tono")) }.getOrDefault(Tono.CERCANO),
+                    descripcion = texto(json, "descripcion")
                 )
             )
         }.getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
     }
+
+    private fun texto(json: JSONObject, clave: String): String = if (json.isNull(clave)) "" else json.optString(clave)
 
     private fun errorDeRed(error: Throwable): Resultado.Error =
         Resultado.Error(

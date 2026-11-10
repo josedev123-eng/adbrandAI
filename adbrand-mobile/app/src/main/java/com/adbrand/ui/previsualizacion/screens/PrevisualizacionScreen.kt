@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +39,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adbrand.domain.model.Anuncio
 import com.adbrand.domain.model.KitMarca
 import com.adbrand.domain.model.LogoMarca
+import com.adbrand.core.theme.CoralAdbrand
+import com.adbrand.core.theme.IndigoAdbrand
+import com.adbrand.ui.components.LogoApp
 import com.adbrand.ui.previsualizacion.viewmodel.PrevisualizacionViewModel
 
 // HU 45: aplica el logo, los colores y la tipografía del kit. Si no hay kit, muestra un aviso.
@@ -51,15 +55,31 @@ fun PrevisualizacionScreen(
     LaunchedEffect(Unit) { viewModel.cargar() }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Previsualización") }) }
+        topBar = { TopAppBar(title = { Text("Tu contenido") }) }
     ) { relleno ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(relleno)
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(25.dp))
+                        .background(Brush.linearGradient(listOf(IndigoAdbrand, Color(0xFF7853C7), CoralAdbrand)))
+                        .padding(19.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+                        LogoApp(tamano = 52.dp, sombra = false)
+                        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("VISTA DE MARCA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .78f), fontWeight = FontWeight.Bold)
+                            Text("Tu contenido, a tu estilo", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                            Text("Revisa cómo se ve tu identidad en cada publicación.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .84f))
+                        }
+                    }
+                }
+            }
             item {
                 if (estado.cargando) {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {

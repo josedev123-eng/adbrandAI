@@ -4,6 +4,8 @@ import com.adbrand.core.session.GestorSesion
 import com.adbrand.data.remote.RenovadorSesionRemoto
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -54,5 +56,14 @@ object ClienteApi {
         }
     } catch (error: IOException) {
         Result.failure(error)
+    }
+
+    suspend fun ejecutarAsync(
+        metodo: String,
+        ruta: String,
+        cuerpo: String? = null,
+        clienteHttp: OkHttpClient = cliente
+    ): Result<RespuestaHttp> = withContext(Dispatchers.IO) {
+        ejecutar(metodo, ruta, cuerpo, clienteHttp)
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 // cuando el usuario ya pagó desde su app, se confirma y se registra el pago real.
 @Service
 public class OperacionYapeService {
+    private static final String NUMERO_YAPE_ADBRAND = "987654321";
 
     private final OperacionYapeRepository operaciones;
     private final PlanRepository planes;
@@ -49,7 +50,7 @@ public class OperacionYapeService {
         operacion.setMonto(plan.getPrecio());
         operacion.setCodigo(generarCodigo());
         operacion.setEstado(EstadoOperacionYape.PENDIENTE);
-        operacion.setCelular(celular(datos.celular()));
+        operacion.setCelular(NUMERO_YAPE_ADBRAND);
         operaciones.saveAndFlush(operacion);
 
         return OperacionYapeResponse.desde(operacion, plan.getNombre());
@@ -97,13 +98,6 @@ public class OperacionYapeService {
                 .replace("-", "")
                 .substring(0, 8)
                 .toUpperCase(Locale.ROOT);
-    }
-
-    private String celular(String celular) {
-        if (celular == null || celular.isBlank()) {
-            return null;
-        }
-        return celular.trim();
     }
 
     private String nombreTitular(Long usuarioId) {

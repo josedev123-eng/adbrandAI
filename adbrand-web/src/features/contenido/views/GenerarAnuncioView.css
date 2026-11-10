@@ -1,5 +1,13 @@
-.pagina.pagina-anuncio { max-width: 960px; }
+.pagina.pagina-anuncio { max-width: 1080px; }
+.pagina-anuncio .pagina-cabecera h1 { margin: 4px 0; color: #25143c; font-size: clamp(1.8rem, 4vw, 2.35rem); letter-spacing: -.04em; }
+.anuncio-kicker { color: #7940a8; font-size: .72rem; font-weight: 800; letter-spacing: .15em; }
+.anuncio-bienvenida { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border: 1px solid #e8ddf5; border-radius: 18px; background: linear-gradient(112deg, #f1ebff 0%, #fff4f7 100%); box-shadow: 0 12px 32px rgba(62, 39, 91, .06); }
+.anuncio-bienvenida-icono { display: grid; flex: 0 0 48px; height: 48px; place-items: center; border-radius: 15px; color: #fff; background: linear-gradient(145deg, #6332a4, #b149b4); font-size: 1.55rem; }
+.anuncio-bienvenida strong { color: #302047; }
+.anuncio-bienvenida p { margin: 4px 0 0; color: #766d81; font-size: .9rem; line-height: 1.5; }
+.anuncio-bienvenida-etiqueta { margin-left: auto; flex: 0 0 auto; border-radius: 999px; padding: 7px 12px; background: rgba(255,255,255,.78); color: #684093; font-size: .76rem; font-weight: 700; }
 .anuncio-columnas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.pagina-anuncio .tarjeta { border: 1px solid #e9e5f0; border-radius: 18px; box-shadow: 0 14px 36px rgba(39, 25, 62, .07); }
 .redes { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .redes legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; padding: 0; }
 .redes-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -7,7 +15,7 @@
 .red input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
 .red-activa { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); font-weight: 700; }
 .red:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
-.boton-ia { padding: 11px 18px; border: none; border-radius: 10px; background: var(--ia); color: #ffffff; font-weight: 600; cursor: pointer; }
+.boton-ia { padding: 12px 18px; border: none; border-radius: 12px; background: linear-gradient(105deg, #6330a5, #a23fb1); color: #ffffff; font-weight: 700; cursor: pointer; box-shadow: 0 8px 18px rgba(99, 48, 165, .2); }
 .boton-ia:disabled { opacity: 0.6; cursor: wait; }
 .boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; cursor: pointer; }
 .resultado { display: flex; flex-direction: column; gap: 14px; }
@@ -24,4 +32,8 @@
 .aviso-motivo { font-weight: 700; }
 .resultado-texto-revision { opacity: 0.6; }
 .aviso-con-accion { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
-@media (max-width: 760px) { .anuncio-columnas { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .anuncio-columnas { grid-template-columns: 1fr; }
+  .anuncio-bienvenida { align-items: flex-start; padding: 16px; }
+  .anuncio-bienvenida-etiqueta { display: none; }
+}

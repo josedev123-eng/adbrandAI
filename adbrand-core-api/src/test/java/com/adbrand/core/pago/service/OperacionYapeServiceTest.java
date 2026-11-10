@@ -91,7 +91,7 @@ class OperacionYapeServiceTest {
             return guardada;
         });
 
-        OperacionYapeResponse respuesta = servicio.registrar(1L, new RegistrarYapeRequest(2L, "987654321"));
+        OperacionYapeResponse respuesta = servicio.registrar(1L, new RegistrarYapeRequest(2L));
 
         assertThat(respuesta.id()).isEqualTo(7L);
         assertThat(respuesta.codigo()).startsWith("YPE-");
@@ -99,7 +99,9 @@ class OperacionYapeServiceTest {
         assertThat(respuesta.monto()).isEqualByComparingTo("59.90");
         assertThat(respuesta.estado()).isEqualTo("PENDIENTE");
         assertThat(respuesta.celular()).isEqualTo("987654321");
-        assertThat(respuesta.contenidoQr()).contains(respuesta.codigo()).contains("monto=59.90");
+        assertThat(respuesta.contenidoQr()).contains(respuesta.codigo())
+                .contains("celular=987654321")
+                .contains("monto=59.90");
     }
 
     @Test

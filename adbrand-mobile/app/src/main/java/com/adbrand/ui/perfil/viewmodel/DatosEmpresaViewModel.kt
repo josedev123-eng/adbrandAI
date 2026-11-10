@@ -58,8 +58,15 @@ class DatosEmpresaViewModel(
                     )
                 }
 
-                is Resultado.Error -> _estado.update {
-                    it.copy(cargando = false, error = resultado.mensaje)
+                is Resultado.Error -> {
+                    if (resultado.codigo == 401) auth.cerrarSesion()
+                    _estado.update {
+                        it.copy(
+                            cargando = false,
+                            error = if (resultado.codigo == 401) null else resultado.mensaje,
+                            sesionCerrada = resultado.codigo == 401
+                        )
+                    }
                 }
             }
         }

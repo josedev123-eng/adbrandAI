@@ -19,9 +19,19 @@ export default function GenerarAnuncioView({ irAPerfil }) {
   return (
     <main className="pagina pagina-anuncio">
       <header className="pagina-cabecera">
+        <span className="anuncio-kicker">TU ESPACIO CREATIVO</span>
         <h1>Crear anuncio con IA</h1>
         <p>Escribe tu oferta y la IA arma el texto con el tono de tu marca.</p>
       </header>
+
+      <section className="anuncio-bienvenida" aria-label="Herramientas de creación">
+        <div className="anuncio-bienvenida-icono" aria-hidden="true">✦</div>
+        <div>
+          <strong>Una idea puede convertirse en tu próxima campaña.</strong>
+          <p>Elige una red, cuéntanos tu oferta y deja que AdBrand.AI prepare el texto.</p>
+        </div>
+        <span className="anuncio-bienvenida-etiqueta">Listo para crear</span>
+      </section>
 
       {faltaPerfil && (
         <div className="aviso aviso-error aviso-con-accion">

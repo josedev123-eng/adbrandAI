@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
-// Único punto de entrada a la IA para todo el proyecto (ver CONTEXTO.md).
+// Único punto de entrada a la IA para todo el proyecto (ver adbrand-docs/guia-desarrollo.md).
 // Con AI_MOCK=true devuelve un texto de prueba para poder trabajar fuera de Tecsup.
 @Service
 public class ServicioIa {

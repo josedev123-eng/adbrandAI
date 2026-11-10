@@ -45,7 +45,7 @@ class PagoControllerYapeTest {
     private OperacionYapeResponse operacion() {
         return new OperacionYapeResponse(7L, "YPE-ABC12345", "Pro", new BigDecimal("59.90"),
                 "PENDIENTE", "987654321", LocalDateTime.of(2026, 10, 23, 10, 0),
-                "yape://pagar?codigo=YPE-ABC12345&monto=59.90&moneda=PEN");
+                "yape://pagar?codigo=YPE-ABC12345&celular=987654321&monto=59.90&moneda=PEN");
     }
 
     @Test
@@ -55,7 +55,7 @@ class PagoControllerYapeTest {
         mvc.perform(post(REGISTRAR)
                         .requestAttr("usuarioId", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"planId\":2,\"celular\":\"987654321\"}"))
+                        .content("{\"planId\":2}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(7))
                 .andExpect(jsonPath("$.codigo").value("YPE-ABC12345"))
@@ -97,13 +97,14 @@ class PagoControllerYapeTest {
     }
 
     @Test
-    void unCelularQueNoEmpiezaConNueveResponde400() throws Exception {
+    void elQrUsaElNumeroYapeFijoDeAdbrand() throws Exception {
+        when(yape.registrar(eq(1L), any())).thenReturn(operacion());
         mvc.perform(post(REGISTRAR)
                         .requestAttr("usuarioId", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"planId\":2,\"celular\":\"123456789\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("DATOS_INVALIDOS"))
-                .andExpect(jsonPath("$.campos.celular").exists());
+                        .content("{\"planId\":2}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.celular").value("987654321"))
+                .andExpect(jsonPath("$.contenidoQr").value(org.hamcrest.Matchers.containsString("celular=987654321")));
     }
 }

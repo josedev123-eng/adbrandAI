@@ -1,5 +1,40 @@
 /* Auth.css: pantallas de registro, inicio de sesión y recuperar contraseña (HU-21, 22 y 24) */
-.pagina.pagina-auth { max-width: 460px; padding-top: 56px; }
+.pagina.pagina-auth {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: min(100%, 520px);
+  min-height: 100vh;
+  justify-content: center;
+  padding: 56px 26px;
+}
+
+.pagina.pagina-auth::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(ellipse at 18% 14%, rgba(226, 204, 255, .72), transparent 38%),
+    radial-gradient(ellipse at 88% 84%, rgba(255, 218, 224, .72), transparent 35%), #f8f7fc;
+  content: '';
+}
+
+.pagina-auth > .tarjeta.formulario {
+  border: 1px solid rgba(255, 255, 255, .85);
+  border-radius: 22px;
+  padding: 28px;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: 0 24px 70px rgba(50, 29, 81, .13);
+  backdrop-filter: blur(14px);
+}
+
+.pagina-auth .pagina-cabecera h1 { margin: 0; color: #26153e; font-size: clamp(1.8rem, 6vw, 2.35rem); letter-spacing: -.04em; }
+.pagina-auth .pagina-cabecera p { color: #746b82; line-height: 1.55; }
+.pagina-auth .auth-marca { color: #2f1c4a; font-size: 1.55rem; letter-spacing: -.04em; }
+.pagina-auth .auth-marca b { color: #8636bd; }
+.pagina-auth .boton-primario { min-height: 48px; border-radius: 12px; background: linear-gradient(110deg, #6430a3, #923fc0); box-shadow: 0 9px 20px rgba(109, 51, 166, .24); }
+.pagina-auth .campo input { min-height: 46px; border-radius: 12px; background: #fff; }
+.pagina-auth .auth-enlaces { justify-content: center; gap: 12px 24px; }
+.pagina-auth .boton-enlace { color: #7133a7; }
 
 .auth-marca {
   font-family: var(--f-display);
@@ -34,4 +69,9 @@
   font-family: var(--f-mono);
   font-size: 1.2rem;
   letter-spacing: 0.4em;
+}
+
+@media (max-width: 520px) {
+  .pagina.pagina-auth { min-height: 100svh; padding: 36px 18px; }
+  .pagina-auth > .tarjeta.formulario { padding: 22px 18px; }
 }
