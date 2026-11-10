@@ -2,8 +2,10 @@
 // HU 35: campañas con su color, filtro por campaña y formulario para crear campañas.
 // HU 34: al programar se elige uno de los anuncios aprobados.
 // HU 36: las publicaciones programadas se arrastran a otro día.
+// HU 35: los días que dura cada campaña se pintan con su color y el primero lleva su nombre.
 import { useState } from 'react'
 import {
+  campanasDelDia,
   diasDelMes,
   fechaDeDia,
   hoyIso,
@@ -71,6 +73,10 @@ export default function CalendarioView() {
   const totalDias = diasDelMes(mes)
   const huecos = primerDiaSemana(mes)
   const celdas = [...Array(huecos).fill(null), ...Array.from({ length: totalDias }, (_, indice) => indice + 1)]
+  // Con el filtro puesto solo se pinta esa campaña; sin filtro, todas.
+  const campanasVisibles = campanaFiltro
+    ? campanas.filter((campana) => String(campana.id) === String(campanaFiltro))
+    : campanas
 
   function cambiarCampo(campo, valor) {
     setFormulario((actual) => ({ ...actual, [campo]: valor }))
@@ -202,19 +208,31 @@ export default function CalendarioView() {
               const fecha = fechaDeDia(mes, dia)
               const delDia = publicaciones.filter((publicacion) => publicacion.fecha === fecha)
               const esHoy = fecha === hoyIso()
+              // HU 35: el día toma el color de la primera campaña vigente; el nombre va en su primer día
+              // (o en el día 1 del mes, si la campaña empezó el mes anterior).
+              const vigentes = campanasDelDia(campanasVisibles, fecha)
+              const nombresQueEmpiezan = vigentes
+                .filter((campana) => campana.fechaInicio === fecha || dia === 1)
+                .map((campana) => campana.nombre)
               const clasesCelda = ['calendario-celda']
               if (esHoy) clasesCelda.push('calendario-hoy')
+              if (vigentes.length > 0) clasesCelda.push('calendario-dia-campana')
               if (diaDestino === fecha) clasesCelda.push('calendario-destino')
               return (
                 <div
                   key={fecha}
                   className={clasesCelda.join(' ')}
+                  style={vigentes.length > 0 ? { '--color-campana': vigentes[0].color } : undefined}
+                  title={vigentes.length > 0 ? vigentes.map((campana) => campana.nombre).join(' · ') : undefined}
                   data-fecha={fecha}
                   onDragOver={(evento) => alPasarSobreDia(evento, fecha)}
                   onDragLeave={() => setDiaDestino((actual) => (actual === fecha ? null : actual))}
                   onDrop={(evento) => alSoltarEnDia(evento, fecha)}
                 >
                   <span className="calendario-numero">{dia}</span>
+                  {nombresQueEmpiezan.length > 0 && (
+                    <span className="calendario-nombre-campana">{nombresQueEmpiezan.join(' · ')}</span>
+                  )}
                   <div className="calendario-publicaciones">
                     {delDia.map((publicacion) => (
                       <span

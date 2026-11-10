@@ -62,6 +62,17 @@ export function validarCampana(datos) {
   return errores
 }
 
+// HU 35: campañas que están vigentes ese día (fechaInicio <= fecha <= fechaFin), para pintar la celda.
+// Las fechas llegan como AAAA-MM-DD, así que se comparan como texto.
+export function campanasDelDia(campanas, fecha) {
+  return campanas.filter((campana) => campana.fechaInicio <= fecha && fecha <= campana.fechaFin)
+}
+
+// "2026-12-01" → "2026-12": el mes al que salta el calendario al elegir una campaña.
+export function mesDeFecha(fecha) {
+  return fecha.slice(0, 7)
+}
+
 // Sin filtro se llama como en la HU 33 (solo con el mes).
 function pedirCalendario(mes, campanaId) {
   return campanaId ? obtenerCalendario(mes, campanaId) : obtenerCalendario(mes)
@@ -136,10 +147,14 @@ export function useCalendario() {
     setMes((actual) => desplazarMes(actual, delta))
   }
 
+  // HU 35: al elegir una campaña, el calendario va al mes en que empieza.
+  // Con "Todas las publicaciones" se queda en el mes que se estaba viendo.
   function filtrarPorCampana(campanaId) {
     setCargando(true)
     setError(null)
     setCampanaFiltro(campanaId)
+    const campana = campanas.find((item) => String(item.id) === String(campanaId))
+    if (campana) setMes(mesDeFecha(campana.fechaInicio))
   }
 
   // HU 34: el error se muestra junto al formulario (errorProgramar), no arriba del calendario.
