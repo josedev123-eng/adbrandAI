@@ -162,4 +162,4 @@ Los dos backends usan la misma BD. Para que no se pisen:
    Antes de crear una migración nueva, `git pull origin main` y avisar al grupo qué número se toma.
 3. Las tablas solo se crean con migraciones nuevas. No se edita una migración que ya se subió.
 4. Respeta MVVM: la pantalla en views/ o screens/, la lógica en viewmodels/ o viewmodel/.
-5. Antes de usar la IA para programar, pásale el archivo `CONTEXTO.md` de la raíz para que siga estas mismas reglas.
+5. Antes de usar la IA para programar, pásale el archivo `adbrand-docs/guia-desarrollo.md` para que siga estas mismas reglas.

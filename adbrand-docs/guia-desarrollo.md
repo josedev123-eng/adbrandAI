@@ -1,6 +1,6 @@
-# CONTEXTO PARA LA IA — Proyecto AdBrand.AI
+# Guía de desarrollo — Proyecto AdBrand.AI
 
-Copia este archivo completo al inicio de cada conversación con la IA (ChatGPT, Claude, Gemini, Copilot, Antigravity, etc.) antes de pedirle código.
+Reglas, arquitectura y estado actual del proyecto para quien vaya a programar en él. Si usas un asistente de IA (ChatGPT, Claude, Gemini, Copilot, etc.), compártele este archivo completo antes de pedirle código.
 
 ## Qué es el proyecto
 
@@ -416,7 +416,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 
 ## Lo que la IA NO debe hacer
 
-- No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
+- No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `adbrand-docs/arquitectura/estructura.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
 - No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V24 y V30 a V37). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).

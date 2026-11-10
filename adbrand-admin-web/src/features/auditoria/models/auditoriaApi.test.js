@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { NOMBRES_ACCION } from './auditoriaApi'
 
-// Las mismas acciones que registra Django (ver CONTEXTO.md, "Qué se registra en la auditoría").
+// Las mismas acciones que registra Django (ver adbrand-docs/guia-desarrollo.md, "Qué se registra en la auditoría").
 const ACCIONES_DE_DJANGO = [
   'CREAR_ADMIN',
   'DESACTIVAR_ADMIN',
