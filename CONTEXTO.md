@@ -84,8 +84,13 @@ El filtro de la HU 13 está en Spring Boot porque el anuncio se revisa en el mom
 | 31 | Personalizar la identidad visual (tipografías y voz de marca); los anuncios nuevos usan esa voz | Spring `brandkit` (`PUT /api/kit-marca/{id}/identidad`, V37) y `contenido` (`PlantillaPromptAnuncio`) + web `features/brandkit` (botón Identidad en el kit; `EditarIdentidadView`) |
 | 32 | Editar a mano colores, tipografías y logotipo del kit de marca | Spring `brandkit` (`EdicionKitMarcaService`) + web `features/brandkit` (lista Tus kits guardados y botón Editar en el kit) |
 | 33 | Calendario mensual de publicaciones | Spring `calendario` (`GET /api/calendario?mes=AAAA-MM` y `POST /api/calendario`) + web `features/calendario` (entrada en el menú `Calendario`) |
+| 34 | Programar un anuncio aprobado con fecha, hora y red social; no se programa en el pasado ni un anuncio rechazado | Spring `calendario` (`contenido_id`, V26) + web `features/calendario` (lista Anuncio aprobado en Programar una publicación) |
+| 35 | Campañas y eventos especiales con color; filtro del calendario por campaña | Spring `calendario` (`/api/campanas`, tabla `campana`, V25) + web `features/calendario` (formulario Nueva campaña o evento, leyenda y selector Ver campaña) |
+| 36 | Reprogramar una publicación arrastrándola a otro día; a un día pasado vuelve a su lugar con un aviso | Spring `calendario` (`PATCH /api/calendario/{id}/fecha`) + web `features/calendario` (arrastrar y soltar en la grilla) |
 | 37 | Informe consolidado de las campañas de la empresa | Spring `reporte` (`GET /api/reportes/campanas`, índice V35) + web `features/reportes` (entrada en el menú `Informes`) |
 | 38 | Descargar el informe de campañas en PDF | Spring `reporte` (`GET /api/reportes/campanas/pdf`, OpenPDF) + web `features/reportes` (botón Descargar PDF en `Informes`) |
+| 39 | Descargar el informe de campañas en Word con formato de reporte | Spring `reporte` (`GET /api/reportes/campanas/docx`, Apache POI) + web `features/reportes` (botón Descargar Word en `Informes`) |
+| 40 | Filtrar el informe y sus descargas por periodo y por campaña | Spring `reporte` (`desde`, `hasta` y `campanaId` en los 3 endpoints) + web `features/reportes` (filtros Desde, Hasta y Campaña en `Informes`) |
 | 41 | Datos de la empresa en la app móvil, con RUC y teléfono validados y cierre de sesión | Spring `cuenta` (`GET/PUT /api/cuenta/empresa`) + móvil `ui/perfil` (`DatosEmpresaScreen`, `DatosEmpresaViewModel`) |
 | 42 | Inicio de sesión en la app móvil y guardado cifrado de la sesión | Spring `auth` (`POST /api/auth/login`) + móvil `ui/auth`, `core/network` (`ClienteApi`) y `core/session` (`GestorSesion`) |
 | 43 | Renovación automática de la sesión móvil sin volver a pedir la contraseña | Spring `auth` (`POST /api/auth/renovar`, `POST /api/auth/cerrar-sesion`, V18) + móvil `core/network` (`AutenticadorRenovacion`) |
@@ -117,6 +122,12 @@ Spring Boot (`http://localhost:8080/api`):
 - `PUT /kit-marca/{id}/identidad` con `{tipografiaPrimaria, tipografiaSecundaria, vozMarca}`: cambia tipografías y voz (la principal y la voz son obligatorias; la secundaria es opcional) y guarda una versión nueva (HU 31).
 - `GET /reportes/campanas`: informe de la empresa del token, sin id en la URL. Responde `{empresa, total, aprobados, dudosos, rechazados, campanas: [{id, fecha, redSocial, oferta, estado}]}`, del más reciente al más antiguo (HU 37).
 - `GET /reportes/campanas/pdf`: el mismo informe en PDF (`application/pdf`), que se descarga como `informe-campanas-AAAA-MM-DD.pdf` (HU 38).
+- `GET /reportes/campanas/docx`: el mismo informe en Word (`.docx`), que se descarga como `informe-campanas-AAAA-MM-DD.docx` (HU 39).
+- Los 3 endpoints del informe aceptan `?desde=AAAA-MM-DD`, `?hasta=AAAA-MM-DD` y `?campanaId=` (todos opcionales; sin ellos sale el informe completo y con el mismo formato). El periodo filtra por `contenido.fecha_creacion` con los dos días incluidos; la campaña deja solo los anuncios programados en ella (`publicacion_programada.contenido_id`). 400 `FECHAS_INVALIDAS` si el inicio es posterior al fin, 400 `FECHA_INVALIDA` si una fecha no es AAAA-MM-DD y 404 `CAMPANA_NO_ENCONTRADA` si la campaña no es de la empresa (HU 40).
+- `GET /campanas` y `POST /campanas` con `{nombre, color, tipo, fechaInicio, fechaFin}`: campañas y eventos de la empresa del token, de la que empieza antes a la que empieza después. `color` es `#RRGGBB` (se guarda en mayúsculas), `tipo` es CAMPANA o EVENTO; 400 `FECHAS_INVALIDAS` si el fin es anterior al inicio (HU 35).
+- `GET /calendario?mes=AAAA-MM&campanaId=` (el filtro es opcional): cada publicación trae además `campanaId`, `campanaNombre`, `campanaColor`, `contenidoId` y `contenidoOferta` (en null si no tiene) (HU 35 y 34).
+- `POST /calendario` acepta además `campanaId` y `contenidoId` (opcionales). 400 `FECHA_PASADA` si la fecha y hora ya pasaron; 404 `CONTENIDO_NO_ENCONTRADO` si el anuncio no es de la empresa; 400 `CONTENIDO_RECHAZADO` o `CONTENIDO_NO_APROBADO` si no está aprobado; 404 `CAMPANA_NO_ENCONTRADA` (HU 34 y 35).
+- `PATCH /calendario/{id}/fecha` con `{fecha}`: mueve la publicación a otro día y mantiene la hora. 404 `PUBLICACION_NO_ENCONTRADA`, 400 `PUBLICACION_NO_MOVIBLE` si ya está PUBLICADA o CANCELADA y 400 `FECHA_PASADA` (HU 36).
 - `POST /auth/registro`: crea la cuenta con `{nombre, nombreEmpresa, correo, contrasena}`; 201, o 409 `CORREO_REPETIDO` (HU 21).
 - `POST /auth/login` con `{correo, contrasena}`: responde `{token, tokenRenovacion, usuario}`; 401 `CREDENCIALES_INVALIDAS` o 403 `CUENTA_INACTIVA` (HU 22). El `tokenRenovacion` lo usa la app móvil (HU 43); la web puede ignorarlo.
 - `POST /auth/renovar` con `{tokenRenovacion}`: ruta pública. Si el token existe, no está revocado y no venció, devuelve `{token, tokenRenovacion}` nuevo y revoca el anterior (rotación). Si no sirve, 401 `TOKEN_RENOVACION_INVALIDO` (HU 43).
@@ -197,6 +208,8 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V22 | `operacion_yape` (pago con Yape en dos pasos) | 27 |
 | V23 | `pago.numero_comprobante` | 28 |
 | V24 | `publicacion_programada` (publicaciones del calendario) | 33 |
+| V25 | `campana` (nombre, color `#RRGGBB`, tipo CAMPANA o EVENTO, fecha de inicio y de fin) y `publicacion_programada.campana_id` | 35 |
+| V26 | `publicacion_programada.contenido_id` (el anuncio que se va a publicar) | 34 |
 | V30 | `consumo_token` (tokens de entrada, salida y total de cada generación con IA, por `usuario_id` y `origen`; `simulado` si se estimaron) | 17 |
 | V31 | `limite_tokens` (límite mensual y porcentaje de aviso; `usuario_id` NULL es el de por defecto: 100 000 tokens y aviso al 80 %; una fila por empresa) | 19 |
 | V32 | vista `vista_consumo_token_mensual` (tokens y generaciones por mes, con la hora de Lima, y por `usuario_id`; solo lectura) | 20 |
@@ -206,7 +219,7 @@ Cada integrante usa su rango de versiones: Karim V13 a V19, Edu V20 a V29, Jose 
 | V36 | `logo_diseno` (TEXT con el JSON del logo) en `kit_marca` y `kit_marca_version` | 29 |
 | V37 | `kit_marca_version.voz_marca` | 31 |
 
-Si la base local ya tenía una versión mayor cuando llegaron V13 a V17 o V30 a V37, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
+Si la base local ya tenía una versión mayor cuando llegaron V13 a V19 o V30 a V37, Spring necesita `spring.flyway.out-of-order=true` en el `.env` para aplicarlas.
 
 Los datos de prueba NO van en Flyway: están en `adbrand-docs/datos-prueba/` y se cargan a mano sobre la base local, una sola vez. `contenido-dudoso.sql` llena la bandeja de revisión, `suscripciones-y-pagos.sql` llena el panel financiero y la lista de deudas (8 suscripciones y sus pagos de los últimos 6 meses) y `kit-marca.sql` deja un kit listo para editar (HU 32; cambiar el correo por el de tu cuenta).
 
@@ -241,6 +254,25 @@ Notas del sprint de Jose:
 - HU 38: el PDF se arma con OpenPDF (`reporte/pdf/PlantillaInformePdf`) a partir de `InformeService.campanas`, el mismo que usa la pantalla, para que los datos coincidan. El Word (HU 39) y el filtro por periodo (HU 40) deben partir del mismo `InformeService`.
 - En la web, `apiDescargar(ruta)` de `shared/services/apiClient.js` descarga archivos con el token (devuelve un Blob), y `guardarArchivo` y `nombreArchivoInforme` de `features/reportes/models/reportesApi.js` los guardan con su nombre.
 - Pruebas al cerrar el sprint: Spring 219 y web del usuario 45, todas en verde.
+
+### Resumen del Sprint 3 de Karim (`rama-karim`)
+
+| HU | Qué quedó | Migración |
+|---|---|---|
+| 35 | Campañas y eventos con nombre, color y fechas; las publicaciones de una campaña se pintan con su color y el calendario se filtra por campaña | V25 |
+| 34 | Programar eligiendo un anuncio aprobado; no se programa en una fecha u hora pasada ni un anuncio rechazado o en revisión | V26 |
+| 36 | Arrastrar una publicación programada a otro día; a un día pasado no se mueve y sale un aviso, y si Spring rechaza el cambio vuelve a su día | — |
+| 40 | Filtros Desde, Hasta y Campaña en `Informes`; el informe, el PDF y el Word salen con los mismos filtros | — |
+| 39 | Botón Descargar Word en `Informes`; el `.docx` trae empresa, periodo, totales y la tabla de anuncios | — |
+
+Notas del sprint de Karim:
+
+- El informe, el PDF y el Word salen de `InformeService.campanas(usuarioId, desde, hasta, campanaId)`, así los tres muestran los mismos datos. El formato del JSON de la HU 37 no cambió.
+- El Word se arma con Apache POI (`org.apache.poi:poi-ooxml` en el `pom.xml`) en `reporte/word/PlantillaInformeWord`, con los colores de la marca.
+- `CalendarioService`, `PublicacionResponse`, `CrearPublicacionRequest` e `InformeService` conservan sus constructores anteriores, así las pruebas de la HU 33 y de la HU 37 siguen igual.
+- La fecha pasada se revisa en la web (solo el día, para avisar sin consultar) y en Spring (día y hora). Las pruebas nuevas usan fechas relativas a hoy (`LocalDate.now().plusDays(7)`), así no dejan de pasar con el tiempo.
+- En la web, `features/calendario/models` tiene `campanasApi.js` (también lo usa `Informes` para el filtro) y `anunciosApi.js` (los anuncios para programar salen de `/reportes/campanas`).
+- Pruebas al cerrar el sprint: Spring 251 y web del usuario 69, todas en verde.
 
 ### Resumen del Sprint 2 de Edu (`rama-edu`)
 
@@ -352,7 +384,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 | Las dos webs | ESLint | `npm run lint` |
 | App móvil | JUnit 4, coroutines-test | `.\gradlew.bat :app:testDebugUnitTest` (desde `adbrand-mobile`) |
 
-- En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA. Las pruebas de `auth`, `cuenta` y `EditarKitMarcaTest` usan `@SpringBootTest` con `@Transactional` para pasar por `FiltroJwt` con tokens reales: usan la base local y todo se deshace al terminar cada prueba.
+- En Spring, las pruebas de un módulo van en `src/test/java/com/adbrand/core/<modulo>/`. Usan Mockito para no depender de la base de datos ni de la IA. Las pruebas de `auth`, `cuenta`, `EditarKitMarcaTest`, las del calendario (`CampanaTest`, `ProgramarPublicacionTest`, `ReprogramarPublicacionTest`) y las del informe (`InformeFiltrosTest`, `InformeWordTest`) usan `@SpringBootTest` con `@Transactional` para pasar por `FiltroJwt` con tokens reales: usan la base local y todo se deshace al terminar cada prueba.
 - En Django, el runner `core/test_runner.py` crea las tablas de Flyway en la base temporal de pruebas, así que las pruebas no necesitan Spring.
 - La vista `vista_consumo_token_mensual` (V32) se lee con el modelo `ConsumoMensual` (clave compuesta `mes` + `usuario_id`). En la base de prueba Django la crea como una tabla común, así que las pruebas la llenan directo.
 - La vista `vista_historial_contenido` (V34) se lee con el modelo `HistorialContenido`. Sus pruebas usan `usar_vista_de_flyway("V34__...sql")` de `core/pruebas.py`, que cambia la tabla de prueba por la vista real con el mismo SQL de la migración.
@@ -361,7 +393,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 
 ## Convenciones
 
-- Errores de Spring Boot: `{"codigo": "...", "mensaje": "...", "campos": {"campo": "mensaje"}}` (ver `shared/error/ManejadorDeErrores`). Códigos usados: `DATOS_INVALIDOS` (400), `CODIGO_INVALIDO` (400), `NO_AUTENTICADO` y `CREDENCIALES_INVALIDAS` (401), `CUENTA_INACTIVA` (403), `PERFIL_NO_ENCONTRADO` y `KIT_MARCA_NO_ENCONTRADO` (404), `CORREO_REPETIDO` y `RUC_REPETIDO` (409), `IA_NO_DISPONIBLE` (503).
+- Errores de Spring Boot: `{"codigo": "...", "mensaje": "...", "campos": {"campo": "mensaje"}}` (ver `shared/error/ManejadorDeErrores`). Códigos usados: `DATOS_INVALIDOS` (400), `CODIGO_INVALIDO` (400), `NO_AUTENTICADO` y `CREDENCIALES_INVALIDAS` (401), `CUENTA_INACTIVA` (403), `PERFIL_NO_ENCONTRADO` y `KIT_MARCA_NO_ENCONTRADO` (404), `CORREO_REPETIDO` y `RUC_REPETIDO` (409), `IA_NO_DISPONIBLE` (503). Calendario e informes (HU 34 a 36, 39 y 40): `FECHA_PASADA`, `FECHAS_INVALIDAS`, `FECHA_INVALIDA`, `CONTENIDO_RECHAZADO`, `CONTENIDO_NO_APROBADO` y `PUBLICACION_NO_MOVIBLE` (400), `CAMPANA_NO_ENCONTRADA`, `CONTENIDO_NO_ENCONTRADO` y `PUBLICACION_NO_ENCONTRADA` (404).
 - Errores de Django: por ahora el formato de DRF, `{"campo": ["mensaje"]}`, y 404 con `{"detail": "..."}`.
 - Código (clases, métodos, variables) en español; textos de pantalla en español.
 - Cada commit con el formato `HU-<número>: descripción corta`, por ejemplo `HU-14: bandeja de contenidos dudosos`.
@@ -387,7 +419,7 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 - No crear carpetas nuevas en la raíz ni cambiar la estructura existente (ver `ESTRUCTURA.md`).
 - No cambiar el stack ni las versiones (nada de Node/Express, Firebase, MongoDB, Next.js, Spring Boot 3, etc.).
 - No hacer que Django llame a Spring Boot ni al revés.
-- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V17, V20 a V24 y V30 a V37). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
+- No crear tablas fuera de Flyway ni editar las migraciones ya subidas (V1 a V24 y V30 a V37). Cada uno usa su rango (Karim V13-V19, Edu V20-V29, Jose V30-V39).
 - No borrar ni reemplazar pruebas de otros integrantes; solo agregar las nuevas.
 - No poner llamadas a la API dentro de `views/` o `screens/`.
 - No escribir contraseñas, la URL de la IA ni su clave en el código.

@@ -42,6 +42,14 @@ public class PublicacionProgramada {
     @Column(nullable = false, length = 20)
     private EstadoPublicacion estado = EstadoPublicacion.PROGRAMADA;
 
+    // HU 35: campaña a la que pertenece (V25). Puede ser null si no es de ninguna.
+    @Column(name = "campana_id")
+    private Long campanaId;
+
+    // HU 34: anuncio que se va a publicar (V26). Las publicaciones de la HU 33 no tienen anuncio.
+    @Column(name = "contenido_id")
+    private Long contenidoId;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -69,6 +77,12 @@ public class PublicacionProgramada {
 
     public EstadoPublicacion getEstado() { return estado; }
     public void setEstado(EstadoPublicacion estado) { this.estado = estado; }
+
+    public Long getCampanaId() { return campanaId; }
+    public void setCampanaId(Long campanaId) { this.campanaId = campanaId; }
+
+    public Long getContenidoId() { return contenidoId; }
+    public void setContenidoId(Long contenidoId) { this.contenidoId = contenidoId; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }
