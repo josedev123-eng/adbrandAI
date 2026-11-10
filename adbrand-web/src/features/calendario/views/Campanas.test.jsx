@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { crearPublicacion, obtenerCalendario } from '../models/calendarioApi'
 import { crearCampana, listarCampanas } from '../models/campanasApi'
-import { fechaDeDia, mesActual, validarCampana } from '../viewmodels/useCalendario'
+import { campanasDelDia, fechaDeDia, mesActual, mesDeFecha, validarCampana } from '../viewmodels/useCalendario'
 import CalendarioView from './CalendarioView'
 
 vi.mock('../models/calendarioApi', () => ({
@@ -74,19 +74,39 @@ describe('Campañas en el calendario', () => {
     expect(screen.getByRole('list', { name: 'Campañas' })).toHaveTextContent('Navidad 2026')
   })
 
-  it('al elegir una campaña pide el calendario solo de esa campaña', async () => {
+  it('al elegir una campaña va a su mes y pide el calendario solo de esa campaña', async () => {
     obtenerCalendario.mockResolvedValue([DE_CAMPANA, SIN_CAMPANA])
 
     render(<CalendarioView />)
     await screen.findByText(/Post normal/)
 
-    obtenerCalendario.mockResolvedValue([DE_CAMPANA])
+    obtenerCalendario.mockResolvedValue([{ ...DE_CAMPANA, fecha: '2026-12-20' }])
     const usuario = userEvent.setup()
     await usuario.selectOptions(screen.getByLabelText('Ver campaña'), '7')
 
-    await waitFor(() => expect(obtenerCalendario).toHaveBeenLastCalledWith(MES, '7'))
-    await waitFor(() => expect(screen.queryByText(/Post normal/)).not.toBeInTheDocument())
-    expect(screen.getByText(/Oferta navideña/)).toBeInTheDocument()
+    // Navidad 2026 empieza el 1 de diciembre: el calendario salta a ese mes.
+    await waitFor(() => expect(obtenerCalendario).toHaveBeenLastCalledWith('2026-12', '7'))
+    expect(await screen.findByText('Diciembre de 2026')).toBeInTheDocument()
+    expect(await screen.findByText(/Oferta navideña/)).toBeInTheDocument()
+    expect(screen.queryByText(/Post normal/)).not.toBeInTheDocument()
+  })
+
+  it('pinta los días que dura la campaña aunque no tengan publicaciones y pone su nombre en el primero', async () => {
+    const hoyHastaManana = { ...NAVIDAD, id: 8, nombre: 'Día del niño', color: '#E63946', fechaInicio: HOY, fechaFin: HOY }
+    listarCampanas.mockResolvedValue([hoyHastaManana])
+    obtenerCalendario.mockResolvedValue([])
+
+    render(<CalendarioView />)
+    await screen.findByRole('list', { name: 'Campañas' })
+
+    const celdaHoy = document.querySelector(`[data-fecha="${HOY}"]`)
+    await waitFor(() => expect(celdaHoy).toHaveClass('calendario-dia-campana'))
+    expect(celdaHoy.style.getPropertyValue('--color-campana')).toBe('#E63946')
+    expect(celdaHoy).toHaveTextContent('Día del niño')
+
+    // Un día fuera de la campaña no se pinta.
+    const otroDia = [...document.querySelectorAll('[data-fecha]')].find((celda) => celda.dataset.fecha !== HOY)
+    expect(otroDia).not.toHaveClass('calendario-dia-campana')
   })
 
   it('programa una publicación dentro de una campaña', async () => {
@@ -147,5 +167,13 @@ describe('Campañas en el calendario', () => {
     expect(validarCampana({ ...base, fechaFin: '2026-11-30' })).toEqual({
       fechaFin: 'La fecha de fin no puede ser anterior a la fecha de inicio.',
     })
+  })
+
+  it('campanasDelDia incluye el primer y el último día, y mesDeFecha da el mes de inicio', () => {
+    expect(campanasDelDia([NAVIDAD], '2026-12-01')).toEqual([NAVIDAD])
+    expect(campanasDelDia([NAVIDAD], '2026-12-25')).toEqual([NAVIDAD])
+    expect(campanasDelDia([NAVIDAD], '2026-11-30')).toEqual([])
+    expect(campanasDelDia([NAVIDAD], '2026-12-26')).toEqual([])
+    expect(mesDeFecha('2026-12-01')).toBe('2026-12')
   })
 })
