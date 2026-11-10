@@ -95,7 +95,7 @@ Cada historia tiene 4 tareas, y **cada tarea es un commit**: 20 commits por pers
 1. Cada uno corre todas sus pruebas y sube su rama.
 2. Cada uno abre su **Pull Request a `main`** con "Create a merge commit".
 3. Se unen en orden: **A → B → C**, porque B usa el informe de A y C usa el kit de A.
-4. Se actualiza `CONTEXTO.md` con las HU del Sprint 3, las migraciones nuevas y la app móvil.
+4. Se actualiza la guía de desarrollo (`adbrand-docs/guia-desarrollo.md`, antes `CONTEXTO.md`) con las HU del Sprint 3, las migraciones nuevas y la app móvil.
 
 ## Resumen de commits por día
 
