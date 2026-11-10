@@ -9,7 +9,7 @@ USUARIO          Front End Web (React)  ─┐                          │
                  Front End Móvil (Kotlin)┴►  Back End (Spring Boot) ┘
 ```
 
-Un solo repositorio con seis carpetas. Cada carpeta vacía tiene un archivo `.gitkeep` para que Git la suba; se puede borrar cuando la carpeta tenga archivos.
+Un solo repositorio: una carpeta por aplicación, más la documentación y los scripts. No se dejan carpetas vacías: una carpeta se crea cuando llega su primer archivo.
 
 ```
 adbrand/
@@ -54,8 +54,7 @@ src/
 │   └── context/       Sesión del administrador
 ├── shared/
 │   ├── components/    Botones, tablas, menú lateral y estructura de página
-│   ├── services/      Cliente HTTP hacia Django (uno solo)
-│   └── hooks/
+│   └── services/      Cliente HTTP hacia Django (uno solo)
 ├── assets/
 └── features/          Cada módulo con views/, viewmodels/ y models/
     ├── auth/            Inicio de sesión del administrador
@@ -73,8 +72,7 @@ src/
 src/main/java/com/adbrand/core/
 ├── config/          CORS, seguridad con JWT, variables del servidor de IA
 ├── shared/
-│   ├── error/       Formato de error {codigo, mensaje, campos}
-│   └── util/
+│   └── error/       Formato de error {codigo, mensaje, campos}
 ├── ia/              Cliente hacia el servidor de IA del instituto (client/, service/, dto/) y modo simulado
 ├── auth/            HU 21, 22, 24: registro, inicio de sesión, recuperar contraseña
 ├── negocio/         HU 9, 23: perfil del negocio y datos de la empresa
@@ -85,7 +83,7 @@ src/main/java/com/adbrand/core/
 ├── calendario/      HU 33 a 36: calendario de publicaciones
 ├── reporte/         HU 37 a 40: informes en PDF y Word
 ├── previsualizacion/ HU 45: kit de marca y anuncios para la app móvil
-└── notificacion/    HU 49 a 52: alertas push
+└── notificacion/    Envío de correos (HU 24 y 28); las alertas push de las HU 49 a 52 irán aquí
 src/main/resources/db/migration/   Migraciones Flyway de TODA la base de datos
 src/test/java/com/adbrand/core/    Pruebas, una carpeta por módulo
 ```
@@ -96,8 +94,8 @@ Cada módulo tiene `controller/` → `service/` → `repository/`, más `entity/
 
 ```
 src/
-├── app/{routes, context}
-├── shared/{components, services, hooks}   services/ = cliente HTTP hacia Spring Boot
+├── app/context/                    Sesión del usuario PYME
+├── shared/{components, services}   services/ = cliente HTTP hacia Spring Boot
 ├── assets/
 └── features/
     ├── auth/         HU 21, 22, 24
@@ -116,15 +114,13 @@ app/src/main/java/com/adbrand/
 ├── core/{network, session, theme}  network/ = cliente HTTP hacia Spring Boot; session/ = GestorSesion cifrado
 ├── data/{remote, repository}
 ├── domain/model/
-├── notifications/               HU 49 a 52
 └── ui/                          Cada módulo con screens/ y viewmodel/
-    ├── auth/              HU 41 a 43
-    ├── perfil/            HU 44
-    ├── previsualizacion/  HU 45 a 48
-    ├── aprobacion/        HU 53 a 56
-    ├── metricas/          HU 57 a 60
-    └── calendario/
+    ├── auth/              HU 42 y 43
+    ├── perfil/            HU 41 y 44
+    └── previsualizacion/  HU 45
 ```
+
+Módulos que se crearán cuando lleguen sus historias: `notifications/` (HU 49 a 52), `ui/aprobacion/` (HU 53 a 56), `ui/metricas/` (HU 57 a 60) y `ui/calendario/`.
 
 La app móvil usa los mismos endpoints de `adbrand-core-api`. La navegación principal y la barra inferior están en `ui/AppAdbrand.kt`; `MainActivity` solo monta el tema y `AppAdbrand`. Comandos: `.\gradlew.bat :app:testDebugUnitTest` y `.\gradlew.bat :app:assembleDebug` desde `adbrand-mobile`.
 
