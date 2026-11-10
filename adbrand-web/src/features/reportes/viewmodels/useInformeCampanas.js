@@ -1,12 +1,26 @@
 // ViewModel: carga el informe consolidado de campañas de la empresa (HU-37) y lo descarga en PDF (HU-38).
+// HU-40: filtra el informe (y el PDF) por periodo y por campaña.
 import { useEffect, useState } from 'react'
+import { listarCampanas } from '../../calendario/models/campanasApi'
 import { descargarInformePdf, guardarArchivo, nombreArchivoInforme, obtenerInformeCampanas } from '../models/reportesApi'
+
+const SIN_FILTROS = { desde: '', hasta: '', campanaId: '' }
+
+export function hayFiltros(filtros) {
+  return Boolean(filtros.desde || filtros.hasta || filtros.campanaId)
+}
 
 export function useInformeCampanas() {
   const [informe, setInforme] = useState(null)
   const [error, setError] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [descargando, setDescargando] = useState(false)
+
+  // HU-40: "filtros" es lo que está escrito en el formulario; "aplicados" es lo que muestra el informe y usa el PDF.
+  const [filtros, setFiltros] = useState(SIN_FILTROS)
+  const [aplicados, setAplicados] = useState(SIN_FILTROS)
+  const [actualizando, setActualizando] = useState(false)
+  const [campanas, setCampanas] = useState([])
 
   useEffect(() => {
     obtenerInformeCampanas()
@@ -15,14 +29,53 @@ export function useInformeCampanas() {
       .finally(() => setCargando(false))
   }, [])
 
+  // Las campañas del calendario (HU 35) para el filtro. Si no cargan, se filtra solo por periodo.
+  useEffect(() => {
+    listarCampanas()
+      .then((lista) => {
+        if (Array.isArray(lista)) setCampanas(lista)
+      })
+      .catch(() => {})
+  }, [])
+
   // Criterio 2: sin campañas no hay nada que descargar; la vista muestra un aviso.
   const sinCampanas = informe !== null && informe.total === 0
+  const conFiltros = hayFiltros(aplicados)
+
+  function cambiarFiltro(campo, valor) {
+    setFiltros((actuales) => ({ ...actuales, [campo]: valor }))
+  }
+
+  async function consultar(nuevos) {
+    setError(null)
+    setActualizando(true)
+    try {
+      setInforme(await obtenerInformeCampanas(nuevos))
+      setAplicados(nuevos)
+      return true
+    } catch (fallo) {
+      setError(fallo.message ?? 'No se pudo cargar el informe. Revisa tu conexión e inténtalo de nuevo.')
+      return false
+    } finally {
+      setActualizando(false)
+    }
+  }
+
+  function aplicarFiltros() {
+    return consultar(filtros)
+  }
+
+  function quitarFiltros() {
+    setFiltros(SIN_FILTROS)
+    return consultar(SIN_FILTROS)
+  }
 
   async function descargarPdf() {
     setError(null)
     setDescargando(true)
     try {
-      guardarArchivo(await descargarInformePdf(), nombreArchivoInforme('pdf'))
+      const pdf = conFiltros ? await descargarInformePdf(aplicados) : await descargarInformePdf()
+      guardarArchivo(pdf, nombreArchivoInforme('pdf'))
     } catch {
       setError('No se pudo descargar el PDF. Revisa tu conexión e inténtalo de nuevo.')
     } finally {
@@ -30,5 +83,19 @@ export function useInformeCampanas() {
     }
   }
 
-  return { informe, error, cargando, sinCampanas, descargando, descargarPdf }
+  return {
+    informe,
+    error,
+    cargando,
+    sinCampanas,
+    descargando,
+    descargarPdf,
+    filtros,
+    cambiarFiltro,
+    aplicarFiltros,
+    quitarFiltros,
+    conFiltros,
+    actualizando,
+    campanas,
+  }
 }

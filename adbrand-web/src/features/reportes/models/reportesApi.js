@@ -2,14 +2,25 @@
 // No llevan id: Spring usa siempre la empresa del usuario que inició sesión.
 import { apiDescargar, apiRequest } from '../../../shared/services/apiClient'
 
+// HU-40: { desde, hasta, campanaId } → "?desde=2026-11-01&hasta=2026-11-30&campanaId=3". Los vacíos no se envían.
+export function consultaFiltros(filtros = {}) {
+  const parametros = new URLSearchParams()
+  for (const campo of ['desde', 'hasta', 'campanaId']) {
+    if (filtros[campo]) parametros.set(campo, filtros[campo])
+  }
+  const texto = parametros.toString()
+  return texto ? `?${texto}` : ''
+}
+
 // Devuelve { empresa, total, aprobados, dudosos, rechazados, campanas: [{ id, fecha, redSocial, oferta, estado }] }.
-export function obtenerInformeCampanas() {
-  return apiRequest('/reportes/campanas')
+export function obtenerInformeCampanas(filtros) {
+  return apiRequest(`/reportes/campanas${consultaFiltros(filtros)}`)
 }
 
 // HU-38: el mismo informe como PDF (Blob). Spring lo arma con los mismos datos de obtenerInformeCampanas.
-export function descargarInformePdf() {
-  return apiDescargar('/reportes/campanas/pdf')
+// HU-40: con los mismos filtros que la pantalla.
+export function descargarInformePdf(filtros) {
+  return apiDescargar(`/reportes/campanas/pdf${consultaFiltros(filtros)}`)
 }
 
 // "informe-campanas-2026-11-03.pdf", con la fecha de hoy (igual que el nombre que pone Spring).
