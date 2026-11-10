@@ -23,6 +23,11 @@ export function descargarInformePdf(filtros) {
   return apiDescargar(`/reportes/campanas/pdf${consultaFiltros(filtros)}`)
 }
 
+// HU-39: el mismo informe como Word (.docx, Blob), con los mismos datos y filtros que la pantalla y el PDF.
+export function descargarInformeWord(filtros) {
+  return apiDescargar(`/reportes/campanas/docx${consultaFiltros(filtros)}`)
+}
+
 // "informe-campanas-2026-11-03.pdf", con la fecha de hoy (igual que el nombre que pone Spring).
 export function nombreArchivoInforme(extension, hoy = new Date()) {
   const dos = (numero) => String(numero).padStart(2, '0')

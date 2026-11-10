@@ -1,6 +1,7 @@
 // View: informe consolidado de las campañas de la empresa (HU-37). La lógica está en useInformeCampanas.
 // HU-38: botón para descargar el mismo informe en PDF (solo si hay campañas).
 // HU-40: filtros por periodo y por campaña; el PDF sale con los mismos filtros.
+// HU-39: botón para descargar el informe en Word, también con esos filtros.
 import { formatearFecha, NOMBRES_ESTADO, NOMBRES_RED } from '../models/reportesApi'
 import { useInformeCampanas } from '../viewmodels/useInformeCampanas'
 import './InformeCampanasView.css'
@@ -22,6 +23,8 @@ export default function InformeCampanasView() {
     sinCampanas,
     descargando,
     descargarPdf,
+    descargandoWord,
+    descargarWord,
     filtros,
     cambiarFiltro,
     aplicarFiltros,
@@ -49,6 +52,9 @@ export default function InformeCampanasView() {
           <div className="informe-descargas">
             <button type="button" className="boton-primario" onClick={descargarPdf} disabled={descargando}>
               {descargando ? 'Preparando PDF...' : '📄 Descargar PDF'}
+            </button>
+            <button type="button" className="boton-secundario" onClick={descargarWord} disabled={descargandoWord}>
+              {descargandoWord ? 'Preparando Word...' : '📝 Descargar Word'}
             </button>
           </div>
         )}

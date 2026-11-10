@@ -1,8 +1,15 @@
 // ViewModel: carga el informe consolidado de campañas de la empresa (HU-37) y lo descarga en PDF (HU-38).
 // HU-40: filtra el informe (y el PDF) por periodo y por campaña.
+// HU-39: también lo descarga en Word, con los mismos filtros.
 import { useEffect, useState } from 'react'
 import { listarCampanas } from '../../calendario/models/campanasApi'
-import { descargarInformePdf, guardarArchivo, nombreArchivoInforme, obtenerInformeCampanas } from '../models/reportesApi'
+import {
+  descargarInformePdf,
+  descargarInformeWord,
+  guardarArchivo,
+  nombreArchivoInforme,
+  obtenerInformeCampanas,
+} from '../models/reportesApi'
 
 const SIN_FILTROS = { desde: '', hasta: '', campanaId: '' }
 
@@ -24,6 +31,7 @@ export function useInformeCampanas() {
   const [error, setError] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [descargando, setDescargando] = useState(false)
+  const [descargandoWord, setDescargandoWord] = useState(false)
 
   // HU-40: "filtros" es lo que está escrito en el formulario; "aplicados" es lo que muestra el informe y usa el PDF.
   const [filtros, setFiltros] = useState(SIN_FILTROS)
@@ -98,6 +106,19 @@ export function useInformeCampanas() {
     }
   }
 
+  // HU-39: el Word sale con los filtros aplicados, igual que el PDF.
+  async function descargarWord() {
+    setError(null)
+    setDescargandoWord(true)
+    try {
+      guardarArchivo(await descargarInformeWord(aplicados), nombreArchivoInforme('docx'))
+    } catch {
+      setError('No se pudo descargar el Word. Revisa tu conexión e inténtalo de nuevo.')
+    } finally {
+      setDescargandoWord(false)
+    }
+  }
+
   return {
     informe,
     error,
@@ -105,6 +126,8 @@ export function useInformeCampanas() {
     sinCampanas,
     descargando,
     descargarPdf,
+    descargandoWord,
+    descargarWord,
     filtros,
     cambiarFiltro,
     aplicarFiltros,
