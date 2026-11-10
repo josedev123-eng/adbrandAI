@@ -42,11 +42,11 @@ public class PublicacionProgramada {
     @Column(nullable = false, length = 20)
     private EstadoPublicacion estado = EstadoPublicacion.PROGRAMADA;
 
-    // HU 35: campaña a la que pertenece (V18). Puede ser null si no es de ninguna.
+    // HU 35: campaña a la que pertenece (V25). Puede ser null si no es de ninguna.
     @Column(name = "campana_id")
     private Long campanaId;
 
-    // HU 34: anuncio que se va a publicar (V19). Las publicaciones de la HU 33 no tienen anuncio.
+    // HU 34: anuncio que se va a publicar (V26). Las publicaciones de la HU 33 no tienen anuncio.
     @Column(name = "contenido_id")
     private Long contenidoId;
 

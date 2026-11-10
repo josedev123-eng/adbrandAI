@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-// Entidad: una campaña o evento especial de la PYME (tabla campana, HU 35, V18).
+// Entidad: una campaña o evento especial de la PYME (tabla campana, HU 35, V25).
 @Entity
 @Table(name = "campana")
 public class Campana {
