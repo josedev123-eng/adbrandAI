@@ -19,7 +19,12 @@ public class InformePdfService {
     }
 
     public byte[] campanas(Long usuarioId) {
-        InformeCampanasResponse informe = informes.campanas(usuarioId);
+        return campanas(usuarioId, null, null, null);
+    }
+
+    // HU 40: el PDF usa los mismos filtros que la pantalla, así muestran los mismos datos.
+    public byte[] campanas(Long usuarioId, String desde, String hasta, Long campanaId) {
+        InformeCampanasResponse informe = informes.campanas(usuarioId, desde, hasta, campanaId);
         return plantilla.generar(informe, LocalDateTime.now());
     }
 
