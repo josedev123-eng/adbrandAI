@@ -75,12 +75,7 @@ public class KitMarcaService {
 
     // Algunas IA (por ejemplo Gemini) envuelven el JSON en un bloque ```json ... ```; se quita antes de leerlo.
     static String sinBloqueMarkdown(String respuesta) {
-        String texto = respuesta == null ? "" : respuesta.strip();
-        if (texto.startsWith("```")) {
-            texto = texto.replaceFirst("^```[a-zA-Z]*\\s*", "");
-            texto = texto.replaceFirst("\\s*```$", "");
-        }
-        return texto;
+        return com.adbrand.core.ia.service.JsonDeIa.sinBloqueMarkdown(respuesta);
     }
 
     // Cada campo se guarda como texto. Si la IA manda una lista (por ejemplo, los colores de la paleta),

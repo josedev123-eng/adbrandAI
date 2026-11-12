@@ -5,6 +5,7 @@ import com.adbrand.core.contenido.dto.AnuncioGeneradoResponse;
 import com.adbrand.core.contenido.dto.GenerarAnuncioRequest;
 import com.adbrand.core.contenido.dto.IdentidadMarca;
 import com.adbrand.core.contenido.dto.PromptAnuncio;
+import com.adbrand.core.contenido.dto.RedSocial;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
@@ -52,16 +53,26 @@ public class AnuncioService {
                 identidadActual(usuarioId));
         // HU 17: los tokens usados se suman a la empresa que pidió el anuncio.
         String texto = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.ANUNCIO);
+        return guardar(usuarioId, perfil, datos.oferta(), datos.redSocial(), texto, prompt, ia.esSimulado());
+    }
 
+    // HU 31: lo usan también las opciones de anuncio para armar el prompt con la voz del kit.
+    public IdentidadMarca identidadDe(Long usuarioId) {
+        return identidadActual(usuarioId);
+    }
+
+    // Pasa el texto por el filtro (HU 13) y lo guarda como contenido. Lo usa también "elegir una opción".
+    public AnuncioGeneradoResponse guardar(Long usuarioId, PerfilNegocioResponse perfil, String oferta,
+                                           RedSocial red, String texto, PromptAnuncio prompt, boolean simulado) {
         // HU 13, criterio 1: todo texto generado pasa por el filtro antes de poder usarse.
         ResultadoRevision revision = filtro.revisar(texto);
 
         Contenido contenido = new Contenido();
         contenido.setUsuarioId(usuarioId);
         contenido.setTipo(Contenido.TIPO_ANUNCIO);
-        contenido.setRedSocial(datos.redSocial());
+        contenido.setRedSocial(red);
         contenido.setTono(perfil.tono());
-        contenido.setOferta(datos.oferta());
+        contenido.setOferta(oferta);
         contenido.setTexto(texto);
         // HU 13, criterio 2: si incumple alguna regla queda DUDOSO y no se publica.
         contenido.setEstado(revision.aprobado() ? EstadoContenido.APROBADO : EstadoContenido.DUDOSO);
@@ -69,7 +80,7 @@ public class AnuncioService {
         // HU 12: guardar el prompt original para permitir regeneración
         contenido.setPromptOriginal(prompt.sistema() + "\n\n---\n\n" + prompt.usuario());
 
-        return AnuncioGeneradoResponse.desde(contenidos.save(contenido), ia.esSimulado());
+        return AnuncioGeneradoResponse.desde(contenidos.save(contenido), simulado);
     }
 
     // HU 12: regenera un contenido usando los mismos parámetros originales
