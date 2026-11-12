@@ -10,6 +10,7 @@ import PlanesView from './features/pagos/views/PlanesView'
 import CalendarioView from './features/calendario/views/CalendarioView'
 import InformeCampanasView from './features/reportes/views/InformeCampanasView'
 import MenuUsuario from './shared/components/MenuUsuario'
+import { SECCIONES } from './shared/components/opcionesMenuUsuario'
 import { useSesion } from './app/context/useSesion'
 
 // HU-22: sin sesión se muestran el inicio de sesión y el registro; con sesión, el menú y las pantallas de siempre.
@@ -58,9 +59,26 @@ function App() {
     setPantallaPublica('login')
   }
 
+  // Sección de la pantalla actual para la barra superior ("Crear", "Planificar" o "Mi empresa").
+  const seccionActual = SECCIONES.find((seccion) => seccion.opciones.some((opcion) => opcion.id === pantalla))?.titulo
+  const fechaDeHoy = new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
   return (
-    <>
+    <div className="layout-usuario">
       <MenuUsuario actual={pantalla} alCambiar={setPantalla} empresa={usuario.nombreEmpresa} alSalir={cerrarSesion} />
+      <div className="layout-contenido">
+        <div className="barra-superior">
+          <span>
+            {usuario.nombreEmpresa ?? 'Tu negocio'}
+            {seccionActual && (
+              <>
+                {' · '}
+                <strong>{seccionActual}</strong>
+              </>
+            )}
+          </span>
+          <span className="barra-fecha">{fechaDeHoy}</span>
+        </div>
       {pantalla === 'perfil' && <PerfilNegocioView />}
       {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} />}
       {pantalla === 'kit' && <SolicitarKitMarcaView />}
@@ -68,7 +86,8 @@ function App() {
       {pantalla === 'calendario' && <CalendarioView />}
       {pantalla === 'informes' && <InformeCampanasView />}
       {pantalla === 'cuenta' && <MiCuentaView />}
-    </>
+      </div>
+    </div>
   )
 }
 
