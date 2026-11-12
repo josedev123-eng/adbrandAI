@@ -88,7 +88,8 @@ class CalendarioServiceTest {
 
         PublicacionResponse respuesta = servicio.crear(1L, new CrearPublicacionRequest(
                 "  Promoción de fin de semana  ", RedSocialPublicacion.FACEBOOK,
-                LocalDate.of(2026, 11, 14), LocalTime.of(18, 30)));
+                LocalDate.now().plusDays(3), LocalTime.of(18, 30)));
+        // La fecha es relativa a hoy: desde la HU 34 no se puede programar en el pasado.
 
         assertThat(respuesta.id()).isEqualTo(3L);
         assertThat(respuesta.titulo()).isEqualTo("Promoción de fin de semana");
