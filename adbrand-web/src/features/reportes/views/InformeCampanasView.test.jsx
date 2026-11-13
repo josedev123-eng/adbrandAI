@@ -51,7 +51,9 @@ describe('InformeCampanasView (HU-37)', () => {
     obtenerInformeCampanas.mockResolvedValue({ ...INFORME, total: 0, aprobados: 0, rechazados: 0, campanas: [] })
     render(<InformeCampanasView />)
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Todavía no tienes campañas')
+    // Mientras carga también hay un "status" (la carga animada); se espera a que aparezca el aviso.
+    await screen.findByText(/Todavía no tienes campañas/)
+    expect(screen.getByRole('status')).toHaveTextContent('Todavía no tienes campañas')
     expect(screen.queryByRole('table')).toBeNull()
   })
 

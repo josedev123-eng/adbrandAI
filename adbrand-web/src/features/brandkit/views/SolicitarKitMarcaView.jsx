@@ -6,6 +6,7 @@ import EditarLogoView from './EditarLogoView'
 import EditarColoresView from './EditarColoresView'
 import EditarIdentidadView from './EditarIdentidadView'
 import './SolicitarKitMarcaView.css'
+import Cargando from '../../../shared/components/Cargando'
 
 function Campo({ etiqueta, error, children, ayuda }) {
   return (
@@ -196,6 +197,7 @@ export default function SolicitarKitMarcaView() {
             </button>
           </div>
         </form>
+        {generando && <Cargando texto="La IA está creando tu logo, tus colores y tus tipografías…" filas={3} />}
       </section>
     </main>
   )

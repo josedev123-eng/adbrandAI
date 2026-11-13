@@ -4,6 +4,7 @@
 // HU 36: las publicaciones programadas se arrastran a otro día.
 // HU 35: los días que dura cada campaña se pintan con su color y el primero lleva su nombre.
 import { useState } from 'react'
+import Cargando from '../../../shared/components/Cargando'
 import {
   campanasDelDia,
   diasDelMes,
@@ -192,7 +193,7 @@ export default function CalendarioView() {
           </p>
         )}
         {cargando ? (
-          <p className="cargando">Cargando calendario…</p>
+          <Cargando texto="Cargando calendario…" filas={4} />
         ) : (
           <div className="calendario-grid" role="grid" aria-label={`Publicaciones de ${etiquetaMes(mes)}`}>
             {DIAS.map((dia) => (

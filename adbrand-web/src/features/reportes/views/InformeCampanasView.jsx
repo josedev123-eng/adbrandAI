@@ -5,6 +5,8 @@
 import { formatearFecha, NOMBRES_ESTADO, NOMBRES_RED } from '../models/reportesApi'
 import { useInformeCampanas } from '../viewmodels/useInformeCampanas'
 import './InformeCampanasView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 function Total({ etiqueta, valor, clase }) {
   return (
@@ -35,7 +37,11 @@ export default function InformeCampanasView() {
   } = useInformeCampanas()
 
   if (cargando) {
-    return <main className="pagina"><p className="cargando">Cargando tu informe...</p></main>
+    return (
+      <main className="pagina pagina-informe">
+        <Cargando texto="Cargando tu informe..." filas={4} />
+      </main>
+    )
   }
 
   function alAplicar(evento) {
@@ -95,11 +101,11 @@ export default function InformeCampanasView() {
       {error && <div className="aviso aviso-error">{error}</div>}
 
       {sinCampanas && (
-        <div className="aviso aviso-info" role="status">
+        <SinResultados rol="status">
           {conFiltros
             ? 'No hay campañas con esos filtros. Prueba con otro periodo u otra campaña.'
             : 'Todavía no tienes campañas. Genera tu primer anuncio para ver aquí tu informe.'}
-        </div>
+        </SinResultados>
       )}
 
       {informe && !sinCampanas && (
