@@ -7,6 +7,8 @@ import com.adbrand.core.contenido.entity.VersionAnuncio;
 import com.adbrand.core.contenido.repository.OpcionAnuncioRepository;
 import com.adbrand.core.contenido.repository.VersionAnuncioRepository;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
+import com.adbrand.core.imagen.entity.ConsumoImagen;
+import com.adbrand.core.imagen.service.ControlGastoImagenes;
 import com.adbrand.core.imagen.service.ServicioImagenes;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import com.adbrand.core.shared.error.SolicitudInvalidaException;
@@ -23,20 +25,27 @@ public class RetoqueAnuncioService {
     private final OpcionAnuncioRepository opciones;
     private final VersionAnuncioRepository versiones;
     private final ServicioImagenes imagenes;
+    private final ControlGastoImagenes gasto;
 
     public RetoqueAnuncioService(OpcionAnuncioRepository opciones, VersionAnuncioRepository versiones,
-                                 ServicioImagenes imagenes) {
+                                 ServicioImagenes imagenes, ControlGastoImagenes gasto) {
         this.opciones = opciones;
         this.versiones = versiones;
         this.imagenes = imagenes;
+        this.gasto = gasto;
     }
 
     @Transactional
     public VersionesAnuncioResponse retocar(Long usuarioId, Long opcionId, String instruccion) {
         OpcionAnuncio opcion = opcionElegida(usuarioId, opcionId);
+        // Control de gasto: los retoques reales usan crédito; en modo de prueba no se limitan.
+        if (!imagenes.esSimulado()) {
+            gasto.verificarRetoqueDisponible(usuarioId);
+        }
         List<VersionAnuncio> historial = historialConOriginal(opcion);
 
         ImagenGenerada retocada = imagenes.finalORetoque(descripcionDeRetoque(instruccion), opcion.imagen());
+        gasto.registrar(usuarioId, ConsumoImagen.Tipo.RETOQUE, retocada);
         int numero = historial.get(historial.size() - 1).getNumero() + 1;
         versiones.save(VersionAnuncio.de(opcion, numero, instruccion, retocada));
 
@@ -102,6 +111,8 @@ public class RetoqueAnuncioService {
         List<VersionAnuncioResponse> lista = versiones.findByOpcionIdOrderByNumero(opcion.getId()).stream()
                 .map(version -> VersionAnuncioResponse.desde(version, actual))
                 .toList();
-        return new VersionesAnuncioResponse(opcion.getId(), actual, opcion.imagen().dataUrl(), lista);
+        // null en modo de prueba (no hay límite); si no, cuántos retoques de pago le quedan este mes a la empresa.
+        Integer restantes = imagenes.esSimulado() ? null : gasto.retoquesRestantes(opcion.getGeneracion().getUsuarioId());
+        return new VersionesAnuncioResponse(opcion.getId(), actual, opcion.imagen().dataUrl(), restantes, lista);
     }
 }

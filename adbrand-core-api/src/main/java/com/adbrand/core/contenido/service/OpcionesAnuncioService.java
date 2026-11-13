@@ -16,6 +16,8 @@ import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.ia.service.JsonDeIa;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
+import com.adbrand.core.imagen.entity.ConsumoImagen;
+import com.adbrand.core.imagen.service.ControlGastoImagenes;
 import com.adbrand.core.imagen.service.ServicioImagenes;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
 import com.adbrand.core.negocio.service.PerfilNegocioService;
@@ -54,11 +56,12 @@ public class OpcionesAnuncioService {
     private final KitMarcaRepository kits;
     private final GeneracionAnuncioRepository generaciones;
     private final OpcionAnuncioRepository opciones;
+    private final ControlGastoImagenes gasto;
 
     public OpcionesAnuncioService(PerfilNegocioService perfilService, PlantillaPromptAnuncio plantilla,
                                   ServicioIa ia, ServicioImagenes imagenes, AnuncioService anuncios,
                                   KitMarcaRepository kits, GeneracionAnuncioRepository generaciones,
-                                  OpcionAnuncioRepository opciones) {
+                                  OpcionAnuncioRepository opciones, ControlGastoImagenes gasto) {
         this.perfilService = perfilService;
         this.plantilla = plantilla;
         this.ia = ia;
@@ -67,6 +70,7 @@ public class OpcionesAnuncioService {
         this.kits = kits;
         this.generaciones = generaciones;
         this.opciones = opciones;
+        this.gasto = gasto;
     }
 
     @Transactional
@@ -88,6 +92,7 @@ public class OpcionesAnuncioService {
             // La escena la escribe la IA de texto en inglés; si no vino, se usa el producto sacado de la oferta.
             String escena = textos.get(i).extra() != null ? textos.get(i).extra() : temaSinCifras(datos.oferta());
             ImagenGenerada imagen = imagenes.borrador(descripcionDeImagen(perfil, escena, ESTILOS[i][1], colores));
+            gasto.registrar(usuarioId, ConsumoImagen.Tipo.BORRADOR, imagen);
             OpcionAnuncio opcion = new OpcionAnuncio();
             opcion.setGeneracion(generacion);
             opcion.setNumero(i + 1);

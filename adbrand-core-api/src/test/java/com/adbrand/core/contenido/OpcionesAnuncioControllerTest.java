@@ -97,7 +97,7 @@ class OpcionesAnuncioControllerTest {
     }
 
     private static VersionesAnuncioResponse dosVersiones() {
-        return new VersionesAnuncioResponse(102L, 2, "data:image/png;base64,V2", List.of(
+        return new VersionesAnuncioResponse(102L, 2, "data:image/png;base64,V2", 18, List.of(
                 new VersionAnuncioResponse(1, null, "data:image/jpeg;base64,V1", "cloudflare", false, false),
                 new VersionAnuncioResponse(2, "fondo más claro", "data:image/png;base64,V2", "openrouter", false, true)));
     }
@@ -112,7 +112,8 @@ class OpcionesAnuncioControllerTest {
                 .andExpect(jsonPath("$.versionActual").value(2))
                 .andExpect(jsonPath("$.imagenActual").value("data:image/png;base64,V2"))
                 .andExpect(jsonPath("$.versiones[1].instruccion").value("fondo más claro"))
-                .andExpect(jsonPath("$.versiones[1].actual").value(true));
+                .andExpect(jsonPath("$.versiones[1].actual").value(true))
+                .andExpect(jsonPath("$.retoquesRestantes").value(18));
     }
 
     @Test
@@ -137,7 +138,7 @@ class OpcionesAnuncioControllerTest {
     @Test
     void usarUnaVersionAnteriorLaDevuelveComoActual() throws Exception {
         when(retoques.usarVersion(1L, 102L, 1)).thenReturn(new VersionesAnuncioResponse(102L, 1,
-                "data:image/jpeg;base64,V1", dosVersiones().versiones()));
+                "data:image/jpeg;base64,V1", 18, dosVersiones().versiones()));
 
         mvc.perform(post(URL + "/102/versiones/1/usar").requestAttr("usuarioId", 1L))
                 .andExpect(status().isOk())

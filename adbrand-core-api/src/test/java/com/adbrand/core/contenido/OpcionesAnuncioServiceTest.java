@@ -28,7 +28,9 @@ import com.adbrand.core.contenido.service.OpcionesAnuncioService;
 import com.adbrand.core.contenido.service.PlantillaPromptAnuncio;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
 import com.adbrand.core.imagen.service.GeneradorImagen;
+import com.adbrand.core.imagen.service.ControlGastoImagenes;
 import com.adbrand.core.imagen.service.GeneradorImagenSimulado;
+import com.adbrand.core.imagen.entity.ConsumoImagen;
 import com.adbrand.core.imagen.service.ServicioImagenes;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
@@ -54,6 +56,7 @@ class OpcionesAnuncioServiceTest {
     private KitMarcaRepository kits;
     private GeneracionAnuncioRepository generaciones;
     private OpcionAnuncioRepository opciones;
+    private ControlGastoImagenes gasto;
     private OpcionesAnuncioService servicio;
     private final List<OpcionAnuncio> guardadas = new ArrayList<>();
     // Lo que se le pidió a la "IA de imágenes" (un Cloudflare falso que solo anota la descripción).
@@ -87,7 +90,8 @@ class OpcionesAnuncioServiceTest {
         ServicioImagenes imagenes = new ServicioImagenes(
                 new ImagenProperties(false, "cuenta", "token", "flux", "", "gemini", 90),
                 List.of(simulado, cloudflareFalso), simulado);
-        servicio = new OpcionesAnuncioService(perfilService, plantilla, ia, imagenes, anuncios, kits, generaciones, opciones);
+        gasto = mock(ControlGastoImagenes.class);
+        servicio = new OpcionesAnuncioService(perfilService, plantilla, ia, imagenes, anuncios, kits, generaciones, opciones, gasto);
 
         when(perfilService.obtener(1L)).thenReturn(new PerfilNegocioResponse(
                 1L, "Panadería Doña Rosa", "Panadería", "Familias del barrio", Tono.CERCANO, null, null));
@@ -236,5 +240,17 @@ class OpcionesAnuncioServiceTest {
         // Sin escena se usa el producto de la oferta.
         assertThat(descripciones.get(2)).contains("Main subject: pan de yema.");
         assertThat(descripciones.get(3)).contains("Main subject: pan de yema.");
+    }
+
+    // Control de gasto: cada una de las 4 imágenes borrador queda anotada para el panel del admin.
+    @Test
+    void cadaBorradorQuedaAnotadoEnElControlDeGasto() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any()))
+                .thenReturn("{\"opciones\": [\"Uno\", \"Dos\", \"Tres\", \"Cuatro\"]}");
+
+        servicio.generar(1L, pedido());
+
+        verify(gasto, times(4)).registrar(org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.eq(ConsumoImagen.Tipo.BORRADOR), any());
     }
 }

@@ -19,6 +19,9 @@ import com.adbrand.core.contenido.repository.VersionAnuncioRepository;
 import com.adbrand.core.contenido.service.RetoqueAnuncioService;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
 import com.adbrand.core.imagen.service.ServicioImagenes;
+import com.adbrand.core.imagen.service.ControlGastoImagenes;
+import com.adbrand.core.imagen.entity.ConsumoImagen;
+import com.adbrand.core.contenido.entity.GeneracionAnuncio;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import com.adbrand.core.shared.error.SolicitudInvalidaException;
 import java.util.ArrayList;
@@ -36,6 +39,7 @@ class RetoqueAnuncioServiceTest {
     private OpcionAnuncioRepository opciones;
     private VersionAnuncioRepository versiones;
     private ServicioImagenes imagenes;
+    private ControlGastoImagenes gasto;
     private RetoqueAnuncioService servicio;
     private OpcionAnuncio opcion;
     private final List<VersionAnuncio> historial = new ArrayList<>();
@@ -46,11 +50,16 @@ class RetoqueAnuncioServiceTest {
         opciones = mock(OpcionAnuncioRepository.class);
         versiones = mock(VersionAnuncioRepository.class);
         imagenes = mock(ServicioImagenes.class);
-        servicio = new RetoqueAnuncioService(opciones, versiones, imagenes);
+        gasto = mock(ControlGastoImagenes.class);
+        when(gasto.retoquesRestantes(any())).thenReturn(19);
+        servicio = new RetoqueAnuncioService(opciones, versiones, imagenes, gasto);
 
         opcion = new OpcionAnuncio();
         ReflectionTestUtils.setField(opcion, "id", 102L);
         opcion.setNumero(2);
+        GeneracionAnuncio generacion = new GeneracionAnuncio();
+        generacion.setUsuarioId(1L);
+        opcion.setGeneracion(generacion);
         opcion.setElegida(true);
         opcion.ponerImagen(ORIGINAL);
         when(opciones.findByIdAndGeneracionUsuarioId(102L, 1L)).thenReturn(Optional.of(opcion));
@@ -139,5 +148,35 @@ class RetoqueAnuncioServiceTest {
         assertThatThrownBy(() -> servicio.usarVersion(1L, 102L, 9))
                 .isInstanceOf(RecursoNoEncontradoException.class)
                 .hasMessageContaining("versión");
+    }
+
+    @Test
+    void cadaRetoqueQuedaAnotadoYDiceCuantosQuedan() {
+        VersionesAnuncioResponse respuesta = servicio.retocar(1L, 102L, "fondo más claro");
+
+        verify(gasto).verificarRetoqueDisponible(1L);
+        verify(gasto).registrar(eq(1L), eq(ConsumoImagen.Tipo.RETOQUE), any());
+        assertThat(respuesta.retoquesRestantes()).isEqualTo(19);
+    }
+
+    @Test
+    void siLlegoAlLimiteDelMesNoSeLlamaALaIaDePago() {
+        org.mockito.Mockito.doThrow(new SolicitudInvalidaException("LIMITE_RETOQUES", "Llegaste a tu límite de 20 retoques"))
+                .when(gasto).verificarRetoqueDisponible(1L);
+
+        assertThatThrownBy(() -> servicio.retocar(1L, 102L, "fondo"))
+                .isInstanceOf(SolicitudInvalidaException.class)
+                .hasMessageContaining("límite");
+        verify(imagenes, never()).finalORetoque(anyString(), any());
+    }
+
+    @Test
+    void enModoDePruebaNoSeLimitaNiSeMuestranRestantes() {
+        when(imagenes.esSimulado()).thenReturn(true);
+
+        VersionesAnuncioResponse respuesta = servicio.retocar(1L, 102L, "fondo");
+
+        verify(gasto, never()).verificarRetoqueDisponible(any());
+        assertThat(respuesta.retoquesRestantes()).isNull();
     }
 }
