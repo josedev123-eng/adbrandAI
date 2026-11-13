@@ -5,6 +5,7 @@ import './MenuUsuario.css'
 
 // Trazos de un ícono simple por opción (viewBox 24x24). Se dibujan con línea, sin relleno.
 const ICONOS = {
+  inicio: ['M3 11l9-7 9 7', 'M5 10v10h14V10', 'M10 20v-6h4v6'],
   anuncio: ['M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z', 'M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z'],
   kit: ['M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-1-.8-1.4-.8-2.3 0-.8.7-1.2 1.6-1.2H17a4 4 0 0 0 4-4c0-5-4-9-9-9Z', 'M7.5 11h.01', 'M10 7h.01', 'M14.5 7h.01'],
   calendario: ['M4 6h16v14H4z', 'M4 10h16', 'M8 3v4', 'M16 3v4'],
@@ -35,8 +36,8 @@ export default function MenuUsuario({ actual, alCambiar, empresa, alSalir }) {
       </span>
       <nav className="menu-secciones" aria-label="Menú principal">
         {SECCIONES.map((seccion) => (
-          <div key={seccion.titulo} className="menu-seccion">
-            <span className="menu-seccion-titulo">{seccion.titulo}</span>
+          <div key={seccion.titulo || 'inicio'} className="menu-seccion">
+            {seccion.titulo && <span className="menu-seccion-titulo">{seccion.titulo}</span>}
             {seccion.opciones.map((opcion) => (
               <button
                 key={opcion.id}

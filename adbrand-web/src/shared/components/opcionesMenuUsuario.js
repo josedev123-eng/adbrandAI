@@ -1,6 +1,8 @@
 // Datos del menú lateral de la web del usuario (las secciones y sus opciones) y ayudas para dibujarlo.
 // Opciones agrupadas por sección, en el orden en que se ven.
 export const SECCIONES = [
+  // Inicio va solo, arriba de todo y sin título de sección.
+  { titulo: '', opciones: [{ id: 'inicio', nombre: 'Inicio' }] },
   {
     titulo: 'Crear',
     opciones: [
