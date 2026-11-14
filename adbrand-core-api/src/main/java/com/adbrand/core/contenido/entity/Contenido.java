@@ -56,6 +56,14 @@ public class Contenido {
     @Column(name = "prompt_original", columnDefinition = "TEXT")
     private String promptOriginal;
 
+    // HU 53 y 54: lo que decidió el dueño desde el móvil (V41).
+    @Enumerated(EnumType.STRING)
+    @Column(name = "decision_dueno", nullable = false, length = 20)
+    private DecisionDueno decisionDueno = DecisionDueno.PENDIENTE;
+
+    @Column(name = "fecha_decision")
+    private LocalDateTime fechaDecision;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -101,6 +109,12 @@ public class Contenido {
 
     public String getPromptOriginal() { return promptOriginal; }
     public void setPromptOriginal(String promptOriginal) { this.promptOriginal = promptOriginal; }
+
+    public DecisionDueno getDecisionDueno() { return decisionDueno; }
+    public void setDecisionDueno(DecisionDueno decisionDueno) { this.decisionDueno = decisionDueno; }
+
+    public LocalDateTime getFechaDecision() { return fechaDecision; }
+    public void setFechaDecision(LocalDateTime fechaDecision) { this.fechaDecision = fechaDecision; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }
