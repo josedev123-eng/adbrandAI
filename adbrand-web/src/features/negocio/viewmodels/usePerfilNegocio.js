@@ -1,4 +1,5 @@
 // ViewModel: carga el perfil guardado, valida los campos y lo guarda (HU-09).
+// Con perfil guardado se muestra el resumen; "Editar" abre el formulario y al guardar vuelve al resumen.
 import { useEffect, useState } from 'react'
 import { guardarPerfil, obtenerPerfil } from '../models/perfilNegocioApi'
 
@@ -24,6 +25,8 @@ export function usePerfilNegocio() {
   const [existe, setExiste] = useState(false)
   // Copia de lo que está guardado en la base, para el resumen. No cambia mientras se edita el formulario.
   const [guardado, setGuardado] = useState(null)
+  // Sin perfil guardado se empieza directo en el formulario.
+  const [editando, setEditando] = useState(false)
 
   // Criterio 2: al entrar, si ya hay un perfil guardado se carga en el formulario.
   useEffect(() => {
@@ -34,12 +37,26 @@ export function usePerfilNegocio() {
         setExiste(true)
       })
       .catch((error) => {
-        if (error.status !== 404) {
-          setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+        if (error.status === 404) setEditando(true)
+        else {
+          setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
         }
       })
       .finally(() => setCargando(false))
   }, [])
+
+  function empezarEdicion() {
+    setMensaje(null)
+    setEditando(true)
+  }
+
+  // Cancelar descarta lo escrito y vuelve al perfil guardado.
+  function cancelarEdicion() {
+    if (guardado) setPerfil({ ...guardado, descripcion: guardado.descripcion ?? '' })
+    setErrores({})
+    setMensaje(null)
+    setEditando(false)
+  }
 
   function cambiarCampo(campo, valor) {
     setPerfil((actual) => ({ ...actual, [campo]: valor }))
@@ -60,17 +77,31 @@ export function usePerfilNegocio() {
       setGuardado(perfilGuardado)
       setExiste(true)
       setMensaje({ tipo: 'exito', texto: 'Perfil guardado. La IA usará estos datos en tus anuncios.' })
+      setEditando(false)
     } catch (error) {
       if (error.status === 400) {
         setErrores(error.campos)
         setMensaje({ tipo: 'error', texto: error.message })
       } else {
-        setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+        setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
       }
     } finally {
       setGuardando(false)
     }
   }
 
-  return { perfil, guardado, errores, mensaje, cargando, guardando, existe, cambiarCampo, guardar }
+  return {
+    perfil,
+    guardado,
+    errores,
+    mensaje,
+    cargando,
+    guardando,
+    existe,
+    editando,
+    empezarEdicion,
+    cancelarEdicion,
+    cambiarCampo,
+    guardar,
+  }
 }
