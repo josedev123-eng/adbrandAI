@@ -61,6 +61,10 @@ public class Usuario {
     @Column(length = 250)
     private String direccion;
 
+    // Color del avatar elegido en "Mi cuenta" (V42). null = automático según el nombre.
+    @Column(name = "color_avatar", length = 20)
+    private String colorAvatar;
+
     @PrePersist
     void alCrear() {
         fechaCreacion = LocalDateTime.now();
@@ -105,4 +109,7 @@ public class Usuario {
 
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+
+    public String getColorAvatar() { return colorAvatar; }
+    public void setColorAvatar(String colorAvatar) { this.colorAvatar = colorAvatar; }
 }

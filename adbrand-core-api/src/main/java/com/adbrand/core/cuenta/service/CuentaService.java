@@ -39,6 +39,9 @@ public class CuentaService {
         usuario.setRazonSocial(datos.razonSocial());
         usuario.setTelefono(datos.telefono());
         usuario.setDireccion(datos.direccion());
+        if (datos.colorAvatar() != null) {
+            usuario.setColorAvatar(datos.colorAvatar().isEmpty() ? null : datos.colorAvatar());
+        }
 
         try {
             return EmpresaResponse.desde(usuarios.saveAndFlush(usuario));

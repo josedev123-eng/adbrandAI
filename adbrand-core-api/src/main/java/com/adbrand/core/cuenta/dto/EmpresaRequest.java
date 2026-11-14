@@ -21,7 +21,11 @@ public record EmpresaRequest(
 
         @NotBlank(message = "Ingresa la dirección.")
         @Size(max = 250, message = "Máximo 250 caracteres.")
-        String direccion) {
+        String direccion,
+
+        // Opcional: color del avatar. null = no se cambia (la app móvil no lo manda); "" = volver al automático.
+        @Pattern(regexp = "^(INDIGO|CORAL|VERDE|AZUL|VIOLETA|ROSA)?$", message = "Elige uno de los colores de la lista.")
+        String colorAvatar) {
 
     // Quita los espacios de los extremos; un teléfono vacío se guarda como "sin teléfono".
     public EmpresaRequest {
@@ -29,5 +33,6 @@ public record EmpresaRequest(
         razonSocial = razonSocial == null ? null : razonSocial.trim();
         telefono = telefono == null || telefono.isBlank() ? null : telefono.trim();
         direccion = direccion == null ? null : direccion.trim();
+        colorAvatar = colorAvatar == null ? null : colorAvatar.trim();
     }
 }
