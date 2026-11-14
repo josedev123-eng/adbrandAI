@@ -1,6 +1,7 @@
 // View: editor de la identidad visual de la marca (HU-31). La lógica está en useEditarIdentidad.
 // Criterio 1: al lado, un anuncio de ejemplo con las tipografías y la voz, que cambia mientras se editan.
 // Criterio 2: lo guardado lo usan los anuncios que se generen después (Spring lo agrega al prompt).
+import Aviso from '../../../shared/components/Aviso'
 import { leerPaleta, TIPOGRAFIAS_SUGERIDAS } from '../models/brandkitApi'
 import { MAXIMO_TIPOGRAFIA, MAXIMO_VOZ, useEditarIdentidad } from '../viewmodels/useEditarIdentidad'
 import AnuncioVistaPrevia from './AnuncioVistaPrevia'
@@ -47,7 +48,7 @@ export default function EditarIdentidadView({ kit, alGuardar, alCancelar }) {
         </p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <div className="colores-editor">
         <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>

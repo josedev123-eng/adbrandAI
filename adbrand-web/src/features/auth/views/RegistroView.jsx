@@ -1,4 +1,6 @@
 // View: formulario para registrar la empresa (HU-21). La lógica está en useRegistro.
+import InputContrasena from '../../../shared/components/InputContrasena'
+import Aviso from '../../../shared/components/Aviso'
 import { useRegistro } from '../viewmodels/useRegistro'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
@@ -21,13 +23,14 @@ export default function RegistroView({ irALogin }) {
         <p>Con tu cuenta, la IA guarda el perfil, los anuncios y el kit de marca solo para tu negocio.</p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
         <CampoAuth etiqueta="Tu nombre" error={errores.nombre}>
           <input
             value={formulario.nombre}
-            placeholder="Rosa Quispe"
+            maxLength={100}
+            placeholder="Ej.: Rosa Quispe"
             autoComplete="name"
             onChange={(e) => cambiarCampo('nombre', e.target.value)}
           />
@@ -36,7 +39,8 @@ export default function RegistroView({ irALogin }) {
         <CampoAuth etiqueta="Nombre de la empresa" error={errores.nombreEmpresa}>
           <input
             value={formulario.nombreEmpresa}
-            placeholder="Panadería Doña Rosa"
+            maxLength={150}
+            placeholder="Ej.: Panadería Doña Rosa"
             autoComplete="organization"
             onChange={(e) => cambiarCampo('nombreEmpresa', e.target.value)}
           />
@@ -46,7 +50,8 @@ export default function RegistroView({ irALogin }) {
           <input
             type="email"
             value={formulario.correo}
-            placeholder="rosa@panaderia.pe"
+            maxLength={150}
+            placeholder="Ej.: rosa@panaderia.pe"
             autoComplete="email"
             onChange={(e) => cambiarCampo('correo', e.target.value)}
           />
@@ -57,18 +62,18 @@ export default function RegistroView({ irALogin }) {
           error={errores.contrasena}
           ayuda="Mínimo 8 caracteres, con una mayúscula, una minúscula y un número."
         >
-          <input
-            type="password"
+          <InputContrasena
             value={formulario.contrasena}
+            maxLength={72}
             autoComplete="new-password"
             onChange={(e) => cambiarCampo('contrasena', e.target.value)}
           />
         </CampoAuth>
 
         <CampoAuth etiqueta="Confirmar contraseña" error={errores.confirmarContrasena}>
-          <input
-            type="password"
+          <InputContrasena
             value={formulario.confirmarContrasena}
+            maxLength={72}
             autoComplete="new-password"
             onChange={(e) => cambiarCampo('confirmarContrasena', e.target.value)}
           />

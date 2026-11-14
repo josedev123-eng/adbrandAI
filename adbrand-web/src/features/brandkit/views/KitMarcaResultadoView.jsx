@@ -1,4 +1,5 @@
 // View: visualización del Kit de Marca generado con opción a descargar (HU-11).
+import Aviso from '../../../shared/components/Aviso'
 import { useState } from 'react'
 import LogoMarca from './LogoMarca'
 import './KitMarcaResultadoView.css'
@@ -107,7 +108,7 @@ export default function KitMarcaResultadoView({
         </div>
       )}
 
-      {aviso && <div className={`aviso aviso-${aviso.tipo}`}>{aviso.texto}</div>}
+      <Aviso mensaje={aviso} />
 
       <div className="kit-grid">
         <Seccion titulo="Concepto de Logo" icono="🎨">

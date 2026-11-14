@@ -1,4 +1,5 @@
 // View: editar el kit de marca a mano (HU-32). La lógica está en useEditarKitMarca.
+import Aviso from '../../../shared/components/Aviso'
 import { MAXIMO_COLORES, useEditarKitMarca } from '../viewmodels/useEditarKitMarca'
 import './EditarKitMarcaView.css'
 
@@ -47,7 +48,7 @@ export default function EditarKitMarcaView({ kit, alGuardar, alCancelar }) {
         </p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
         <fieldset className="editar-colores">
@@ -80,7 +81,7 @@ export default function EditarKitMarcaView({ kit, alGuardar, alCancelar }) {
                   aria-label={`Código del color ${i + 1}`}
                   value={color.hex}
                   maxLength={7}
-                  placeholder="#2E7D32"
+                  placeholder="Ej.: #2E7D32"
                   onChange={(e) => cambiarColor(i, 'hex', e.target.value)}
                 />
                 <input
@@ -88,7 +89,7 @@ export default function EditarKitMarcaView({ kit, alGuardar, alCancelar }) {
                   aria-label={`Nombre o uso del color ${i + 1}`}
                   value={color.nombre}
                   maxLength={100}
-                  placeholder="Verde bosque - Confianza"
+                  placeholder="Ej.: Verde bosque - Confianza"
                   onChange={(e) => cambiarColor(i, 'nombre', e.target.value)}
                 />
                 <button
@@ -116,14 +117,16 @@ export default function EditarKitMarcaView({ kit, alGuardar, alCancelar }) {
           <Campo etiqueta="Tipografía principal" error={errores.tipografiaPrimaria}>
             <input
               value={formulario.tipografiaPrimaria}
-              placeholder="Bricolage Grotesque"
+              maxLength={200}
+              placeholder="Ej.: Bricolage Grotesque"
               onChange={(e) => cambiarCampo('tipografiaPrimaria', e.target.value)}
             />
           </Campo>
           <Campo etiqueta="Tipografía secundaria (opcional)" error={errores.tipografiaSecundaria}>
             <input
               value={formulario.tipografiaSecundaria}
-              placeholder="Plus Jakarta Sans"
+              maxLength={200}
+              placeholder="Ej.: Plus Jakarta Sans"
               onChange={(e) => cambiarCampo('tipografiaSecundaria', e.target.value)}
             />
           </Campo>
@@ -133,6 +136,7 @@ export default function EditarKitMarcaView({ kit, alGuardar, alCancelar }) {
           <textarea
             rows="4"
             value={formulario.logoConcepto}
+            maxLength={2000}
             placeholder="Una canasta sencilla con una hoja verde encima..."
             onChange={(e) => cambiarCampo('logoConcepto', e.target.value)}
           />

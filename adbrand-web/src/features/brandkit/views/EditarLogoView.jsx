@@ -1,4 +1,5 @@
 // View: editor interactivo del logo con vista previa en vivo (HU-29). La lógica está en useEditarLogo.
+import Aviso from '../../../shared/components/Aviso'
 import { FORMAS_LOGO, TIPOGRAFIAS_LOGO } from '../models/brandkitApi'
 import { useEditarLogo } from '../viewmodels/useEditarLogo'
 import LogoMarca from './LogoMarca'
@@ -49,7 +50,7 @@ export default function EditarLogoView({ kit, alGuardar, alCancelar }) {
         </p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <div className="logo-editor">
         <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>

@@ -13,8 +13,8 @@
   position: fixed;
   z-index: -1;
   inset: 0;
-  background: radial-gradient(ellipse at 18% 14%, rgba(226, 204, 255, .72), transparent 38%),
-    radial-gradient(ellipse at 88% 84%, rgba(255, 218, 224, .72), transparent 35%), #f8f7fc;
+  /* Fondo plano y suave (sin degradados, ver sistema de diseño). */
+  background: var(--bg);
   content: '';
 }
 
@@ -31,7 +31,7 @@
 .pagina-auth .pagina-cabecera p { color: #746b82; line-height: 1.55; }
 .pagina-auth .auth-marca { color: #2f1c4a; font-size: 1.55rem; letter-spacing: -.04em; }
 .pagina-auth .auth-marca b { color: #8636bd; }
-.pagina-auth .boton-primario { min-height: 48px; border-radius: 12px; background: linear-gradient(110deg, #6430a3, #923fc0); box-shadow: 0 9px 20px rgba(109, 51, 166, .24); }
+.pagina-auth .boton-primario { min-height: 48px; border-radius: 12px; box-shadow: 0 6px 16px rgba(79, 70, 229, .22); }
 .pagina-auth .campo input { min-height: 46px; border-radius: 12px; background: #fff; }
 .pagina-auth .auth-enlaces { justify-content: center; gap: 12px 24px; }
 .pagina-auth .boton-enlace { color: #7133a7; }
