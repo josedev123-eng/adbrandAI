@@ -1,5 +1,7 @@
 // Menú lateral de la web del usuario (mismo estilo que el de la web de administración).
 // Solo dibuja; App decide qué pantalla se muestra.
+import MarcaAdbrand from './MarcaAdbrand'
+import { colorDeAvatar } from './avatar'
 import { iniciales, SECCIONES } from './opcionesMenuUsuario'
 import './MenuUsuario.css'
 
@@ -28,12 +30,10 @@ function IconoOpcion({ id }) {
 }
 
 // HU-22: "empresa" es el nombre de la empresa que inició sesión y "alSalir" cierra la sesión.
-export default function MenuUsuario({ actual, alCambiar, empresa, alSalir }) {
+export default function MenuUsuario({ actual, alCambiar, empresa, colorAvatar, alSalir }) {
   return (
     <aside className="menu-usuario">
-      <span className="menu-marca">
-        AdBrand<b>.AI</b>
-      </span>
+      <MarcaAdbrand />
       <nav className="menu-secciones" aria-label="Menú principal">
         {SECCIONES.map((seccion) => (
           <div key={seccion.titulo || 'inicio'} className="menu-seccion">
@@ -55,7 +55,9 @@ export default function MenuUsuario({ actual, alCambiar, empresa, alSalir }) {
       </nav>
       {alSalir && (
         <div className="menu-sesion">
-          <span className="menu-avatar" aria-hidden="true">{iniciales(empresa)}</span>
+          <span className="menu-avatar" aria-hidden="true" style={{ background: colorDeAvatar(empresa, colorAvatar) }}>
+            {iniciales(empresa)}
+          </span>
           {empresa && <span className="menu-empresa">{empresa}</span>}
           <button type="button" className="menu-salir" onClick={alSalir}>
             Cerrar sesión

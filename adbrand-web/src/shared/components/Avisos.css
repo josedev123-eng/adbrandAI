@@ -1,0 +1,68 @@
+/* Franja de conexión y pantalla de respaldo cuando algo falla. */
+.aviso-conexion {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.aviso-conexion-caida {
+  background: #fef3c7;
+  color: #92400e;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.aviso-conexion-ok {
+  background: #dcfce7;
+  color: #166534;
+  border-bottom: 1px solid #86efac;
+}
+
+.pantalla-error {
+  max-width: 520px;
+  margin: 48px auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pantalla-error h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.pantalla-error p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.pantalla-error-icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.pantalla-error-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Los avisos de éxito aparecen suave y se desvanecen solos (ver Aviso.jsx). */
+.aviso { animation: aviso-aparecer 0.25s ease-out; transition: opacity 0.5s ease, transform 0.5s ease; }
+.aviso-saliendo { opacity: 0; transform: translateY(-6px); }
+@keyframes aviso-aparecer { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .aviso { animation: none; transition: none; } }
+

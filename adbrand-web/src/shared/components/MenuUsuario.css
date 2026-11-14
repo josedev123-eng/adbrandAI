@@ -1,7 +1,7 @@
 /* Menú lateral fijo a la izquierda (igual que la web de administración); en pantallas angostas pasa arriba. */
 .menu-usuario { position: sticky; top: 0; height: 100vh; width: 248px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; padding: 20px 14px; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; }
 .menu-marca { font-family: var(--f-display); font-weight: 700; font-size: 1.2rem; padding: 0 8px; }
-.menu-marca b { color: var(--ia); }
+.menu-marca b { color: var(--acento-texto); }
 
 .menu-secciones { display: flex; flex-direction: column; gap: 16px; flex: 1; }
 .menu-seccion { display: flex; flex-direction: column; gap: 2px; }
@@ -13,7 +13,7 @@
 
 /* HU-22: empresa que inició sesión y botón para cerrar la sesión, al fondo del menú */
 .menu-sesion { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 10px; padding: 12px 8px 0; border-top: 1px solid var(--line); }
-.menu-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, #6332a4, #b149b4); color: #ffffff; font-weight: 700; font-size: 0.85rem; }
+.menu-avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: #ffffff; font-weight: 700; font-size: 0.85rem; }
 .menu-empresa { font-weight: 600; font-size: 0.85rem; min-width: 0; overflow-wrap: anywhere; }
 .menu-salir { grid-column: 1 / -1; border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: 8px; font-weight: 600; color: var(--fg); cursor: pointer; }
 .menu-salir:hover { border-color: var(--bad); color: var(--bad); }

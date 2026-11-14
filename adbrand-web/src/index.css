@@ -10,6 +10,9 @@
   --line: #dfe1ec;
   --primary: #4f46e5;
   --primary-soft: #ecebfd;
+  /* Acento de marca: coral. #f97316 para formas (logo, barras); #c2410c para texto (cumple contraste AA). */
+  --acento: #f97316;
+  --acento-texto: #c2410c;
   --ia: #b5179e;
   --ia-soft: #fbe8f8;
   --ok: #15803d;
@@ -49,3 +52,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .barra-superior strong { color: var(--fg); font-weight: 700; }
 .barra-fecha::first-letter { text-transform: uppercase; }
 @media (max-width: 860px) { .barra-superior { padding: 10px 16px; } .barra-fecha { display: none; } }
+
+/* Ver primero, editar después: datos en modo lectura con el botón "Editar" (Mi cuenta, Perfil del negocio). */
+.datos-lectura { display: flex; flex-direction: column; gap: 16px; }
+.datos-lectura-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.datos-lectura-cabecera h2, .formulario-titulo { margin: 0; font-size: 1.1rem; }
+.datos-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; margin: 0; }
+.datos-lista .dato-ancho { grid-column: 1 / -1; }
+.datos-lista dt { font-size: 0.78rem; color: var(--muted); margin-bottom: 2px; }
+.datos-lista dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; white-space: pre-line; }
+.datos-lista dd.dato-vacio { font-weight: 400; color: var(--muted); font-style: italic; }
+.formulario-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 560px) { .datos-lista { grid-template-columns: 1fr; } }

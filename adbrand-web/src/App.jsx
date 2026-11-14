@@ -1,26 +1,38 @@
-import { useState } from 'react'
-import GenerarAnuncioView from './features/contenido/views/GenerarAnuncioView'
-import PerfilNegocioView from './features/negocio/views/PerfilNegocioView'
-import SolicitarKitMarcaView from './features/brandkit/views/SolicitarKitMarcaView'
+import { lazy, Suspense, useState } from 'react'
 import RegistroView from './features/auth/views/RegistroView'
 import LoginView from './features/auth/views/LoginView'
 import RecuperarContrasenaView from './features/auth/views/RecuperarContrasenaView'
-import MiCuentaView from './features/cuenta/views/MiCuentaView'
 import InicioView from './features/inicio/views/InicioView'
-import PlanesView from './features/pagos/views/PlanesView'
-import CalendarioView from './features/calendario/views/CalendarioView'
-import InformeCampanasView from './features/reportes/views/InformeCampanasView'
 import MenuUsuario from './shared/components/MenuUsuario'
+import AvisoConexion from './shared/components/AvisoConexion'
+import LimiteDeErrores from './shared/components/LimiteDeErrores'
+import PantallaArranque from './shared/components/PantallaArranque'
+import Cargando from './shared/components/Cargando'
 import { SECCIONES } from './shared/components/opcionesMenuUsuario'
 import { useSesion } from './app/context/useSesion'
+import { useTituloPagina } from './shared/hooks/useTituloPagina'
+
+// Optimización: cada pantalla se descarga recién cuando el usuario la abre (code splitting).
+const GenerarAnuncioView = lazy(() => import('./features/contenido/views/GenerarAnuncioView'))
+const PerfilNegocioView = lazy(() => import('./features/negocio/views/PerfilNegocioView'))
+const SolicitarKitMarcaView = lazy(() => import('./features/brandkit/views/SolicitarKitMarcaView'))
+const MiCuentaView = lazy(() => import('./features/cuenta/views/MiCuentaView'))
+const PlanesView = lazy(() => import('./features/pagos/views/PlanesView'))
+const CalendarioView = lazy(() => import('./features/calendario/views/CalendarioView'))
+const InformeCampanasView = lazy(() => import('./features/reportes/views/InformeCampanasView'))
 
 // HU-22: sin sesión se muestran el inicio de sesión y el registro; con sesión, el menú y las pantallas de siempre.
 function App() {
-  const { usuario, cargando, salir } = useSesion()
+  const { usuario, cargando, salir, actualizarUsuario } = useSesion()
   const [pantalla, setPantalla] = useState('inicio')
   const [pantallaPublica, setPantallaPublica] = useState('login')
   // HU-24: mensaje para el inicio de sesión, por ejemplo "Tu contraseña se cambió, inicia sesión".
   const [avisoLogin, setAvisoLogin] = useState(null)
+  // Nombre de la pantalla en la pestaña del navegador.
+  const nombrePantalla = usuario
+    ? SECCIONES.flatMap((seccion) => seccion.opciones).find((opcion) => opcion.id === pantalla)?.nombre
+    : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña' }[pantallaPublica]
+  useTituloPagina(nombrePantalla)
 
   function irALogin(aviso = null) {
     setAvisoLogin(aviso)
@@ -28,16 +40,13 @@ function App() {
   }
 
   if (cargando) {
-    return (
-      <main className="pagina">
-        <p className="cargando">Cargando tu sesión…</p>
-      </main>
-    )
+    return <PantallaArranque texto="Revisando tu sesión…" />
   }
 
   if (!usuario) {
     return (
       <>
+        <AvisoConexion />
         {pantallaPublica === 'login' && (
           <LoginView
             key={avisoLogin?.texto ?? 'sin-aviso'}
@@ -66,7 +75,13 @@ function App() {
 
   return (
     <div className="layout-usuario">
-      <MenuUsuario actual={pantalla} alCambiar={setPantalla} empresa={usuario.nombreEmpresa} alSalir={cerrarSesion} />
+      <MenuUsuario
+        actual={pantalla}
+        alCambiar={setPantalla}
+        empresa={usuario.nombreEmpresa}
+        colorAvatar={usuario.colorAvatar}
+        alSalir={cerrarSesion}
+      />
       <div className="layout-contenido">
         <div className="barra-superior">
           <span>
@@ -80,14 +95,28 @@ function App() {
           </span>
           <span className="barra-fecha">{fechaDeHoy}</span>
         </div>
-      {pantalla === 'inicio' && <InicioView empresa={usuario.nombreEmpresa} alAbrir={setPantalla} />}
-      {pantalla === 'perfil' && <PerfilNegocioView />}
-      {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} />}
-      {pantalla === 'kit' && <SolicitarKitMarcaView />}
-      {pantalla === 'planes' && <PlanesView />}
-      {pantalla === 'calendario' && <CalendarioView />}
-      {pantalla === 'informes' && <InformeCampanasView />}
-      {pantalla === 'cuenta' && <MiCuentaView />}
+        <AvisoConexion />
+        {/* key: al cambiar de pantalla, el aviso de error se reinicia */}
+        <LimiteDeErrores key={pantalla} alVolverAlInicio={() => setPantalla('inicio')}>
+          <Suspense
+            fallback={
+              <main className="pagina">
+                <Cargando texto="Abriendo…" />
+              </main>
+            }
+          >
+            {pantalla === 'inicio' && <InicioView empresa={usuario.nombreEmpresa} alAbrir={setPantalla} />}
+            {pantalla === 'perfil' && <PerfilNegocioView />}
+            {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} />}
+            {pantalla === 'kit' && <SolicitarKitMarcaView />}
+            {pantalla === 'planes' && <PlanesView />}
+            {pantalla === 'calendario' && <CalendarioView />}
+            {pantalla === 'informes' && <InformeCampanasView />}
+            {pantalla === 'cuenta' && (
+              <MiCuentaView alGuardar={(empresa) => actualizarUsuario({ colorAvatar: empresa.colorAvatar })} />
+            )}
+          </Suspense>
+        </LimiteDeErrores>
       </div>
     </div>
   )

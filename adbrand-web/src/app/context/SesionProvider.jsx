@@ -49,7 +49,15 @@ export default function SesionProvider({ children }) {
     setUsuario(null)
   }, [])
 
-  const valor = useMemo(() => ({ usuario, cargando, entrar, salir }), [usuario, cargando, entrar, salir])
+  // Cambia algún dato del usuario en pantalla (por ejemplo el color del avatar) sin volver a pedir la sesión.
+  const actualizarUsuario = useCallback((cambios) => {
+    setUsuario((actual) => (actual ? { ...actual, ...cambios } : actual))
+  }, [])
+
+  const valor = useMemo(
+    () => ({ usuario, cargando, entrar, salir, actualizarUsuario }),
+    [usuario, cargando, entrar, salir, actualizarUsuario],
+  )
 
   return <SesionContexto.Provider value={valor}>{children}</SesionContexto.Provider>
 }
