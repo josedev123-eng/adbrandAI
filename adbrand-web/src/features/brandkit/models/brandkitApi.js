@@ -1,5 +1,5 @@
 // Model: llamadas a la API de Kit de Marca (HU-11).
-import { apiRequest } from '../../../shared/services/apiClient'
+import { apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
 
 export const ESTILOS_VISUALES = [
   { valor: 'MINIMALISTA', nombre: 'Minimalista' },
@@ -13,7 +13,7 @@ export const ESTILOS_VISUALES = [
 ]
 
 export function generarKitMarca(datos) {
-  return apiRequest('/kit-marca/generar', { method: 'POST', body: datos })
+  return apiRequest('/kit-marca/generar', { method: 'POST', body: datos, tiempoMaximo: TIEMPO_IA })
 }
 
 export function obtenerKitMarca(id) {

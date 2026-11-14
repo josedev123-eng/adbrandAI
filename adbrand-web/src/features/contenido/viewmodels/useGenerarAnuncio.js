@@ -71,7 +71,7 @@ export function useGenerarAnuncio() {
       const respuesta = await generarOpciones(solicitud)
       setOpciones(respuesta.opciones ?? [])
     } catch (error) {
-      mostrarError(error, 'No se pudo conectar con el servidor.')
+      mostrarError(error, error?.message || 'No se pudo conectar con el servidor.')
     } finally {
       setGenerando(false)
     }
@@ -170,6 +170,8 @@ export function useGenerarAnuncio() {
     try {
       await navigator.clipboard.writeText(anuncio.texto)
       setCopiado(true)
+      // "¡Copiado!" se muestra un momento y el botón vuelve a "Copiar texto".
+      setTimeout(() => setCopiado(false), 2500)
     } catch {
       setAviso('No se pudo copiar. Selecciona el texto y cópialo con Ctrl + C.')
     }

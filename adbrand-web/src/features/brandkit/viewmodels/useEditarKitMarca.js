@@ -89,7 +89,7 @@ export function useEditarKitMarca(kit, alGuardar) {
       } else if (error.status === 404) {
         setMensaje({ tipo: 'error', texto: 'Este kit ya no está disponible.' })
       } else {
-        setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+        setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
       }
     } finally {
       setGuardando(false)
