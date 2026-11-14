@@ -1,4 +1,5 @@
 // View: pantalla de inicio de sesión de la web de administración.
+import InputContrasena from '../../../shared/components/InputContrasena'
 import { useSesion } from '../../../app/context/useSesion'
 import { useLogin } from '../viewmodels/useLogin'
 import './LoginView.css'
@@ -30,18 +31,19 @@ export default function LoginView() {
               type="email"
               autoComplete="username"
               value={correo}
+              maxLength={150}
               onChange={(e) => cambiarCorreo(e.target.value)}
-              placeholder="nombre@adbrand.pe"
+              placeholder="Ej.: nombre@adbrand.pe"
             />
             {errores.correo && <small>{errores.correo}</small>}
           </label>
 
           <label className={errores.contrasena ? 'login-campo login-campo-error' : 'login-campo'}>
             <span>Contraseña</span>
-            <input
-              type="password"
+            <InputContrasena
               autoComplete="current-password"
               value={contrasena}
+              maxLength={128}
               onChange={(e) => cambiarContrasena(e.target.value)}
             />
             {errores.contrasena && <small>{errores.contrasena}</small>}

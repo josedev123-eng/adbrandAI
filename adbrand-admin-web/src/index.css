@@ -10,6 +10,9 @@
   --line: #dfe1ec;
   --primary: #4f46e5;
   --primary-soft: #ecebfd;
+  /* Acento de marca: coral. #f97316 para formas (logo, barras); #c2410c para texto (cumple contraste AA). */
+  --acento: #f97316;
+  --acento-texto: #c2410c;
   --ia: #b5179e;
   --ia-soft: #fbe8f8;
   --ok: #15803d;

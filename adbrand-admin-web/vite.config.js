@@ -9,5 +9,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/setupTests.js',
+    // En una PC cargada, la primera prueba de un archivo puede pasar de 5 s (el valor por defecto) y fallar sin motivo.
+    testTimeout: 15000,
   },
 })

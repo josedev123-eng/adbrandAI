@@ -1,5 +1,6 @@
 // View: lista de administradores con desactivar (HU-03) y editar permisos (HU-02).
 // El formulario para crear cuentas está solo en CrearAdministradorView (HU-01).
+import Aviso from '../../../shared/components/Aviso'
 import { useSesion } from '../../../app/context/useSesion'
 import { useAdministradores } from '../viewmodels/useAdministradores'
 import { useEditarPermisos } from '../viewmodels/useEditarPermisos'
@@ -52,8 +53,8 @@ export default function AdministradoresView() {
         <p>Revisa las cuentas, cambia sus permisos o desactívalas. Para crear una cuenta ve a Administradores.</p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
-      {mensajePermisos && <div className={`aviso aviso-${mensajePermisos.tipo}`}>{mensajePermisos.texto}</div>}
+      <Aviso mensaje={mensaje} />
+      <Aviso mensaje={mensajePermisos} />
 
       {/* Lista de administradores (HU-03) */}
       <section className="tarjeta">

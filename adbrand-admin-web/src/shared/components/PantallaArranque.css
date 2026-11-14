@@ -1,0 +1,38 @@
+/* Pantalla de arranque (ver PantallaArranque.jsx). */
+.arranque {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--bg);
+}
+
+.arranque-logo { animation: arranque-latido 1.4s ease-in-out infinite; }
+
+.arranque-barra {
+  width: 160px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.arranque-barra span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--acento);
+  animation: arranque-avance 1.2s ease-in-out infinite;
+}
+
+.arranque-texto { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+@keyframes arranque-latido { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes arranque-avance { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .arranque-logo, .arranque-barra span { animation: none; }
+}

@@ -1,0 +1,20 @@
+/* Campo de contraseña con el botón Mostrar/Ocultar dentro del borde. */
+.contrasena { display: flex; flex-direction: column; gap: 4px; }
+.contrasena-fila { position: relative; display: flex; }
+.contrasena-fila input { flex: 1; padding-right: 86px; }
+.contrasena-ver {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.contrasena-ver:hover { background: var(--line); }
+.contrasena-aviso { font-size: 0.78rem; color: var(--warn); }

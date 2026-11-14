@@ -1,4 +1,6 @@
 // Menú lateral de la web de administración. Solo dibuja; App decide qué opciones y qué pantalla se muestran.
+import { colorDeAvatar } from './avatar'
+import MarcaAdbrand from './MarcaAdbrand'
 import './MenuAdmin.css'
 
 // Trazos de un ícono simple por opción (viewBox 24x24). Se dibujan con línea, sin relleno.
@@ -46,9 +48,7 @@ function iniciales(admin) {
 export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRol, alSalir, contadores = {} }) {
   return (
     <aside className="menu-admin">
-      <span className="menu-marca">
-        AdBrand<b>.AI</b> <small>Admin</small>
-      </span>
+      <MarcaAdbrand etiqueta="Admin" />
       <nav className="menu-secciones" aria-label="Menú de administración">
         {agruparPorSeccion(opciones).map((grupo) => (
           <div key={grupo.titulo} className="menu-seccion">
@@ -75,7 +75,13 @@ export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRo
       </nav>
       {admin && (
         <div className="menu-cuenta">
-          <span className="menu-avatar" aria-hidden="true">{iniciales(admin)}</span>
+          <span
+            className="menu-avatar"
+            aria-hidden="true"
+            style={{ background: colorDeAvatar(`${admin.nombres ?? ''} ${admin.apellidos ?? ''}`) }}
+          >
+            {iniciales(admin)}
+          </span>
           <span className="menu-usuario">
             {admin.nombres} {admin.apellidos}
             <small>{nombreRol}</small>

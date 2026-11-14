@@ -1,20 +1,27 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useSesion } from './app/context/useSesion'
 import { NOMBRES_ROL, pantallasDelRol } from './app/routes/pantallasPorRol'
-import AdministradoresView from './features/admin/views/AdministradoresView'
-import CrearAdministradorView from './features/admin/views/CrearAdministradorView'
-import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import LoginView from './features/auth/views/LoginView'
-import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
-import HistorialContenidosView from './features/moderacion/views/HistorialContenidosView'
 import InicioView from './features/inicio/views/InicioView'
 import { tarjetasDelRol } from './features/inicio/viewmodels/useInicio'
-import EstadoServidorView from './features/servidor/views/EstadoServidorView'
-import PanelFinancieroView from './features/suscripciones/views/PanelFinancieroView'
-import ConsumoTokensView from './features/tokens/views/ConsumoTokensView'
-import HistorialTokensView from './features/tokens/views/HistorialTokensView'
 import MenuAdmin from './shared/components/MenuAdmin'
+import AvisoConexion from './shared/components/AvisoConexion'
+import LimiteDeErrores from './shared/components/LimiteDeErrores'
+import PantallaArranque from './shared/components/PantallaArranque'
+import Cargando from './shared/components/Cargando'
 import { usePendientesRevision } from './shared/hooks/usePendientesRevision'
+import { useTituloPagina } from './shared/hooks/useTituloPagina'
+
+// Optimización: cada pantalla se descarga recién cuando se abre (code splitting).
+const AdministradoresView = lazy(() => import('./features/admin/views/AdministradoresView'))
+const CrearAdministradorView = lazy(() => import('./features/admin/views/CrearAdministradorView'))
+const AuditoriaView = lazy(() => import('./features/auditoria/views/AuditoriaView'))
+const BandejaRevisionView = lazy(() => import('./features/moderacion/views/BandejaRevisionView'))
+const HistorialContenidosView = lazy(() => import('./features/moderacion/views/HistorialContenidosView'))
+const EstadoServidorView = lazy(() => import('./features/servidor/views/EstadoServidorView'))
+const PanelFinancieroView = lazy(() => import('./features/suscripciones/views/PanelFinancieroView'))
+const ConsumoTokensView = lazy(() => import('./features/tokens/views/ConsumoTokensView'))
+const HistorialTokensView = lazy(() => import('./features/tokens/views/HistorialTokensView'))
 
 // Fecha de hoy para la barra superior, por ejemplo "martes, 10 de noviembre de 2026".
 function fechaDeHoy() {
@@ -27,9 +34,20 @@ function App() {
   // El contador de "Revisión de contenido" solo se pide si el rol ve esa pantalla.
   const veRevision = pantallasDelRol(admin?.rol?.nombre).some((opcion) => opcion.id === 'revision')
   const pendientes = usePendientesRevision(veRevision, pantalla)
+  // Nombre de la pantalla en la pestaña del navegador.
+  const opcionesDelRol = pantallasDelRol(admin?.rol?.nombre)
+  const idActual = opcionesDelRol.some((opcion) => opcion.id === pantalla) ? pantalla : opcionesDelRol[0]?.id
+  useTituloPagina(admin ? opcionesDelRol.find((opcion) => opcion.id === idActual)?.nombre : 'Iniciar sesión')
 
-  if (cargando) return <p className="cargando-sesion">Cargando tu sesión…</p>
-  if (!admin) return <LoginView />
+  if (cargando) return <PantallaArranque texto="Revisando tu sesión…" />
+  if (!admin) {
+    return (
+      <>
+        <AvisoConexion />
+        <LoginView />
+      </>
+    )
+  }
 
   const rol = admin.rol?.nombre
   const opciones = pantallasDelRol(rol)
@@ -66,22 +84,34 @@ function App() {
           </span>
           <span className="barra-fecha">{fechaDeHoy()}</span>
         </div>
-      {actual === 'inicio' && <InicioView admin={admin} claves={tarjetasDelRol(opciones)} alAbrir={setPantalla} />}
-      {actual === 'revision' && <BandejaRevisionView />}
-      {actual === 'historial-contenidos' && <HistorialContenidosView />}
-      {actual === 'administradores' && <CrearAdministradorView />}
-      {actual === 'lista-administradores' && <AdministradoresView />}
-      {actual === 'auditoria' && <AuditoriaView />}
-      {actual === 'panel-financiero' && <PanelFinancieroView />}
-      {actual === 'consumo-tokens' && <ConsumoTokensView />}
-      {actual === 'historial-tokens' && <HistorialTokensView />}
-      {actual === 'estado-servidor' && <EstadoServidorView />}
-      {!actual && (
-        <main className="sin-pantallas">
-          <h1>Hola, {admin.nombres}</h1>
-          <p>Tu rol todavía no tiene pantallas. Llegan con las historias del Sprint 2.</p>
-        </main>
-      )}
+        <AvisoConexion />
+        {/* key: al cambiar de pantalla, el aviso de error se reinicia */}
+        <LimiteDeErrores key={actual ?? 'ninguna'} alVolverAlInicio={() => setPantalla('inicio')}>
+          <Suspense
+            fallback={
+              <main className="pagina">
+                <Cargando texto="Abriendo…" />
+              </main>
+            }
+          >
+            {actual === 'inicio' && <InicioView admin={admin} claves={tarjetasDelRol(opciones)} alAbrir={setPantalla} />}
+            {actual === 'revision' && <BandejaRevisionView />}
+            {actual === 'historial-contenidos' && <HistorialContenidosView />}
+            {actual === 'administradores' && <CrearAdministradorView />}
+            {actual === 'lista-administradores' && <AdministradoresView />}
+            {actual === 'auditoria' && <AuditoriaView />}
+            {actual === 'panel-financiero' && <PanelFinancieroView />}
+            {actual === 'consumo-tokens' && <ConsumoTokensView />}
+            {actual === 'historial-tokens' && <HistorialTokensView />}
+            {actual === 'estado-servidor' && <EstadoServidorView />}
+            {!actual && (
+              <main className="sin-pantallas">
+                <h1>Hola, {admin.nombres}</h1>
+                <p>Tu rol todavía no tiene pantallas. Llegan con las historias del Sprint 2.</p>
+              </main>
+            )}
+          </Suspense>
+        </LimiteDeErrores>
       </div>
     </div>
   )

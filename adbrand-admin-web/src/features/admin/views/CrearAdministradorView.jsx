@@ -1,4 +1,6 @@
 // View: solo dibuja el formulario. La lógica está en useCrearAdministrador.
+import InputContrasena from '../../../shared/components/InputContrasena'
+import Aviso from '../../../shared/components/Aviso'
 import { useCrearAdministrador } from '../viewmodels/useCrearAdministrador'
 import './CrearAdministradorView.css'
 
@@ -27,7 +29,7 @@ export default function CrearAdministradorView() {
         <p>Solo el superadmin puede crear cuentas y asignar roles.</p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <section className="tarjeta">
         <h2>Registrar administrador</h2>
@@ -37,14 +39,16 @@ export default function CrearAdministradorView() {
             <Campo etiqueta="Nombres" error={errores.nombres}>
               <input
                 value={formulario.nombres}
-                placeholder="María"
+                maxLength={100}
+                placeholder="Ej.: María"
                 onChange={(e) => cambiarCampo('nombres', e.target.value)}
               />
             </Campo>
             <Campo etiqueta="Apellidos" error={errores.apellidos}>
               <input
                 value={formulario.apellidos}
-                placeholder="Torres"
+                maxLength={100}
+                placeholder="Ej.: Torres"
                 onChange={(e) => cambiarCampo('apellidos', e.target.value)}
               />
             </Campo>
@@ -54,15 +58,16 @@ export default function CrearAdministradorView() {
             <input
               type="email"
               value={formulario.correo}
-              placeholder="maria.torres@adbrand.pe"
+              maxLength={150}
+              placeholder="Ej.: maria.torres@adbrand.pe"
               onChange={(e) => cambiarCampo('correo', e.target.value)}
             />
           </Campo>
 
           <Campo etiqueta="Contraseña" error={errores.contrasena}>
-            <input
-              type="password"
+            <InputContrasena
               value={formulario.contrasena}
+              maxLength={128}
               placeholder="Mínimo 8 caracteres"
               onChange={(e) => cambiarCampo('contrasena', e.target.value)}
             />

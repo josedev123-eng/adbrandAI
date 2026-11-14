@@ -60,7 +60,7 @@ describe('App (login y menú por rol)', () => {
     obtenerSesion.mockResolvedValue(adminCon('SUPERADMIN'))
     mostrar()
 
-    expect(screen.getByText('Cargando tu sesión…')).toBeInTheDocument()
+    expect(screen.getByText('Revisando tu sesión…')).toBeInTheDocument()
     expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
     expect(screen.getByText('Superadministrador')).toBeInTheDocument()
     expect(opcionesDelMenu()).toEqual([
