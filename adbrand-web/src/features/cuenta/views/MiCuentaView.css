@@ -12,3 +12,17 @@
 .cuenta-fija b { overflow-wrap: anywhere; }
 
 @media (max-width: 560px) { .cuenta-fija { grid-template-columns: 1fr; } }
+
+/* Avatar de la empresa y selector de color (colores planos, ver shared/components/avatar.js). */
+.cuenta-empresa { display: flex; flex-direction: row !important; align-items: center; gap: 12px !important; }
+.cuenta-empresa-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cuenta-avatar { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: #ffffff !important; font-weight: 700; font-size: 1rem !important; }
+.colores-avatar { border: 0; margin: 0; padding: 0; }
+.colores-avatar legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; padding: 0; }
+.colores-avatar-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.color-avatar { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border: 1px solid var(--line); border-radius: 999px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.color-avatar input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.color-avatar:has(input:focus-visible) { outline: 3px solid var(--primary); outline-offset: 2px; }
+.color-avatar-activo { border-color: var(--primary); background: var(--primary-soft); }
+.color-avatar-muestra { width: 24px; height: 24px; border-radius: 50%; }
+.color-avatar-auto { display: grid; place-items: center; background: var(--surface-2); color: var(--muted); font-size: 0.75rem; font-weight: 700; }
