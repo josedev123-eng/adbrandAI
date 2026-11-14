@@ -9,6 +9,20 @@ export function pagarConTarjeta(datos) {
   return apiRequest('/pagos/tarjeta', { method: 'POST', body: datos })
 }
 
+// HU 26 con Mercado Pago: qué pasarela usar (y su llave pública) y el cobro con el token de la tarjeta.
+export function obtenerConfiguracionPago() {
+  return apiRequest('/pagos/configuracion')
+}
+
+export function pagarConMercadoPago(datos) {
+  return apiRequest('/pagos/mercadopago', { method: 'POST', body: datos })
+}
+
+// HU 27 con Mercado Pago: Yape con el token creado a partir del celular y el código de aprobación.
+export function pagarYapeConMercadoPago(datos) {
+  return apiRequest('/pagos/mercadopago/yape', { method: 'POST', body: datos })
+}
+
 // HU 27: genera el QR de Yape (operación pendiente) y luego la confirma.
 export function registrarYape(datos) {
   return apiRequest('/pagos/yape', { method: 'POST', body: datos })

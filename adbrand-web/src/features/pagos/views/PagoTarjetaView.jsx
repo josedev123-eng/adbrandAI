@@ -1,4 +1,5 @@
 // View: formulario de pago con tarjeta. Toda la lógica está en usePagoTarjeta (HU 26).
+import Aviso from '../../../shared/components/Aviso'
 import { usePagoTarjeta } from '../viewmodels/usePagoTarjeta'
 import './pagoComun.css'
 import './PagoTarjetaView.css'
@@ -45,8 +46,9 @@ export default function PagoTarjetaView({ plan, alPagar, alVolver }) {
             type="text"
             inputMode="numeric"
             autoComplete="cc-number"
-            placeholder="4111 1111 1111 1111"
+            placeholder="Ej.: 4111 1111 1111 1111"
             value={formulario.numeroTarjeta}
+            maxLength={23}
             onChange={(evento) => cambiarCampo('numeroTarjeta', evento.target.value)}
           />
         </Campo>
@@ -57,6 +59,7 @@ export default function PagoTarjetaView({ plan, alPagar, alVolver }) {
             autoComplete="cc-name"
             placeholder="Como aparece en la tarjeta"
             value={formulario.titular}
+            maxLength={120}
             onChange={(evento) => cambiarCampo('titular', evento.target.value)}
           />
         </Campo>
@@ -86,7 +89,7 @@ export default function PagoTarjetaView({ plan, alPagar, alVolver }) {
           </Campo>
         </div>
 
-        {mensaje && <p className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</p>}
+        <Aviso mensaje={mensaje} como="p" />
 
         <div className="pago-acciones">
           <button type="button" className="boton-secundario" onClick={alVolver} disabled={enviando}>

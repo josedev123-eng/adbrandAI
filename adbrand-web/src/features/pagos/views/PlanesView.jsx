@@ -1,10 +1,11 @@
 // View: muestra los planes de suscripción y deja elegir cómo pagarlos (HU 25 a 27).
 // La lógica de carga está en usePlanes; la de cada formulario, en su viewmodel.
+import Cargando from '../../../shared/components/Cargando'
 import { useState } from 'react'
 import { usePlanes } from '../viewmodels/usePlanes'
 import ConfirmacionPagoView from './ConfirmacionPagoView'
-import PagoTarjetaView from './PagoTarjetaView'
-import PagoYapeView from './PagoYapeView'
+import PagoConTarjetaView from './PagoConTarjetaView'
+import PagoConYapeView from './PagoConYapeView'
 import './pagoComun.css'
 import './PlanesView.css'
 
@@ -27,17 +28,17 @@ export default function PlanesView() {
   }
 
   if (planElegido && metodo === 'TARJETA') {
-    return <PagoTarjetaView plan={planElegido} alPagar={setPago} alVolver={() => setMetodo(null)} />
+    return <PagoConTarjetaView plan={planElegido} alPagar={setPago} alVolver={() => setMetodo(null)} />
   }
 
   if (planElegido && metodo === 'YAPE') {
-    return <PagoYapeView plan={planElegido} alConfirmar={setPago} alVolver={() => setMetodo(null)} />
+    return <PagoConYapeView plan={planElegido} alConfirmar={setPago} alVolver={() => setMetodo(null)} />
   }
 
   if (cargando) {
     return (
       <main className="pagina">
-        <p className="cargando">Cargando planes…</p>
+        <Cargando texto="Cargando planes…" filas={4} />
       </main>
     )
   }
