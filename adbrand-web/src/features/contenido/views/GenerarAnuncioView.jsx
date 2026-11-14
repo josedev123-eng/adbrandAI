@@ -183,6 +183,11 @@ export default function GenerarAnuncioView({ irAPerfil }) {
                       </button>
                     </div>
                     {errorInstruccion && <small className="campo-error">{errorInstruccion}</small>}
+                    {!errorInstruccion && historial?.retoquesRestantes != null && (
+                      <small className="campo-ayuda">
+                        Te quedan {historial.retoquesRestantes} retoques este mes.
+                      </small>
+                    )}
                   </label>
                 </form>
               )}

@@ -41,11 +41,12 @@ export function useGenerarAnuncio() {
     if (error.codigo === 'PERFIL_NO_ENCONTRADO') {
       // Criterio 1: primero hay que registrar el perfil del negocio (HU 9).
       setFaltaPerfil(true)
+    } else if (['IA_NO_DISPONIBLE', 'OPCION_NO_ENCONTRADA', 'OPCION_NO_ELEGIDA', 'VERSION_NO_ENCONTRADA', 'LIMITE_RETOQUES'].includes(error.codigo)) {
+      // Criterio 2: si la IA falla (o se llegó al límite de retoques), se muestra un mensaje claro.
+      // Va antes del 400 genérico porque OPCION_NO_ELEGIDA y LIMITE_RETOQUES también son 400.
+      setAviso(error.message)
     } else if (error.status === 400) {
       setErrores(error.campos ?? {})
-    } else if (['IA_NO_DISPONIBLE', 'OPCION_NO_ENCONTRADA', 'OPCION_NO_ELEGIDA', 'VERSION_NO_ENCONTRADA'].includes(error.codigo)) {
-      // Criterio 2: si la IA falla, se muestra un mensaje claro.
-      setAviso(error.message)
     } else {
       setAviso(mensajePorDefecto)
     }

@@ -153,5 +153,22 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
       expect(usarVersion).toHaveBeenCalledWith(103, 1)
       expect(await screen.findByAltText('Imagen del anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/jpeg;base64,IMG3')
     })
+    it('muestra cuántos retoques quedan y avisa al llegar al límite', async () => {
+      retocarImagen.mockResolvedValueOnce({ ...historial(2), retoquesRestantes: 19 })
+      await elegirLaTercera()
+      await userEvent.type(screen.getByPlaceholderText('Ej.: pon el fondo más claro'), 'fondo más claro')
+      await userEvent.click(screen.getByRole('button', { name: '✦ Retocar' }))
+
+      expect(await screen.findByText('Te quedan 19 retoques este mes.')).toBeInTheDocument()
+
+      retocarImagen.mockRejectedValueOnce(Object.assign(new Error('Llegaste a tu límite de 20 retoques de imagen este mes.'), {
+        status: 400,
+        codigo: 'LIMITE_RETOQUES',
+      }))
+      await userEvent.type(screen.getByPlaceholderText('Ej.: pon el fondo más claro'), 'logo arriba')
+      await userEvent.click(screen.getByRole('button', { name: '✦ Retocar' }))
+
+      expect(await screen.findByText('Llegaste a tu límite de 20 retoques de imagen este mes.')).toBeInTheDocument()
+    })
   })
 })
