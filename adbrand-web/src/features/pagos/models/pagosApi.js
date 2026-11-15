@@ -1,8 +1,10 @@
 // Model: llamadas a la API de pagos y planes (HU 25 a 28).
 import { apiRequest } from '../../../shared/services/apiClient'
+import { conCache, UN_MINUTO } from '../../../shared/services/cacheConsultas'
 
+// Los planes casi nunca cambian: se guardan 10 minutos para no pedirlos en cada pantalla.
 export function obtenerPlanes() {
-  return apiRequest('/planes')
+  return conCache('planes', () => apiRequest('/planes'), { duracion: 10 * UN_MINUTO })
 }
 
 export function pagarConTarjeta(datos) {

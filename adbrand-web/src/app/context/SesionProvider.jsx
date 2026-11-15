@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { obtenerSesion } from '../../features/auth/models/authApi'
 import { EVENTO_SESION_VENCIDA, MENSAJES } from '../../shared/services/apiClient'
 import { borrarToken, guardarToken, leerToken } from '../../shared/services/sesionToken'
+import { limpiarCache } from '../../shared/services/cacheConsultas'
 import { SesionContexto } from './useSesion'
 
 export default function SesionProvider({ children }) {
@@ -36,6 +37,7 @@ export default function SesionProvider({ children }) {
   // Si Spring responde 401 en cualquier pantalla, apiClient avisa y se vuelve al inicio de sesión.
   useEffect(() => {
     const alVencer = (evento) => {
+      limpiarCache()
       setUsuario(null)
       // El login muestra por qué se cerró la sesión: el motivo de la suspensión o que la sesión venció.
       setAvisoSalida(evento?.detail?.motivo ?? MENSAJES.SESION_VENCIDA)
@@ -51,6 +53,8 @@ export default function SesionProvider({ children }) {
   }, [])
 
   const salir = useCallback(() => {
+    // Al salir no queda en memoria nada de la empresa (perfil, kits) para quien use la compu después.
+    limpiarCache()
     borrarToken()
     setUsuario(null)
   }, [])
