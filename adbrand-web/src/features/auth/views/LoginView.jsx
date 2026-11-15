@@ -5,7 +5,7 @@ import { useLogin } from '../viewmodels/useLogin'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
 
-export default function LoginView({ aviso, irARegistro, irARecuperar }) {
+export default function LoginView({ aviso, irARegistro, irARecuperar, irAInicio }) {
   const { formulario, errores, mensaje, enviando, cambiarCampo, enviar } = useLogin(aviso)
 
   function alEnviar(evento) {
@@ -15,6 +15,11 @@ export default function LoginView({ aviso, irARegistro, irARecuperar }) {
 
   return (
     <main className="pagina pagina-auth">
+      {irAInicio && (
+        <button type="button" className="boton-enlace auth-volver" onClick={irAInicio}>
+          ← Volver al inicio
+        </button>
+      )}
       <p className="auth-marca">
         AdBrand<b>.AI</b>
       </p>

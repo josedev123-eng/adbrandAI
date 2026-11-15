@@ -75,3 +75,16 @@
   .pagina.pagina-auth { min-height: 100svh; padding: 36px 18px; }
   .pagina-auth > .tarjeta.formulario { padding: 22px 18px; }
 }
+
+/* Casilla "Acepto los Términos y la Política de privacidad" del registro. */
+.auth-casilla { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; font-size: 0.9rem; line-height: 1.5; }
+.auth-casilla input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--primary); cursor: pointer; }
+.auth-casilla .boton-enlace { font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.auth-casilla .campo-error { grid-column: 2; }
+.auth-casilla-error input { outline: 2px solid var(--bad); outline-offset: 2px; }
+
+/* Pie de página debajo de las pantallas de cuenta. */
+.pantalla-publica { display: flex; flex-direction: column; min-height: 100vh; }
+.pantalla-publica > main { flex: 1; }
+.pantalla-publica .pagina.pagina-auth { min-height: auto; }
+.auth-volver { align-self: flex-start; }
