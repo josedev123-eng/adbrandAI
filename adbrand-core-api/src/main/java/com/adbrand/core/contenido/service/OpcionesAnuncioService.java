@@ -79,7 +79,7 @@ public class OpcionesAnuncioService {
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
         IdentidadMarca identidad = anuncios.identidadDe(usuarioId);
         List<JsonDeIa.TextoConExtra> textos = pedirTextos(usuarioId, perfil, datos, identidad);
-        List<String> colores = coloresDelKit(usuarioId);
+        EstiloMarca marca = estiloDelKit(usuarioId);
 
         GeneracionAnuncio generacion = new GeneracionAnuncio();
         generacion.setUsuarioId(usuarioId);
@@ -91,7 +91,7 @@ public class OpcionesAnuncioService {
         for (int i = 0; i < CANTIDAD; i++) {
             // La escena la escribe la IA de texto en inglés; si no vino, se usa el producto sacado de la oferta.
             String escena = textos.get(i).extra() != null ? textos.get(i).extra() : temaSinCifras(datos.oferta());
-            ImagenGenerada imagen = imagenes.borrador(descripcionDeImagen(perfil, escena, ESTILOS[i][1], colores));
+            ImagenGenerada imagen = imagenes.borrador(descripcionDeImagen(perfil, escena, ESTILOS[i][1], marca));
             gasto.registrar(usuarioId, ConsumoImagen.Tipo.BORRADOR, imagen);
             OpcionAnuncio opcion = new OpcionAnuncio();
             opcion.setGeneracion(generacion);
@@ -146,16 +146,40 @@ public class OpcionesAnuncioService {
         return textos.subList(0, CANTIDAD);
     }
 
-    // Los colores del kit de marca más reciente (#RRGGBB), si el negocio tiene kit.
-    private List<String> coloresDelKit(Long usuarioId) {
-        List<String> colores = new ArrayList<>();
-        kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(usuarioId).ifPresent(kit -> {
-            Matcher encontrado = COLOR_HEX.matcher(kit.getPaletaColores() == null ? "" : kit.getPaletaColores());
-            while (encontrado.find() && colores.size() < 4) {
-                colores.add(encontrado.group().toUpperCase());
-            }
-        });
-        return colores;
+    // Lo que el kit de marca más reciente aporta a la imagen: hasta 4 colores (#RRGGBB) y el estilo visual.
+    // Así las 4 opciones se ven de la misma marca. Sin kit, la imagen se genera solo con el rubro.
+    public record EstiloMarca(List<String> colores, String estiloVisual) {
+        public static final EstiloMarca SIN_KIT = new EstiloMarca(List.of(), null);
+    }
+
+    private EstiloMarca estiloDelKit(Long usuarioId) {
+        return kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(usuarioId)
+                .map(kit -> {
+                    List<String> colores = new ArrayList<>();
+                    Matcher encontrado = COLOR_HEX.matcher(kit.getPaletaColores() == null ? "" : kit.getPaletaColores());
+                    while (encontrado.find() && colores.size() < 4) {
+                        colores.add(encontrado.group().toUpperCase());
+                    }
+                    return new EstiloMarca(colores, kit.getEstiloVisual());
+                })
+                .orElse(EstiloMarca.SIN_KIT);
+    }
+
+    // El estilo visual del kit (lo elige el dueño al pedirlo) traducido al "ánimo" que entiende la IA de imágenes.
+    static final java.util.Map<String, String> ANIMO_POR_ESTILO = java.util.Map.of(
+            "MINIMALISTA", "clean, calm and minimal",
+            "MODERNO", "modern, fresh and bright",
+            "CLASICO", "classic, warm and timeless",
+            "DIVERTIDO", "playful, cheerful and energetic",
+            "ELEGANTE", "elegant, refined and premium",
+            "TECNOLÓGICO", "sleek, futuristic and high-tech",
+            "ARTESANAL", "handcrafted, warm and rustic",
+            "CORPORATIVO", "professional, trustworthy and neat");
+
+    // Rubros de comida: ahí sí se pide que la imagen "dé hambre". Para ropa, tecnología o servicios, no.
+    static boolean esDeComida(String rubro) {
+        String texto = rubro == null ? "" : rubro.toLowerCase(java.util.Locale.ROOT);
+        return texto.matches(".*(panader|pasteler|restaurant|comida|cafeter|café|cafe|bodega|minimarket|dulce|postre).*");
     }
 
     // Lo que se le pide a la IA de imágenes. Sin letras: el texto del anuncio va aparte (las IA escriben mal).
@@ -164,12 +188,22 @@ public class OpcionesAnuncioService {
     // "tema" es la escena en inglés que escribió la IA de texto, o el producto sacado de la oferta (temaSinCifras).
     public static String descripcionDeImagen(PerfilNegocioResponse perfil, String tema, String estilo,
                                              List<String> colores) {
-        String paleta = colores.isEmpty() ? "" : " Color palette: " + String.join(", ", colores) + ".";
-        return ("Appetizing social media picture for a small %s business in Peru (a picture, not a poster or flyer). "
-                + "Main subject: %s. Style: %s.%s "
+        return descripcionDeImagen(perfil, tema, estilo, new EstiloMarca(colores, null));
+    }
+
+    public static String descripcionDeImagen(PerfilNegocioResponse perfil, String tema, String estilo,
+                                             EstiloMarca marca) {
+        String tipo = esDeComida(perfil.rubro()) ? "Appetizing" : "Eye-catching";
+        String paleta = marca.colores().isEmpty() ? ""
+                : " Brand color palette: " + String.join(", ", marca.colores())
+                + ". Use these colors in the background, props and lighting so the picture feels on-brand.";
+        String animo = marca.estiloVisual() == null ? null : ANIMO_POR_ESTILO.get(marca.estiloVisual().toUpperCase());
+        String ambiente = animo == null ? "" : " Brand mood: " + animo + ".";
+        return ("%s social media picture for a small %s business in Peru (a picture, not a poster or flyer). "
+                + "Main subject: %s. Style: %s.%s%s "
                 + "The image must contain absolutely no text: no letters, no numbers, no words, no prices, "
                 + "no signs, no labels, no logos and no watermarks.")
-                .formatted(perfil.rubro(), tema, estilo, paleta);
+                .formatted(tipo, perfil.rubro(), tema, estilo, paleta, ambiente);
     }
 
     // Solo el producto: "2x1 en pan de yema este sábado" → "pan de yema";

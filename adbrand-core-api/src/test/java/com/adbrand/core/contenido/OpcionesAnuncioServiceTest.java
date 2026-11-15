@@ -166,16 +166,33 @@ class OpcionesAnuncioServiceTest {
     }
 
     @Test
-    void laDescripcionDeLaImagenUsaLosColoresDelKit() {
+    void laDescripcionDeLaImagenUsaLosColoresYElEstiloDelKit() {
         KitMarca kit = new KitMarca();
         kit.setPaletaColores("#d97724 - Ámbar horneado\n#6E3B1E - Marrón tostado");
+        kit.setEstiloVisual("ARTESANAL");
         when(kits.findFirstByUsuarioIdOrderByFechaActualizacionDescIdDesc(1L)).thenReturn(Optional.of(kit));
         when(ia.generarTexto(anyString(), anyString(), any(), any()))
                 .thenReturn("{\"opciones\": [\"Uno\", \"Dos\", \"Tres\", \"Cuatro\"]}");
 
         servicio.generar(1L, pedido());
 
-        assertThat(descripciones.get(0)).contains("Color palette: #D97724, #6E3B1E.");
+        assertThat(descripciones.get(0)).contains("Brand color palette: #D97724, #6E3B1E.")
+                .contains("Use these colors in the background")
+                .contains("Brand mood: handcrafted, warm and rustic.");
+    }
+
+    // "Appetizing" (que dé hambre) solo para negocios de comida; para ropa o tecnología no tiene sentido.
+    @Test
+    void soloLosNegociosDeComidaPidenUnaImagenQueDeHambre() {
+        PerfilNegocioResponse panaderia = new PerfilNegocioResponse(
+                1L, "Panadería Doña Rosa", "Panadería y pastelería", "Familias", Tono.CERCANO, null, null);
+        PerfilNegocioResponse tienda = new PerfilNegocioResponse(
+                2L, "Moda Lima", "Ropa y calzado", "Jóvenes", Tono.CERCANO, null, null);
+
+        assertThat(OpcionesAnuncioService.descripcionDeImagen(panaderia, "bread", "minimalist", List.of()))
+                .startsWith("Appetizing");
+        assertThat(OpcionesAnuncioService.descripcionDeImagen(tienda, "sneakers", "minimalist", List.of()))
+                .startsWith("Eye-catching").doesNotContain("Appetizing");
     }
 
     @Test
