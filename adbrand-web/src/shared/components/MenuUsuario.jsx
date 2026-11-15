@@ -1,5 +1,6 @@
 // Menú lateral de la web del usuario (mismo estilo que el de la web de administración).
 // Solo dibuja; App decide qué pantalla se muestra.
+import { useEffect, useState } from 'react'
 import MarcaAdbrand from './MarcaAdbrand'
 import { colorDeAvatar } from './avatar'
 import { iniciales, SECCIONES } from './opcionesMenuUsuario'
@@ -32,46 +33,81 @@ function IconoOpcion({ id }) {
 
 // HU-22: "empresa" es el nombre de la empresa que inició sesión y "alSalir" cierra la sesión.
 // "contadores": números junto a una opción, por ejemplo decisiones del moderador sin ver en "Mis anuncios".
-export default function MenuUsuario({ actual, alCambiar, empresa, colorAvatar, alSalir, contadores = {} }) {
+// En celular el menú se esconde detrás del botón ☰; "forzarAbierto" lo deja abierto (por ejemplo, durante el tutorial).
+export default function MenuUsuario({ actual, alCambiar, empresa, colorAvatar, alSalir, contadores = {}, forzarAbierto = false }) {
+  const [abierto, setAbierto] = useState(false)
+  const visible = abierto || forzarAbierto
+  const totalAvisos = Object.values(contadores).reduce((suma, n) => suma + (n > 0 ? n : 0), 0)
+
+  // Con el menú abierto en celular, Esc lo cierra.
+  useEffect(() => {
+    if (!abierto) return undefined
+    const alTeclear = (evento) => {
+      if (evento.key === 'Escape') setAbierto(false)
+    }
+    window.addEventListener('keydown', alTeclear)
+    return () => window.removeEventListener('keydown', alTeclear)
+  }, [abierto])
+
+  function elegir(id) {
+    setAbierto(false)
+    alCambiar(id)
+  }
+
   return (
-    <aside className="menu-usuario">
-      <MarcaAdbrand />
-      <nav className="menu-secciones" aria-label="Menú principal">
-        {SECCIONES.map((seccion) => (
-          <div key={seccion.titulo || 'inicio'} className="menu-seccion">
-            {seccion.titulo && <span className="menu-seccion-titulo">{seccion.titulo}</span>}
-            {seccion.opciones.map((opcion) => (
-              <button
-                key={opcion.id}
-                type="button"
-                className={actual === opcion.id ? 'menu-opcion menu-opcion-activa' : 'menu-opcion'}
-                aria-current={actual === opcion.id ? 'page' : undefined}
-                data-tutorial={opcion.id}
-                onClick={() => alCambiar(opcion.id)}
-              >
-                <IconoOpcion id={opcion.id} />
-                {opcion.nombre}
-                {contadores[opcion.id] > 0 && (
-                  <span className="menu-contador" aria-label={`${contadores[opcion.id]} sin ver`}>
-                    {contadores[opcion.id]}
-                  </span>
-                )}
-              </button>
-            ))}
+    <aside className={visible ? 'menu-usuario menu-abierto' : 'menu-usuario'}>
+      <div className="menu-cabecera">
+        <MarcaAdbrand />
+        <button
+          type="button"
+          className="menu-hamburguesa"
+          aria-expanded={visible}
+          aria-controls="menu-usuario-contenido"
+          aria-label={visible ? 'Cerrar menú' : 'Abrir menú'}
+          onClick={() => setAbierto((actual) => !actual)}
+        >
+          <span aria-hidden="true">{visible ? '✕' : '☰'}</span>
+          {!visible && totalAvisos > 0 && <span className="menu-hamburguesa-aviso" aria-hidden="true" />}
+        </button>
+      </div>
+      <div id="menu-usuario-contenido" className="menu-contenido">
+        <nav className="menu-secciones" aria-label="Menú principal">
+          {SECCIONES.map((seccion) => (
+            <div key={seccion.titulo || 'inicio'} className="menu-seccion">
+              {seccion.titulo && <span className="menu-seccion-titulo">{seccion.titulo}</span>}
+              {seccion.opciones.map((opcion) => (
+                <button
+                  key={opcion.id}
+                  type="button"
+                  className={actual === opcion.id ? 'menu-opcion menu-opcion-activa' : 'menu-opcion'}
+                  aria-current={actual === opcion.id ? 'page' : undefined}
+                  data-tutorial={opcion.id}
+                  onClick={() => elegir(opcion.id)}
+                >
+                  <IconoOpcion id={opcion.id} />
+                  {opcion.nombre}
+                  {contadores[opcion.id] > 0 && (
+                    <span className="menu-contador" aria-label={`${contadores[opcion.id]} sin ver`}>
+                      {contadores[opcion.id]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        {alSalir && (
+          <div className="menu-sesion">
+            <span className="menu-avatar" aria-hidden="true" style={{ background: colorDeAvatar(empresa, colorAvatar) }}>
+              {iniciales(empresa)}
+            </span>
+            {empresa && <span className="menu-empresa">{empresa}</span>}
+            <button type="button" className="menu-salir" onClick={alSalir}>
+              Cerrar sesión
+            </button>
           </div>
-        ))}
-      </nav>
-      {alSalir && (
-        <div className="menu-sesion">
-          <span className="menu-avatar" aria-hidden="true" style={{ background: colorDeAvatar(empresa, colorAvatar) }}>
-            {iniciales(empresa)}
-          </span>
-          {empresa && <span className="menu-empresa">{empresa}</span>}
-          <button type="button" className="menu-salir" onClick={alSalir}>
-            Cerrar sesión
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   )
 }

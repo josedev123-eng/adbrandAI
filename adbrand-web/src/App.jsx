@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import LandingView from './features/landing/views/LandingView'
 import PiePagina from './shared/components/PiePagina'
+import PaginaNoEncontrada from './shared/components/PaginaNoEncontrada'
+import { navegar, pantallaDeRuta, useRuta } from './shared/navegacion/navegacion'
 import { marcarTutorialVisto } from './features/tutorial/models/tutorialApi'
 import MenuUsuario from './shared/components/MenuUsuario'
 import AvisoConexion from './shared/components/AvisoConexion'
@@ -37,6 +39,33 @@ const CARGANDO_PANTALLA = (
   </main>
 )
 
+// Dirección de cada pantalla. Con sesión y sin sesión hay mapas distintos; Términos y Privacidad están en los dos.
+const RUTAS_PRIVADAS = {
+  inicio: '/inicio',
+  anuncio: '/crear-anuncio',
+  misAnuncios: '/mis-anuncios',
+  kit: '/kit-de-marca',
+  calendario: '/calendario',
+  informes: '/informes',
+  perfil: '/mi-negocio',
+  planes: '/planes',
+  cuenta: '/mi-cuenta',
+  terminos: '/terminos',
+  privacidad: '/privacidad',
+}
+const RUTAS_PUBLICAS = {
+  inicio: '/',
+  login: '/iniciar-sesion',
+  registro: '/crear-cuenta',
+  recuperar: '/recuperar-contrasena',
+  terminos: '/terminos',
+  privacidad: '/privacidad',
+}
+const SOLO_SIN_SESION = ['/', '/iniciar-sesion', '/crear-cuenta', '/recuperar-contrasena']
+
+// Si alguien abre /calendario sin sesión, se le pide entrar y luego se le lleva ahí.
+let rutaPendiente = null
+
 const NOMBRES_LEGALES = { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad' }
 const TEXTO_VOLVER = {
   inicio: 'Volver al inicio',
@@ -48,10 +77,15 @@ const TEXTO_VOLVER = {
 // HU-22: sin sesión se muestran el inicio de sesión y el registro; con sesión, el menú y las pantallas de siempre.
 function App() {
   const { usuario, cargando, salir, actualizarUsuario, avisoSalida } = useSesion()
-  const [pantalla, setPantalla] = useState('inicio')
-  // Sin sesión se empieza por la página de presentación.
-  const [pantallaPublica, setPantallaPublica] = useState('inicio')
-  const [volverDeLegal, setVolverDeLegal] = useState('inicio')
+  // La pantalla sale de la dirección del navegador (/calendario, /mi-cuenta…), no de un estado interno.
+  const ruta = useRuta()
+  const pantalla = pantallaDeRuta(RUTAS_PRIVADAS, ruta) ?? 'noEncontrada'
+  const pantallaPublica =
+    pantallaDeRuta(RUTAS_PUBLICAS, ruta) ?? (pantallaDeRuta(RUTAS_PRIVADAS, ruta) ? 'login' : 'noEncontrada')
+  const setPantalla = (id) => navegar(RUTAS_PRIVADAS[id])
+  const setPantallaPublica = (id) => navegar(RUTAS_PUBLICAS[id])
+  // Desde qué pantalla se abrieron Términos o Privacidad (null si se entró directo con el enlace).
+  const [volverDeLegal, setVolverDeLegal] = useState(null)
   // Tutorial guiado: sale solo la primera vez (tutorialVisto=false, V46) o cuando se pide desde Mi cuenta.
   const [verTutorial, setVerTutorial] = useState(false)
   // HU-24: mensaje para el inicio de sesión, por ejemplo "Tu contraseña se cambió, inicia sesión".
@@ -60,15 +94,29 @@ function App() {
   const nombrePantalla = usuario
     ? (NOMBRES_LEGALES[pantalla] ?? SECCIONES.flatMap((seccion) => seccion.opciones).find((opcion) => opcion.id === pantalla)?.nombre)
     : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña', ...NOMBRES_LEGALES }[pantallaPublica]
-  useTituloPagina(nombrePantalla)
+  const titulo = (usuario ? pantalla : pantallaPublica) === 'noEncontrada' ? 'Página no encontrada' : nombrePantalla
+  useTituloPagina(titulo)
   // Decisiones del moderador sin ver: el número junto a "Mis anuncios".
   const { avisos, limpiarAvisos } = useAvisosModeracion(Boolean(usuario), pantalla)
   // Si la sesión se cerró sola (venció o la cuenta fue suspendida), se muestra el inicio de sesión con el aviso.
-  const [avisoAtendido, setAvisoAtendido] = useState(avisoSalida)
-  if (avisoSalida !== avisoAtendido) {
-    setAvisoAtendido(avisoSalida)
-    if (avisoSalida) setPantallaPublica('login')
-  }
+  useEffect(() => {
+    if (avisoSalida) navegar(RUTAS_PUBLICAS.login, { reemplazar: true })
+  }, [avisoSalida])
+
+  // Redirecciones según haya sesión o no:
+  // - con sesión, la landing y el login llevan a Inicio (o a la pantalla que se quería abrir antes de entrar);
+  // - sin sesión, una pantalla privada lleva al login y se recuerda para después.
+  useEffect(() => {
+    if (cargando) return
+    if (usuario && SOLO_SIN_SESION.includes(ruta)) {
+      const destino = rutaPendiente ?? RUTAS_PRIVADAS.inicio
+      rutaPendiente = null
+      navegar(destino, { reemplazar: true })
+    } else if (!usuario && !pantallaDeRuta(RUTAS_PUBLICAS, ruta) && pantallaDeRuta(RUTAS_PRIVADAS, ruta)) {
+      rutaPendiente = ruta
+      navegar(RUTAS_PUBLICAS.login, { reemplazar: true })
+    }
+  }, [usuario, cargando, ruta])
 
   // Sin sesión: cuando la página de presentación ya se pintó, se bajan en segundo plano el login y el registro
   // para que abran al instante al hacer clic.
@@ -96,6 +144,13 @@ function App() {
     if (!NOMBRES_LEGALES[actual]) setVolverDeLegal(actual)
     if (usuario) setPantalla(tipo)
     else setPantallaPublica(tipo)
+  }
+
+  // "Volver" de Términos/Privacidad: si se abrieron desde la app, es como el botón Atrás; si se entró directo, al inicio.
+  function cerrarLegal() {
+    if (volverDeLegal) window.history.back()
+    else navegar(usuario ? RUTAS_PRIVADAS.inicio : RUTAS_PUBLICAS.inicio)
+    setVolverDeLegal(null)
   }
 
   if (!usuario) {
@@ -138,12 +193,13 @@ function App() {
             <RecuperarContrasenaView irALogin={() => irALogin()} alTerminar={(aviso) => irALogin(aviso)} />
           )}
         </Suspense>
+        {pantallaPublica === 'noEncontrada' && <PaginaNoEncontrada alVolver={() => setPantallaPublica('inicio')} />}
         {enLegal && (
           <Suspense fallback={CARGANDO_PANTALLA}>
             <DocumentoLegalView
               tipo={pantallaPublica}
-              alVolver={() => setPantallaPublica(volverDeLegal)}
-              textoVolver={TEXTO_VOLVER[volverDeLegal]}
+              alVolver={cerrarLegal}
+              textoVolver={TEXTO_VOLVER[volverDeLegal] ?? 'Ir al inicio'}
             />
           </Suspense>
         )}
@@ -166,9 +222,9 @@ function App() {
 
   function cerrarSesion() {
     setVerTutorial(false)
+    // Primero se va a la landing y después se cierra la sesión, así no se "recuerda" la pantalla actual para volver.
+    navegar(RUTAS_PUBLICAS.inicio)
     salir()
-    setPantalla('inicio')
-    setPantallaPublica('inicio')
   }
 
   // Sección de la pantalla actual para la barra superior ("Crear", "Planificar" o "Mi empresa").
@@ -184,6 +240,7 @@ function App() {
         colorAvatar={usuario.colorAvatar}
         alSalir={cerrarSesion}
         contadores={{ misAnuncios: avisos }}
+        forzarAbierto={tutorialAbierto}
       />
       <div className="layout-contenido">
         <div className="barra-superior">
@@ -225,8 +282,9 @@ function App() {
               />
             )}
             {(pantalla === 'terminos' || pantalla === 'privacidad') && (
-              <DocumentoLegalView tipo={pantalla} alVolver={() => setPantalla(volverDeLegal)} />
+              <DocumentoLegalView tipo={pantalla} alVolver={cerrarLegal} />
             )}
+            {pantalla === 'noEncontrada' && <PaginaNoEncontrada alVolver={() => setPantalla('inicio')} />}
           </Suspense>
         </LimiteDeErrores>
         <PiePagina abrir={abrirLegal} compacto />
