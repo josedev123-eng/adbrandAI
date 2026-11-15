@@ -8,11 +8,14 @@ export const NOMBRES_ACCION = {
   CAMBIAR_ROL: 'Cambió un rol',
   APROBAR_CONTENIDO: 'Aprobó un contenido',
   RECHAZAR_CONTENIDO: 'Rechazó un contenido',
+  SUSPENDER_EMPRESA: 'Suspendió una empresa',
+  REACTIVAR_EMPRESA: 'Reactivó una empresa',
 }
 
 export const NOMBRES_ENTIDAD = {
   usuario_admin: 'Administrador',
   contenido: 'Contenido',
+  usuario: 'Empresa',
 }
 
 // Los filtros vacíos no se envían: Django responde 400 si llega una fecha vacía.

@@ -22,6 +22,7 @@ const EstadoServidorView = lazy(() => import('./features/servidor/views/EstadoSe
 const PanelFinancieroView = lazy(() => import('./features/suscripciones/views/PanelFinancieroView'))
 const ConsumoTokensView = lazy(() => import('./features/tokens/views/ConsumoTokensView'))
 const HistorialTokensView = lazy(() => import('./features/tokens/views/HistorialTokensView'))
+const EmpresasView = lazy(() => import('./features/empresas/views/EmpresasView'))
 
 // Fecha de hoy para la barra superior, por ejemplo "martes, 10 de noviembre de 2026".
 function fechaDeHoy() {
@@ -97,6 +98,7 @@ function App() {
             {actual === 'inicio' && <InicioView admin={admin} claves={tarjetasDelRol(opciones)} alAbrir={setPantalla} />}
             {actual === 'revision' && <BandejaRevisionView />}
             {actual === 'historial-contenidos' && <HistorialContenidosView />}
+            {actual === 'empresas' && <EmpresasView />}
             {actual === 'administradores' && <CrearAdministradorView />}
             {actual === 'lista-administradores' && <AdministradoresView />}
             {actual === 'auditoria' && <AuditoriaView />}
