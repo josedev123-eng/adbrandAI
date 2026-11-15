@@ -64,7 +64,7 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #d97724;
+  background: #a8541a;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -87,7 +87,8 @@
   padding: 3px 10px;
   border-radius: 999px;
   background: var(--ok-soft);
-  color: var(--ok);
+  /* Verde más oscuro que --ok: el texto es pequeño y necesita más contraste (WCAG AA). */
+  color: #166534;
   font-size: 0.78rem;
   font-weight: 700;
 }

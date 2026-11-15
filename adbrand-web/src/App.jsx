@@ -1,8 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
-import RegistroView from './features/auth/views/RegistroView'
-import LoginView from './features/auth/views/LoginView'
-import RecuperarContrasenaView from './features/auth/views/RecuperarContrasenaView'
-import InicioView from './features/inicio/views/InicioView'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import LandingView from './features/landing/views/LandingView'
 import PiePagina from './shared/components/PiePagina'
 import MenuUsuario from './shared/components/MenuUsuario'
@@ -16,6 +12,13 @@ import { useTituloPagina } from './shared/hooks/useTituloPagina'
 import { useAvisosModeracion } from './shared/hooks/useAvisosModeracion'
 
 // Optimización: cada pantalla se descarga recién cuando el usuario la abre (code splitting).
+// La página de presentación sí va en el paquete principal: es lo primero que se pinta sin sesión.
+const cargarLogin = () => import('./features/auth/views/LoginView')
+const cargarRegistro = () => import('./features/auth/views/RegistroView')
+const LoginView = lazy(cargarLogin)
+const RegistroView = lazy(cargarRegistro)
+const RecuperarContrasenaView = lazy(() => import('./features/auth/views/RecuperarContrasenaView'))
+const InicioView = lazy(() => import('./features/inicio/views/InicioView'))
 const GenerarAnuncioView = lazy(() => import('./features/contenido/views/GenerarAnuncioView'))
 const PerfilNegocioView = lazy(() => import('./features/negocio/views/PerfilNegocioView'))
 const SolicitarKitMarcaView = lazy(() => import('./features/brandkit/views/SolicitarKitMarcaView'))
@@ -25,6 +28,12 @@ const CalendarioView = lazy(() => import('./features/calendario/views/Calendario
 const InformeCampanasView = lazy(() => import('./features/reportes/views/InformeCampanasView'))
 const MisAnunciosView = lazy(() => import('./features/misAnuncios/views/MisAnunciosView'))
 const DocumentoLegalView = lazy(() => import('./features/legal/views/DocumentoLegalView'))
+
+const CARGANDO_PANTALLA = (
+  <main className="pagina">
+    <Cargando texto="Abriendo…" />
+  </main>
+)
 
 const NOMBRES_LEGALES = { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad' }
 const TEXTO_VOLVER = {
@@ -56,6 +65,17 @@ function App() {
     setAvisoAtendido(avisoSalida)
     if (avisoSalida) setPantallaPublica('login')
   }
+
+  // Sin sesión: cuando la página de presentación ya se pintó, se bajan en segundo plano el login y el registro
+  // para que abran al instante al hacer clic.
+  useEffect(() => {
+    if (usuario || cargando) return undefined
+    const temporizador = setTimeout(() => {
+      cargarLogin()
+      cargarRegistro()
+    }, 1500)
+    return () => clearTimeout(temporizador)
+  }, [usuario, cargando])
 
   function irALogin(aviso = null) {
     setAvisoLogin(aviso)
@@ -95,25 +115,27 @@ function App() {
     return (
       <div className="pantalla-publica">
         <AvisoConexion />
-        {pantallaPublica === 'login' && (
-          <LoginView
-            key={avisoLogin?.texto ?? avisoSalida ?? 'sin-aviso'}
-            aviso={avisoLogin ?? (avisoSalida ? { tipo: 'error', texto: avisoSalida } : null)}
-            irARegistro={() => setPantallaPublica('registro')}
-            irARecuperar={() => setPantallaPublica('recuperar')}
-            irAInicio={() => setPantallaPublica('inicio')}
-          />
-        )}
-        {registroVisible && (
-          <div hidden={enLegal}>
-            <RegistroView irALogin={() => irALogin()} abrir={abrirLegal} irAInicio={() => setPantallaPublica('inicio')} />
-          </div>
-        )}
-        {pantallaPublica === 'recuperar' && (
-          <RecuperarContrasenaView irALogin={() => irALogin()} alTerminar={(aviso) => irALogin(aviso)} />
-        )}
+        <Suspense fallback={CARGANDO_PANTALLA}>
+          {pantallaPublica === 'login' && (
+            <LoginView
+              key={avisoLogin?.texto ?? avisoSalida ?? 'sin-aviso'}
+              aviso={avisoLogin ?? (avisoSalida ? { tipo: 'error', texto: avisoSalida } : null)}
+              irARegistro={() => setPantallaPublica('registro')}
+              irARecuperar={() => setPantallaPublica('recuperar')}
+              irAInicio={() => setPantallaPublica('inicio')}
+            />
+          )}
+          {registroVisible && (
+            <div hidden={enLegal}>
+              <RegistroView irALogin={() => irALogin()} abrir={abrirLegal} irAInicio={() => setPantallaPublica('inicio')} />
+            </div>
+          )}
+          {pantallaPublica === 'recuperar' && (
+            <RecuperarContrasenaView irALogin={() => irALogin()} alTerminar={(aviso) => irALogin(aviso)} />
+          )}
+        </Suspense>
         {enLegal && (
-          <Suspense fallback={<main className="pagina"><Cargando texto="Abriendo…" /></main>}>
+          <Suspense fallback={CARGANDO_PANTALLA}>
             <DocumentoLegalView
               tipo={pantallaPublica}
               alVolver={() => setPantallaPublica(volverDeLegal)}
