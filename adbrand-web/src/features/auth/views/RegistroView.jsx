@@ -5,7 +5,7 @@ import { useRegistro } from '../viewmodels/useRegistro'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
 
-export default function RegistroView({ irALogin }) {
+export default function RegistroView({ irALogin, abrir, irAInicio }) {
   const { formulario, errores, mensaje, enviando, creada, cambiarCampo, enviar } = useRegistro()
 
   function alEnviar(evento) {
@@ -15,6 +15,11 @@ export default function RegistroView({ irALogin }) {
 
   return (
     <main className="pagina pagina-auth">
+      {irAInicio && (
+        <button type="button" className="boton-enlace auth-volver" onClick={irAInicio}>
+          ← Volver al inicio
+        </button>
+      )}
       <p className="auth-marca">
         AdBrand<b>.AI</b>
       </p>
@@ -78,6 +83,33 @@ export default function RegistroView({ irALogin }) {
             onChange={(e) => cambiarCampo('confirmarContrasena', e.target.value)}
           />
         </CampoAuth>
+
+        <div className={errores.aceptaTerminos ? 'auth-casilla auth-casilla-error' : 'auth-casilla'}>
+          <input
+            id="registro-acepta"
+            type="checkbox"
+            checked={formulario.aceptaTerminos}
+            aria-invalid={Boolean(errores.aceptaTerminos)}
+            aria-describedby={errores.aceptaTerminos ? 'registro-acepta-error' : undefined}
+            onChange={(e) => cambiarCampo('aceptaTerminos', e.target.checked)}
+          />
+          <label htmlFor="registro-acepta">
+            Acepto los{' '}
+            <button type="button" className="boton-enlace" onClick={() => abrir?.('terminos')}>
+              Términos y condiciones
+            </button>{' '}
+            y la{' '}
+            <button type="button" className="boton-enlace" onClick={() => abrir?.('privacidad')}>
+              Política de privacidad
+            </button>
+            .
+          </label>
+          {errores.aceptaTerminos && (
+            <small id="registro-acepta-error" className="campo-error">
+              {errores.aceptaTerminos}
+            </small>
+          )}
+        </div>
 
         <button className="boton-primario" type="submit" disabled={enviando}>
           {enviando ? 'Creando cuenta...' : 'Crear cuenta'}

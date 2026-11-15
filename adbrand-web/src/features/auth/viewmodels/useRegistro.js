@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { registrar } from '../models/authApi'
 import { esCorreoValido, normalizarCorreo, problemaDeContrasena, problemaDeEmpresa, problemaDeNombre } from './validaciones'
 
-const FORMULARIO_VACIO = { nombre: '', nombreEmpresa: '', correo: '', contrasena: '', confirmarContrasena: '' }
+const FORMULARIO_VACIO = { nombre: '', nombreEmpresa: '', correo: '', contrasena: '', confirmarContrasena: '', aceptaTerminos: false }
 
 function validar(formulario) {
   const errores = {}
@@ -20,6 +20,8 @@ function validar(formulario) {
   else if (formulario.confirmarContrasena !== formulario.contrasena) {
     errores.confirmarContrasena = 'Las contraseñas no coinciden.'
   }
+  // Ley 29733: el consentimiento para tratar los datos debe ser expreso, por eso la casilla es obligatoria.
+  if (!formulario.aceptaTerminos) errores.aceptaTerminos = 'Para crear la cuenta debes aceptar los Términos y la Política de privacidad.'
   return errores
 }
 
