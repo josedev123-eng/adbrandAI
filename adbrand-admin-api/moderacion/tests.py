@@ -4,7 +4,9 @@ from rest_framework.test import APITestCase
 
 from core.pruebas import crear_admin, iniciar_sesion, usar_vista_de_flyway
 
-from .models import Contenido, EmpresaUsuario, PerfilNegocio
+from empresas.models import Empresa
+
+from .models import Contenido, PerfilNegocio
 
 URL_BANDEJA = "/api/moderacion/contenidos/dudosos/"
 
@@ -382,7 +384,7 @@ class AvisoAlDuenoTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        EmpresaUsuario.objects.create(id=1, correo="rosa@panaderia.pe", nombre_empresa="Panadería Doña Rosa")
+        Empresa.objects.create(id=1, nombre="Rosa", correo="rosa@panaderia.pe", nombre_empresa="Panadería Doña Rosa")
         cls.moderador = crear_admin("MODERADOR")
 
     def setUp(self):

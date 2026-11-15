@@ -68,17 +68,3 @@ class HistorialContenido(models.Model):
 
     def __str__(self):
         return f"{self.estado} {self.id} por {self.moderador}"
-
-
-class EmpresaUsuario(models.Model):
-    """La cuenta de la PYME (tabla usuario de Spring, HU 21). Solo se lee el correo para avisarle al moderar."""
-
-    correo = models.CharField(max_length=150)
-    nombre_empresa = models.CharField(max_length=150)
-
-    class Meta:
-        managed = False  # la tabla la crea Flyway
-        db_table = "usuario"
-
-    def __str__(self):
-        return self.nombre_empresa

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "moderacion",
     "tokens",
     "servidor",
+    "empresas",
 ]
 
 MIDDLEWARE = [

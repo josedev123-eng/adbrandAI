@@ -7,7 +7,9 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from .models import Contenido, EmpresaUsuario, HistorialContenido, PerfilNegocio
+from empresas.models import Empresa
+
+from .models import Contenido, HistorialContenido, PerfilNegocio
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +56,7 @@ def moderar_contenido(contenido_id, accion, moderador_id, motivo_rechazo=None):
 
 def avisar_al_dueno(contenido):
     """Correo al dueño con lo que decidió el moderador. Si el correo falla, la moderación igual queda hecha."""
-    empresa = EmpresaUsuario.objects.filter(pk=contenido.usuario_id).first()
+    empresa = Empresa.objects.filter(pk=contenido.usuario_id).first()
     if not empresa or not empresa.correo:
         return
     if contenido.estado == Contenido.APROBADO:
