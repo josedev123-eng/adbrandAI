@@ -33,6 +33,23 @@ class Suscripcion(models.Model):
         return f"{self.cliente} ({self.estado})"
 
 
+class Plan(models.Model):
+    """Planes que contrata la PYME (V20). Se lee el límite de tokens del plan para el panel (HU 19)."""
+
+    nombre = models.CharField(max_length=40, unique=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    limite_tokens = models.IntegerField()
+    descripcion = models.CharField(max_length=300)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        managed = False  # la tabla la crea Flyway (V20)
+        db_table = "plan"
+
+    def __str__(self):
+        return self.nombre
+
+
 class Pago(models.Model):
     """Pago recibido por una suscripción. La tabla la crea Flyway (V10)."""
 
