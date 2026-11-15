@@ -32,3 +32,21 @@ class UsuarioAdmin(models.Model):
 
     def __str__(self):
         return self.correo
+
+
+class CodigoRecuperacionAdmin(models.Model):
+    """Código de 6 dígitos para recuperar la contraseña de un administrador (V47).
+
+    Se guarda cifrado; vence a los 15 minutos, sirve una sola vez y se bloquea tras 5 intentos.
+    """
+
+    admin = models.ForeignKey(UsuarioAdmin, on_delete=models.CASCADE, db_column="admin_id")
+    codigo_hash = models.CharField(max_length=255)
+    expira_en = models.DateTimeField()
+    usado = models.BooleanField(default=False)
+    intentos = models.IntegerField(default=0)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False  # la tabla la crea Flyway (V47)
+        db_table = "codigo_recuperacion_admin"

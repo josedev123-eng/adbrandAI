@@ -561,3 +561,106 @@ class AccesoPorRolTests(APITestCase):
         self.assertEqual(registro.entidad_id, respuesta.data["id"])
         self.assertIn("karim@adbrand.pe", registro.detalle)
         self.assertIn("MODERADOR", registro.detalle)
+
+
+class MiContrasenaTests(APITestCase):
+    """Mi cuenta: cualquier administrador cambia su propia contraseña escribiendo la actual."""
+
+    URL = "/api/usuarios/mi-contrasena/"
+
+    def setUp(self):
+        self.admin = crear_admin("MODERADOR", correo="mod@prueba.pe")
+        self.admin.contrasena = make_password("Actual123")
+        self.admin.save()
+        iniciar_sesion(self.client, self.admin)
+
+    def test_con_la_actual_correcta_cambia_y_queda_en_auditoria(self):
+        respuesta = self.client.post(self.URL, {"actual": "Actual123", "nueva": "Nueva2026"}, format="json")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.admin.refresh_from_db()
+        self.assertTrue(check_password("Nueva2026", self.admin.contrasena))
+        self.assertTrue(AuditoriaAdmin.objects.filter(accion="CAMBIAR_CONTRASENA", admin_id=self.admin.id).exists())
+
+    def test_con_la_actual_equivocada_no_cambia(self):
+        respuesta = self.client.post(self.URL, {"actual": "Otra1234", "nueva": "Nueva2026"}, format="json")
+
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertIn("actual", respuesta.data)
+        self.admin.refresh_from_db()
+        self.assertTrue(check_password("Actual123", self.admin.contrasena))
+
+    def test_la_nueva_debe_ser_segura_y_distinta(self):
+        debil = self.client.post(self.URL, {"actual": "Actual123", "nueva": "solominusculas"}, format="json")
+        igual = self.client.post(self.URL, {"actual": "Actual123", "nueva": "Actual123"}, format="json")
+
+        self.assertEqual(debil.status_code, 400)
+        self.assertIn("nueva", debil.data)
+        self.assertEqual(igual.status_code, 400)
+
+    def test_sin_sesion_no_se_puede(self):
+        self.client.credentials()
+        respuesta = self.client.post(self.URL, {"actual": "Actual123", "nueva": "Nueva2026"}, format="json")
+        self.assertIn(respuesta.status_code, (401, 403))
+
+
+class RecuperarContrasenaAdminTests(APITestCase):
+    """Olvidé mi contraseña del panel: código de 6 dígitos por correo, de un solo uso y con vencimiento."""
+
+    SOLICITAR = "/api/usuarios/recuperar/solicitar/"
+    CAMBIAR = "/api/usuarios/recuperar/cambiar/"
+
+    def setUp(self):
+        self.admin = crear_admin("FINANZAS", correo="finanzas@prueba.pe")
+
+    def _codigo_del_correo(self):
+        from django.core import mail
+        import re as _re
+        return _re.search(r"\b(\d{6})\b", mail.outbox[-1].body).group(1)
+
+    def test_manda_el_codigo_y_con_el_se_cambia_la_contrasena(self):
+        from django.core import mail
+
+        respuesta = self.client.post(self.SOLICITAR, {"correo": "Finanzas@Prueba.pe"}, format="json")
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["finanzas@prueba.pe"])
+
+        codigo = self._codigo_del_correo()
+        cambio = self.client.post(self.CAMBIAR, {"correo": "finanzas@prueba.pe", "codigo": codigo, "nueva": "Nueva2026"}, format="json")
+
+        self.assertEqual(cambio.status_code, 200)
+        self.admin.refresh_from_db()
+        self.assertTrue(check_password("Nueva2026", self.admin.contrasena))
+        # El mismo código no sirve dos veces.
+        otra = self.client.post(self.CAMBIAR, {"correo": "finanzas@prueba.pe", "codigo": codigo, "nueva": "Otra2026x"}, format="json")
+        self.assertEqual(otra.status_code, 400)
+
+    def test_con_un_correo_que_no_existe_responde_igual_y_no_manda_nada(self):
+        from django.core import mail
+
+        existe = self.client.post(self.SOLICITAR, {"correo": "finanzas@prueba.pe"}, format="json")
+        no_existe = self.client.post(self.SOLICITAR, {"correo": "nadie@prueba.pe"}, format="json")
+
+        self.assertEqual(existe.data, no_existe.data)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_tras_5_codigos_equivocados_se_bloquea(self):
+        self.client.post(self.SOLICITAR, {"correo": "finanzas@prueba.pe"}, format="json")
+        codigo = self._codigo_del_correo()
+        equivocado = "000000" if codigo != "000000" else "111111"
+
+        for _ in range(5):
+            self.client.post(self.CAMBIAR, {"correo": "finanzas@prueba.pe", "codigo": equivocado, "nueva": "Nueva2026"}, format="json")
+        con_el_bueno = self.client.post(self.CAMBIAR, {"correo": "finanzas@prueba.pe", "codigo": codigo, "nueva": "Nueva2026"}, format="json")
+
+        self.assertEqual(con_el_bueno.status_code, 400)
+
+    def test_un_admin_desactivado_no_recibe_codigo(self):
+        from django.core import mail
+
+        self.admin.estado = UsuarioAdmin.INACTIVO
+        self.admin.save()
+        self.client.post(self.SOLICITAR, {"correo": "finanzas@prueba.pe"}, format="json")
+
+        self.assertEqual(len(mail.outbox), 0)

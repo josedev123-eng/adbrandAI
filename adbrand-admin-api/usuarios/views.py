@@ -12,8 +12,11 @@ from .serializers import (
     CambiarRolSerializer,
     CrearAdministradorSerializer,
     DesactivarAdministradorSerializer,
+    CambiarConCodigoSerializer,
+    CambiarMiContrasenaSerializer,
     LoginSerializer,
     RolSerializer,
+    SolicitarCodigoSerializer,
 )
 from .sesion import crear_token
 from .vistas import VistaAdmin
@@ -151,3 +154,61 @@ class SesionView(VistaAdmin):
 
     def get(self, request):
         return Response(AdministradorSerializer(request.user).data)
+
+
+class MiContrasenaView(VistaAdmin):
+    """POST /api/usuarios/mi-contrasena/ : el administrador conectado cambia su contraseña (cualquier rol)."""
+
+    def post(self, request):
+        serializer = CambiarMiContrasenaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            services.cambiar_mi_contrasena(request.user, serializer.validated_data["actual"], serializer.validated_data["nueva"])
+        except services.ContrasenaActualIncorrecta:
+            return Response({"actual": ["La contraseña actual no es correcta."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        registrar_accion(request.user.id, "CAMBIAR_CONTRASENA", "usuario_admin", request.user.id, "Cambió su propia contraseña")
+        return Response({"detail": "Tu contraseña se cambió."})
+
+
+MENSAJE_CODIGO_ENVIADO = "Si el correo es de un administrador activo, te enviamos un código de 6 números. Revisa tu bandeja."
+
+
+class SolicitarCodigoView(APIView):
+    """POST /api/usuarios/recuperar/solicitar/ : manda el código al correo. Pública.
+
+    Responde siempre lo mismo, exista o no el correo, para no revelar quién es administrador.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SolicitarCodigoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        admin = services.solicitar_codigo(serializer.validated_data["correo"])
+        if admin is not None:
+            registrar_accion(admin.id, "SOLICITAR_CODIGO", "usuario_admin", admin.id, "Pidió un código para recuperar su contraseña")
+        return Response({"detail": MENSAJE_CODIGO_ENVIADO})
+
+
+class CambiarConCodigoView(APIView):
+    """POST /api/usuarios/recuperar/cambiar/ : con el código del correo pone una contraseña nueva. Pública."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = CambiarConCodigoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        datos = serializer.validated_data
+        try:
+            admin = services.cambiar_con_codigo(datos["correo"], datos["codigo"], datos["nueva"])
+        except services.CodigoInvalido:
+            return Response(
+                {"codigo": ["El código no es correcto o ya venció. Pide uno nuevo."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        registrar_accion(admin.id, "RECUPERAR_CONTRASENA", "usuario_admin", admin.id, "Cambió su contraseña con un código del correo")
+        return Response({"detail": "Listo, tu contraseña se cambió. Ya puedes iniciar sesión."})
