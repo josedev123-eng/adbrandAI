@@ -26,7 +26,7 @@ function Dato({ etiqueta, valor }) {
   )
 }
 
-export default function MiCuentaView({ alGuardar }) {
+export default function MiCuentaView({ alGuardar, alVerTutorial }) {
   const {
     datos,
     cuenta,
@@ -188,6 +188,20 @@ export default function MiCuentaView({ alGuardar }) {
             </button>
           </div>
         </form>
+      )}
+
+      {alVerTutorial && (
+        <section className="tarjeta cuenta-tutorial" aria-labelledby="cuenta-tutorial-titulo">
+          <div>
+            <h2 id="cuenta-tutorial-titulo" className="formulario-titulo">
+              Recorrido por AdBrand.AI
+            </h2>
+            <p>Vuelve a ver, paso a paso, dónde está cada cosa: perfil, kit de marca, anuncios, calendario y planes.</p>
+          </div>
+          <button type="button" className="boton-secundario" onClick={alVerTutorial}>
+            Ver el tutorial otra vez
+          </button>
+        </section>
       )}
     </main>
   )

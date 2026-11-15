@@ -46,6 +46,7 @@ export default function MenuUsuario({ actual, alCambiar, empresa, colorAvatar, a
                 type="button"
                 className={actual === opcion.id ? 'menu-opcion menu-opcion-activa' : 'menu-opcion'}
                 aria-current={actual === opcion.id ? 'page' : undefined}
+                data-tutorial={opcion.id}
                 onClick={() => alCambiar(opcion.id)}
               >
                 <IconoOpcion id={opcion.id} />

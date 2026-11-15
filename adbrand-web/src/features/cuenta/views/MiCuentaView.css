@@ -26,3 +26,7 @@
 .color-avatar-activo { border-color: var(--primary); background: var(--primary-soft); }
 .color-avatar-muestra { width: 24px; height: 24px; border-radius: 50%; }
 .color-avatar-auto { display: grid; place-items: center; background: var(--surface-2); color: var(--muted); font-size: 0.75rem; font-weight: 700; }
+
+/* Tarjeta para volver a ver el tutorial guiado. */
+.cuenta-tutorial { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+.cuenta-tutorial p { margin: 4px 0 0; color: var(--muted); max-width: 40em; }

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import LandingView from './features/landing/views/LandingView'
 import PiePagina from './shared/components/PiePagina'
+import { marcarTutorialVisto } from './features/tutorial/models/tutorialApi'
 import MenuUsuario from './shared/components/MenuUsuario'
 import AvisoConexion from './shared/components/AvisoConexion'
 import LimiteDeErrores from './shared/components/LimiteDeErrores'
@@ -28,6 +29,7 @@ const CalendarioView = lazy(() => import('./features/calendario/views/Calendario
 const InformeCampanasView = lazy(() => import('./features/reportes/views/InformeCampanasView'))
 const MisAnunciosView = lazy(() => import('./features/misAnuncios/views/MisAnunciosView'))
 const DocumentoLegalView = lazy(() => import('./features/legal/views/DocumentoLegalView'))
+const TutorialGuiado = lazy(() => import('./features/tutorial/views/TutorialGuiado'))
 
 const CARGANDO_PANTALLA = (
   <main className="pagina">
@@ -50,6 +52,8 @@ function App() {
   // Sin sesión se empieza por la página de presentación.
   const [pantallaPublica, setPantallaPublica] = useState('inicio')
   const [volverDeLegal, setVolverDeLegal] = useState('inicio')
+  // Tutorial guiado: sale solo la primera vez (tutorialVisto=false, V46) o cuando se pide desde Mi cuenta.
+  const [verTutorial, setVerTutorial] = useState(false)
   // HU-24: mensaje para el inicio de sesión, por ejemplo "Tu contraseña se cambió, inicia sesión".
   const [avisoLogin, setAvisoLogin] = useState(null)
   // Nombre de la pantalla en la pestaña del navegador.
@@ -148,7 +152,20 @@ function App() {
     )
   }
 
+  const tutorialAbierto = verTutorial || usuario.tutorialVisto === false
+
+  // Al terminar o saltar se guarda en la base que ya lo vio; si falla, igual se cierra (no es grave).
+  function cerrarTutorial(irAlPerfil) {
+    setVerTutorial(false)
+    if (!usuario.tutorialVisto) {
+      actualizarUsuario({ tutorialVisto: true })
+      marcarTutorialVisto().catch(() => {})
+    }
+    if (irAlPerfil) setPantalla('perfil')
+  }
+
   function cerrarSesion() {
+    setVerTutorial(false)
     salir()
     setPantalla('inicio')
     setPantallaPublica('inicio')
@@ -202,7 +219,10 @@ function App() {
             {pantalla === 'calendario' && <CalendarioView />}
             {pantalla === 'informes' && <InformeCampanasView />}
             {pantalla === 'cuenta' && (
-              <MiCuentaView alGuardar={(empresa) => actualizarUsuario({ colorAvatar: empresa.colorAvatar })} />
+              <MiCuentaView
+                alGuardar={(empresa) => actualizarUsuario({ colorAvatar: empresa.colorAvatar })}
+                alVerTutorial={() => setVerTutorial(true)}
+              />
             )}
             {(pantalla === 'terminos' || pantalla === 'privacidad') && (
               <DocumentoLegalView tipo={pantalla} alVolver={() => setPantalla(volverDeLegal)} />
@@ -211,6 +231,15 @@ function App() {
         </LimiteDeErrores>
         <PiePagina abrir={abrirLegal} compacto />
       </div>
+      {tutorialAbierto && (
+        <Suspense fallback={null}>
+          <TutorialGuiado
+            empresa={usuario.nombreEmpresa}
+            alTerminar={() => cerrarTutorial(true)}
+            alSaltar={() => cerrarTutorial(false)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
