@@ -142,6 +142,9 @@ Spring Boot (`http://localhost:8080/api`):
 Django (`http://localhost:8000/api`):
 - `POST /usuarios/login/` con `{"correo", "contrasena"}`: responde `{token, admin}`; 401 si los datos están mal y 403 si la cuenta está desactivada (login de administradores).
 - `GET /usuarios/sesion/`: devuelve el administrador dueño del token; la web lo usa al recargar la página.
+- `POST /usuarios/mi-contrasena/` con `{"actual", "nueva"}`: el administrador conectado (cualquier rol) cambia su contraseña; 400 con `actual` si la actual no coincide y con `nueva` si no es segura o es igual a la actual. Auditoría: `CAMBIAR_CONTRASENA`.
+- `POST /usuarios/recuperar/solicitar/` con `{"correo"}` (pública): manda un código de 6 dígitos que vence en 15 minutos (tabla `codigo_recuperacion_admin`, V47, guardado cifrado); responde el mismo mensaje exista o no el correo. Un código nuevo anula los anteriores. Auditoría: `SOLICITAR_CODIGO`.
+- `POST /usuarios/recuperar/cambiar/` con `{"correo", "codigo", "nueva"}` (pública): cambia la contraseña; el código sirve una vez y se bloquea tras 5 intentos fallidos; 400 con `codigo` si está mal o venció. Auditoría: `RECUPERAR_CONTRASENA`.
 - `GET /usuarios/roles/` y `POST /usuarios/administradores/` (HU 1). Crear una cuenta queda en la auditoría como `CREAR_ADMIN`.
 - `GET /usuarios/administradores/`: lista los administradores con su estado (HU 3).
 - `PATCH /usuarios/administradores/<id>/desactivar/`: desactiva cuenta; solo el superadmin y nunca a sí mismo. Quién lo hace sale del token de sesión (HU 3).
@@ -159,7 +162,7 @@ Django (`http://localhost:8000/api`):
   - HU 19: cada empresa trae además `limite`, `porcentaje_aviso`, `porcentaje` (1 decimal) y `alerta`, y la raíz trae `alertas: [{usuario_id, empresa, tokens, limite, porcentaje}]` con solo las empresas en alerta, de mayor a menor porcentaje. El límite es la fila propia de la empresa en `limite_tokens` o, si no tiene, la fila por defecto (`usuario_id` NULL). Hay alerta cuando `tokens * 100 >= limite * porcentaje_aviso` (en enteros: el 80 % exacto avisa). Sin ningún límite: `limite` y `porcentaje` en null y nunca hay alerta.
 - `GET /tokens/historial/?desde=AAAA-MM&hasta=AAAA-MM` (los dos obligatorios; `&usuario_id=` opcional): responde `{"desde", "hasta", "total", "meses": [{mes, tokens, generaciones}]}` con todos los meses del periodo, también los que están en 0, del más antiguo al más reciente. Responde 400 si falta una fecha, si el formato no es AAAA-MM, si el inicio es posterior al fin ("La fecha de inicio no puede ser posterior a la fecha de fin") o si pasa de 24 meses. Solo SUPERADMIN y TECNICO (HU 20). La web hace la misma revisión del periodo antes de llamar.
 - `GET /servidor/estado/`: verifica en ese momento la base de datos (`SELECT 1`), el backend (llama a `CORE_API_URL/api/estado`, 3 s de espera) y la IA (la informa Spring). Si Spring no responde, backend e IA quedan CAIDO. Guarda las 3 verificaciones en `verificacion_servidor` y, si la base falla, igual responde. Responde `{"verificado_en": "hora de Lima", "servicios": [{servicio, nombre, estado, tiempo_ms, detalle}]}`. Solo SUPERADMIN y TECNICO (HU 18).
-- Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) , moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`) y suspender o reactivar una empresa (`SUSPENDER_EMPRESA`, `REACTIVAR_EMPRESA`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
+- Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) , moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`) suspender o reactivar una empresa (`SUSPENDER_EMPRESA`, `REACTIVAR_EMPRESA`) y la contraseña de un administrador (`CAMBIAR_CONTRASENA`, `SOLICITAR_CODIGO`, `RECUPERAR_CONTRASENA`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
 ### Inicio de sesión de administradores
 
@@ -431,3 +434,12 @@ Puertos: Spring 8080, Django 8000, Web usuario 5173, Admin web 5174 (o 5176 si o
 2. Di la historia exacta, por ejemplo: "Implementa la HU 15 (aprobar o rechazar contenido) en `adbrand-admin-api/moderacion` y `adbrand-admin-web/src/features/moderacion`, sobre lo que ya hizo la HU 14".
 3. Pide un solo backend o un solo frontend por conversación.
 4. Revisa que los archivos que te dé caigan en las carpetas de la tabla de arriba y que incluya sus pruebas.
+
+## Direcciones (URL) de las webs
+
+Las dos webs usan direcciones reales por pantalla, sin librerías (`shared/navegacion/navegacion.js`, con la History API): se puede recargar con F5, usar Atrás/Adelante y compartir enlaces. Una dirección que no existe muestra la página 404.
+
+- Web del usuario: `/` (presentación), `/iniciar-sesion`, `/crear-cuenta`, `/recuperar-contrasena`, `/terminos`, `/privacidad`; con sesión `/inicio`, `/crear-anuncio`, `/mis-anuncios`, `/kit-de-marca`, `/calendario`, `/informes`, `/mi-negocio`, `/planes`, `/mi-cuenta`. Si se abre una pantalla privada sin sesión, pide iniciar sesión y luego lleva a esa pantalla.
+- Panel admin: `/<id de la pantalla>` (por ejemplo `/revision`, `/empresas`, `/auditoria`), `/mi-cuenta` y `/recuperar-contrasena`. Una pantalla de otro rol escrita a mano muestra la 404.
+- Al publicar: el servidor debe responder `index.html` para cualquier ruta que no sea un archivo (en Nginx `try_files $uri /index.html;`, en Netlify/Vercel una regla de "rewrite" a `/index.html`). `vite dev` y `vite preview` ya lo hacen solos.
+
