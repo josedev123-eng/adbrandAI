@@ -51,6 +51,12 @@ public class CuentaService {
         }
     }
 
+    // Tutorial guiado: la empresa lo terminó o lo saltó; ya no se le muestra solo.
+    @Transactional
+    public void marcarTutorialVisto(Long usuarioId) {
+        buscar(usuarioId).setTutorialVisto(true);
+    }
+
     // Si la cuenta ya no existe, el token no sirve.
     private Usuario buscar(Long usuarioId) {
         return usuarios.findById(usuarioId)

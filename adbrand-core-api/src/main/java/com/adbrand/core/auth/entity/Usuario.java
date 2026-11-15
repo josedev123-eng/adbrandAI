@@ -72,6 +72,10 @@ public class Usuario {
     @Column(name = "color_avatar", length = 20)
     private String colorAvatar;
 
+    // Si ya vio o saltó el tutorial guiado de la web (V46).
+    @Column(name = "tutorial_visto", nullable = false)
+    private boolean tutorialVisto;
+
     @PrePersist
     void alCrear() {
         fechaCreacion = LocalDateTime.now();
@@ -125,4 +129,6 @@ public class Usuario {
 
     public String getColorAvatar() { return colorAvatar; }
     public void setColorAvatar(String colorAvatar) { this.colorAvatar = colorAvatar; }
+    public boolean isTutorialVisto() { return tutorialVisto; }
+    public void setTutorialVisto(boolean tutorialVisto) { this.tutorialVisto = tutorialVisto; }
 }
