@@ -56,7 +56,8 @@ public class ServicioImagenes {
                 continue;
             }
             try {
-                return generador.get().generar(descripcion, imagenBase);
+                // Rendimiento: se guarda y se envía una versión liviana (ver OptimizadorImagen).
+                return OptimizadorImagen.optimizar(generador.get().generar(descripcion, imagenBase));
             } catch (RuntimeException ex) {
                 log.warn("La IA de imágenes {} falló, se prueba con la siguiente: {}", nombre, ex.getMessage());
             }
