@@ -4,8 +4,10 @@ import { useSesion } from '../../../app/context/useSesion'
 import { useLogin } from '../viewmodels/useLogin'
 import './LoginView.css'
 
-export default function LoginView() {
-  const { aviso } = useSesion()
+export default function LoginView({ irARecuperar, aviso: avisoExterno }) {
+  const { aviso: avisoSesion } = useSesion()
+  // Aviso de la sesión (venció) o de otra pantalla (por ejemplo, "tu contraseña se cambió").
+  const aviso = avisoExterno ?? avisoSesion
   const { correo, contrasena, errores, error, enviando, cambiarCorreo, cambiarContrasena, enviar } = useLogin()
 
   return (
@@ -53,6 +55,11 @@ export default function LoginView() {
             {enviando ? 'Ingresando…' : 'Ingresar'}
           </button>
         </form>
+        {irARecuperar && (
+          <button type="button" className="login-enlace" onClick={irARecuperar}>
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
       </section>
     </main>
   )

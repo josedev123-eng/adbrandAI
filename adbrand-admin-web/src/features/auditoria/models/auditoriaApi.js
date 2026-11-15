@@ -10,6 +10,9 @@ export const NOMBRES_ACCION = {
   RECHAZAR_CONTENIDO: 'Rechazó un contenido',
   SUSPENDER_EMPRESA: 'Suspendió una empresa',
   REACTIVAR_EMPRESA: 'Reactivó una empresa',
+  CAMBIAR_CONTRASENA: 'Cambió su contraseña',
+  SOLICITAR_CODIGO: 'Pidió un código de recuperación',
+  RECUPERAR_CONTRASENA: 'Recuperó su contraseña',
 }
 
 export const NOMBRES_ENTIDAD = {
