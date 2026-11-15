@@ -3,6 +3,8 @@ import RegistroView from './features/auth/views/RegistroView'
 import LoginView from './features/auth/views/LoginView'
 import RecuperarContrasenaView from './features/auth/views/RecuperarContrasenaView'
 import InicioView from './features/inicio/views/InicioView'
+import LandingView from './features/landing/views/LandingView'
+import PiePagina from './shared/components/PiePagina'
 import MenuUsuario from './shared/components/MenuUsuario'
 import AvisoConexion from './shared/components/AvisoConexion'
 import LimiteDeErrores from './shared/components/LimiteDeErrores'
@@ -22,21 +24,38 @@ const PlanesView = lazy(() => import('./features/pagos/views/PlanesView'))
 const CalendarioView = lazy(() => import('./features/calendario/views/CalendarioView'))
 const InformeCampanasView = lazy(() => import('./features/reportes/views/InformeCampanasView'))
 const MisAnunciosView = lazy(() => import('./features/misAnuncios/views/MisAnunciosView'))
+const DocumentoLegalView = lazy(() => import('./features/legal/views/DocumentoLegalView'))
+
+const NOMBRES_LEGALES = { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad' }
+const TEXTO_VOLVER = {
+  inicio: 'Volver al inicio',
+  login: 'Volver a iniciar sesión',
+  registro: 'Volver al registro',
+  recuperar: 'Volver',
+}
 
 // HU-22: sin sesión se muestran el inicio de sesión y el registro; con sesión, el menú y las pantallas de siempre.
 function App() {
-  const { usuario, cargando, salir, actualizarUsuario } = useSesion()
+  const { usuario, cargando, salir, actualizarUsuario, avisoSalida } = useSesion()
   const [pantalla, setPantalla] = useState('inicio')
-  const [pantallaPublica, setPantallaPublica] = useState('login')
+  // Sin sesión se empieza por la página de presentación.
+  const [pantallaPublica, setPantallaPublica] = useState('inicio')
+  const [volverDeLegal, setVolverDeLegal] = useState('inicio')
   // HU-24: mensaje para el inicio de sesión, por ejemplo "Tu contraseña se cambió, inicia sesión".
   const [avisoLogin, setAvisoLogin] = useState(null)
   // Nombre de la pantalla en la pestaña del navegador.
   const nombrePantalla = usuario
-    ? SECCIONES.flatMap((seccion) => seccion.opciones).find((opcion) => opcion.id === pantalla)?.nombre
-    : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña' }[pantallaPublica]
+    ? (NOMBRES_LEGALES[pantalla] ?? SECCIONES.flatMap((seccion) => seccion.opciones).find((opcion) => opcion.id === pantalla)?.nombre)
+    : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña', ...NOMBRES_LEGALES }[pantallaPublica]
   useTituloPagina(nombrePantalla)
   // Decisiones del moderador sin ver: el número junto a "Mis anuncios".
   const { avisos, limpiarAvisos } = useAvisosModeracion(Boolean(usuario), pantalla)
+  // Si la sesión se cerró sola (venció o la cuenta fue suspendida), se muestra el inicio de sesión con el aviso.
+  const [avisoAtendido, setAvisoAtendido] = useState(avisoSalida)
+  if (avisoSalida !== avisoAtendido) {
+    setAvisoAtendido(avisoSalida)
+    if (avisoSalida) setPantallaPublica('login')
+  }
 
   function irALogin(aviso = null) {
     setAvisoLogin(aviso)
@@ -47,30 +66,70 @@ function App() {
     return <PantallaArranque texto="Revisando tu sesión…" />
   }
 
+  // Términos o Privacidad: al cerrarlos se vuelve a la pantalla desde donde se abrieron.
+  function abrirLegal(tipo) {
+    const actual = usuario ? pantalla : pantallaPublica
+    if (!NOMBRES_LEGALES[actual]) setVolverDeLegal(actual)
+    if (usuario) setPantalla(tipo)
+    else setPantallaPublica(tipo)
+  }
+
   if (!usuario) {
+    const enLegal = pantallaPublica === 'terminos' || pantallaPublica === 'privacidad'
+    // Si se abren los Términos desde el registro, el formulario se oculta (no se desmonta) para no perder lo escrito.
+    const registroVisible = pantallaPublica === 'registro' || (enLegal && volverDeLegal === 'registro')
+
+    if (pantallaPublica === 'inicio') {
+      return (
+        <>
+          <AvisoConexion />
+          <LandingView
+            irARegistro={() => setPantallaPublica('registro')}
+            irALogin={() => irALogin()}
+            abrir={abrirLegal}
+          />
+        </>
+      )
+    }
+
     return (
-      <>
+      <div className="pantalla-publica">
         <AvisoConexion />
         {pantallaPublica === 'login' && (
           <LoginView
-            key={avisoLogin?.texto ?? 'sin-aviso'}
-            aviso={avisoLogin}
+            key={avisoLogin?.texto ?? avisoSalida ?? 'sin-aviso'}
+            aviso={avisoLogin ?? (avisoSalida ? { tipo: 'error', texto: avisoSalida } : null)}
             irARegistro={() => setPantallaPublica('registro')}
             irARecuperar={() => setPantallaPublica('recuperar')}
+            irAInicio={() => setPantallaPublica('inicio')}
           />
         )}
-        {pantallaPublica === 'registro' && <RegistroView irALogin={() => irALogin()} />}
+        {registroVisible && (
+          <div hidden={enLegal}>
+            <RegistroView irALogin={() => irALogin()} abrir={abrirLegal} irAInicio={() => setPantallaPublica('inicio')} />
+          </div>
+        )}
         {pantallaPublica === 'recuperar' && (
           <RecuperarContrasenaView irALogin={() => irALogin()} alTerminar={(aviso) => irALogin(aviso)} />
         )}
-      </>
+        {enLegal && (
+          <Suspense fallback={<main className="pagina"><Cargando texto="Abriendo…" /></main>}>
+            <DocumentoLegalView
+              tipo={pantallaPublica}
+              alVolver={() => setPantallaPublica(volverDeLegal)}
+              textoVolver={TEXTO_VOLVER[volverDeLegal]}
+            />
+          </Suspense>
+        )}
+        <PiePagina abrir={abrirLegal} compacto />
+      </div>
     )
   }
 
   function cerrarSesion() {
     salir()
     setPantalla('inicio')
-    setPantallaPublica('login')
+    setPantallaPublica('inicio')
   }
 
   // Sección de la pantalla actual para la barra superior ("Crear", "Planificar" o "Mi empresa").
@@ -123,8 +182,12 @@ function App() {
             {pantalla === 'cuenta' && (
               <MiCuentaView alGuardar={(empresa) => actualizarUsuario({ colorAvatar: empresa.colorAvatar })} />
             )}
+            {(pantalla === 'terminos' || pantalla === 'privacidad') && (
+              <DocumentoLegalView tipo={pantalla} alVolver={() => setPantalla(volverDeLegal)} />
+            )}
           </Suspense>
         </LimiteDeErrores>
+        <PiePagina abrir={abrirLegal} compacto />
       </div>
     </div>
   )

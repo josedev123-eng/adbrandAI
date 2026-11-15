@@ -99,7 +99,9 @@ function lanzarError(respuesta, datos, token) {
   // inicio de sesión (sin token) no cierra nada: solo es una contraseña equivocada.
   if (respuesta.status === 401 && token) {
     borrarToken()
-    window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
+    // Si la cuenta fue suspendida por el administrador, el aviso lleva el motivo para mostrarlo en el login.
+    const motivo = datos?.codigo === 'CUENTA_SUSPENDIDA' ? datos.mensaje : null
+    window.dispatchEvent(new CustomEvent(EVENTO_SESION_VENCIDA, { detail: { motivo } }))
   }
 
   // Spring devuelve { codigo, mensaje, campos } (ver shared/error/ErrorResponse.java).

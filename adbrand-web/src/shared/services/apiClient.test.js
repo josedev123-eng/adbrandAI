@@ -89,6 +89,26 @@ describe('apiRequest', () => {
   })
 })
 
+describe('cuenta suspendida', () => {
+  beforeEach(() => vi.stubGlobal('fetch', vi.fn()))
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    localStorage.clear()
+  })
+
+  it('si el administrador suspendió la cuenta, cierra la sesión y avisa el motivo', async () => {
+    guardarToken('token')
+    const escuchar = vi.fn()
+    window.addEventListener(EVENTO_SESION_VENCIDA, escuchar)
+    fetch.mockReturnValue(respuesta(401, { codigo: 'CUENTA_SUSPENDIDA', mensaje: 'Tu cuenta fue suspendida. Motivo: abuso.' }))
+
+    await expect(apiRequest('/planes')).rejects.toMatchObject({ status: 401, codigo: 'CUENTA_SUSPENDIDA' })
+    expect(leerToken()).toBeNull()
+    expect(escuchar.mock.calls[0][0].detail.motivo).toBe('Tu cuenta fue suspendida. Motivo: abuso.')
+    window.removeEventListener(EVENTO_SESION_VENCIDA, escuchar)
+  })
+})
+
 describe('mensajePorEstado', () => {
   it('tiene un mensaje para cada tipo de error', () => {
     expect(mensajePorEstado(403)).toBe(MENSAJES.SIN_PERMISO)
