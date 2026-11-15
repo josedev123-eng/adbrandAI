@@ -40,3 +40,8 @@ export function obtenerYapePendientes() {
 export function obtenerComprobante(pagoId) {
   return apiRequest(`/pagos/${pagoId}/comprobante`)
 }
+
+// Cuánto usó la empresa de su límite de tokens de IA este mes (plan pagado, gratuito o personalizado).
+export function obtenerConsumoMes() {
+  return apiRequest('/consumo/mes')
+}

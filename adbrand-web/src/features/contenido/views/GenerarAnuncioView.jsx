@@ -29,7 +29,7 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
   )
 }
 
-export default function GenerarAnuncioView({ irAPerfil }) {
+export default function GenerarAnuncioView({ irAPerfil, irAPlanes }) {
   const {
     solicitud,
     errores,
@@ -38,6 +38,7 @@ export default function GenerarAnuncioView({ irAPerfil }) {
     opcionElegida,
     aviso,
     faltaPerfil,
+    sinCupo,
     generando,
     eligiendoId,
     regenerando,
@@ -87,6 +88,14 @@ export default function GenerarAnuncioView({ irAPerfil }) {
           <span>Primero completa el perfil de tu negocio para que la IA sepa cómo escribir.</span>
           <button type="button" className="boton-secundario" onClick={irAPerfil}>
             Completar mi perfil
+          </button>
+        </div>
+      )}
+      {sinCupo && (
+        <div className="aviso aviso-error aviso-con-accion" role="alert">
+          <span>{sinCupo}</span>
+          <button type="button" className="boton-primario" onClick={irAPlanes}>
+            Ver planes
           </button>
         </div>
       )}

@@ -47,3 +47,11 @@
   .inicio-publicacion-dia { grid-column: 2; }
   .inicio-publicacion-titulo { grid-column: 2; grid-row: 2; }
 }
+
+/* Consumo de tokens de IA del mes (tarjeta "Tu plan y consumo de IA"). */
+.inicio-consumo { display: flex; flex-direction: column; gap: 8px; }
+.inicio-consumo-plan { font-weight: 700; color: var(--primary); }
+.inicio-consumo-barra { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.inicio-consumo-barra span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.inicio-consumo-alerta span { background: var(--warn); }
+.inicio-consumo-agotado span { background: var(--bad); }

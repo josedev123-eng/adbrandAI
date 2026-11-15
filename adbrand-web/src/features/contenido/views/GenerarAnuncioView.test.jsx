@@ -172,3 +172,25 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
     })
   })
 })
+
+describe('GenerarAnuncioView: límite de tokens del plan', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('si ya usó los tokens de su plan muestra el motivo y el botón para ver los planes', async () => {
+    generarOpciones.mockRejectedValue(
+      Object.assign(new Error('Usaste los 10 000 tokens de IA del plan gratuito este mes. Elige un plan para seguir creando.'), {
+        status: 400,
+        codigo: 'LIMITE_TOKENS',
+      }),
+    )
+    const irAPlanes = vi.fn()
+    render(<GenerarAnuncioView irAPlanes={irAPlanes} />)
+    await pedirOpciones()
+
+    expect(await screen.findByText(/Usaste los 10 000 tokens de IA del plan gratuito/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Ver planes' }))
+    expect(irAPlanes).toHaveBeenCalled()
+  })
+})

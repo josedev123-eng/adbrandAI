@@ -22,6 +22,8 @@ export function useGenerarAnuncio() {
   const [opcionElegida, setOpcionElegida] = useState(null)
   const [aviso, setAviso] = useState(null)
   const [faltaPerfil, setFaltaPerfil] = useState(false)
+  // Ya usó los tokens de IA de su plan este mes: se muestra el aviso con el botón para ver los planes.
+  const [sinCupo, setSinCupo] = useState(null)
   const [generando, setGenerando] = useState(false)
   const [eligiendoId, setEligiendoId] = useState(null)
   const [regenerando, setRegenerando] = useState(false)
@@ -38,7 +40,9 @@ export function useGenerarAnuncio() {
   }
 
   function mostrarError(error, mensajePorDefecto) {
-    if (error.codigo === 'PERFIL_NO_ENCONTRADO') {
+    if (error.codigo === 'LIMITE_TOKENS') {
+      setSinCupo(error.message)
+    } else if (error.codigo === 'PERFIL_NO_ENCONTRADO') {
       // Criterio 1: primero hay que registrar el perfil del negocio (HU 9).
       setFaltaPerfil(true)
     } else if (['IA_NO_DISPONIBLE', 'OPCION_NO_ENCONTRADA', 'OPCION_NO_ELEGIDA', 'VERSION_NO_ENCONTRADA', 'LIMITE_RETOQUES'].includes(error.codigo)) {
@@ -56,6 +60,7 @@ export function useGenerarAnuncio() {
   async function generar() {
     setAviso(null)
     setFaltaPerfil(false)
+    setSinCupo(null)
     setCopiado(false)
     const erroresLocales = validar(solicitud)
     setErrores(erroresLocales)
@@ -106,7 +111,9 @@ export function useGenerarAnuncio() {
     try {
       setAnuncio(await regenerarAnuncio(anuncio.id))
     } catch (error) {
-      if (error.codigo === 'IA_NO_DISPONIBLE') {
+      if (error.codigo === 'LIMITE_TOKENS') {
+        setSinCupo(error.message)
+      } else if (error.codigo === 'IA_NO_DISPONIBLE') {
         setAviso(error.message)
       } else if (error.status === 404) {
         setAviso('El contenido original ya no existe.')
@@ -185,6 +192,7 @@ export function useGenerarAnuncio() {
     opcionElegida,
     aviso,
     faltaPerfil,
+    sinCupo,
     generando,
     eligiendoId,
     regenerando,

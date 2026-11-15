@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { leerPaleta, listarKitsMarca } from '../../brandkit/models/brandkitApi'
 import { obtenerCalendario } from '../../calendario/models/calendarioApi'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
+import { obtenerConsumoMes } from '../../pagos/models/pagosApi'
 import { obtenerInformeCampanas } from '../../reportes/models/reportesApi'
 
 const CARGANDO = { cargando: true, error: false, datos: null }
@@ -42,6 +43,8 @@ const PEDIDOS = {
     const kit = [...kits].sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0]
     return { id: kit.id, nombre: kit.nombreNegocio, colores: leerPaleta(kit.paletaColores).slice(0, 5) }
   },
+  // Tokens de IA usados este mes frente al límite de su plan (o del plan gratuito).
+  consumo: () => obtenerConsumoMes(),
   calendario: async (ahora) => {
     const siguiente = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1)
     const [esteMes, proximoMes] = await Promise.all([obtenerCalendario(mesDe(ahora)), obtenerCalendario(mesDe(siguiente))])
