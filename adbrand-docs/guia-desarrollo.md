@@ -159,7 +159,7 @@ Django (`http://localhost:8000/api`):
   - HU 19: cada empresa trae además `limite`, `porcentaje_aviso`, `porcentaje` (1 decimal) y `alerta`, y la raíz trae `alertas: [{usuario_id, empresa, tokens, limite, porcentaje}]` con solo las empresas en alerta, de mayor a menor porcentaje. El límite es la fila propia de la empresa en `limite_tokens` o, si no tiene, la fila por defecto (`usuario_id` NULL). Hay alerta cuando `tokens * 100 >= limite * porcentaje_aviso` (en enteros: el 80 % exacto avisa). Sin ningún límite: `limite` y `porcentaje` en null y nunca hay alerta.
 - `GET /tokens/historial/?desde=AAAA-MM&hasta=AAAA-MM` (los dos obligatorios; `&usuario_id=` opcional): responde `{"desde", "hasta", "total", "meses": [{mes, tokens, generaciones}]}` con todos los meses del periodo, también los que están en 0, del más antiguo al más reciente. Responde 400 si falta una fecha, si el formato no es AAAA-MM, si el inicio es posterior al fin ("La fecha de inicio no puede ser posterior a la fecha de fin") o si pasa de 24 meses. Solo SUPERADMIN y TECNICO (HU 20). La web hace la misma revisión del periodo antes de llamar.
 - `GET /servidor/estado/`: verifica en ese momento la base de datos (`SELECT 1`), el backend (llama a `CORE_API_URL/api/estado`, 3 s de espera) y la IA (la informa Spring). Si Spring no responde, backend e IA quedan CAIDO. Guarda las 3 verificaciones en `verificacion_servidor` y, si la base falla, igual responde. Responde `{"verificado_en": "hora de Lima", "servicios": [{servicio, nombre, estado, tiempo_ms, detalle}]}`. Solo SUPERADMIN y TECNICO (HU 18).
-- Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) y moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
+- Qué se registra en la auditoría: crear una cuenta (`CREAR_ADMIN`), desactivar una cuenta (`DESACTIVAR_ADMIN`), cambiar un rol (`CAMBIAR_ROL`) , moderar un contenido (`APROBAR_CONTENIDO`, `RECHAZAR_CONTENIDO`) y suspender o reactivar una empresa (`SUSPENDER_EMPRESA`, `REACTIVAR_EMPRESA`). Para registrar una acción nueva se llama a `auditoria.services.registrar_accion(admin_id, accion, entidad, entidad_id, detalle)`; nunca lanza errores, así que no rompe la acción original.
 
 ### Inicio de sesión de administradores
 
@@ -171,7 +171,7 @@ Django (`http://localhost:8000/api`):
 | Rol | Puede usar |
 |---|---|
 | SUPERADMIN | Todo |
-| MODERADOR | Moderación (bandeja, detalle, aprobar y rechazar) |
+| MODERADOR | Moderación (bandeja, detalle, aprobar y rechazar) y Empresas (suspender o reactivar una PYME, `/api/empresas/`) |
 | FINANZAS | Suscripciones (deudas, activas e ingresos) |
 | TECNICO | Consumo de IA (`/api/tokens/`, HU 17) y su sesión |
 
