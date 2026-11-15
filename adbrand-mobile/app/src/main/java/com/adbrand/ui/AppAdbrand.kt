@@ -1,7 +1,15 @@
 package com.adbrand.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -15,76 +23,150 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.adbrand.core.session.GestorSesion
+import com.adbrand.ui.anuncio.screens.CrearAnuncioScreen
 import com.adbrand.ui.auth.screens.BienvenidaScreen
 import com.adbrand.ui.auth.screens.LoginScreen
 import com.adbrand.ui.auth.screens.RecuperarContrasenaScreen
 import com.adbrand.ui.auth.screens.RegistroScreen
+import com.adbrand.ui.components.AperturaMarca
 import com.adbrand.ui.components.BarraInferior
 import com.adbrand.ui.components.ItemNavegacion
+import com.adbrand.ui.panel.screens.PanelScreen
 import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
 import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
 
+private const val RUTA_APERTURA = "apertura"
 private const val RUTA_LOGIN = "login"
 private const val RUTA_REGISTRO = "registro"
 private const val RUTA_RECUPERAR = "recuperar"
 private const val RUTA_BIENVENIDA = "bienvenida"
+private const val RUTA_PANEL = "panel"
 private const val RUTA_EMPRESA = "empresa"
+private const val RUTA_CREAR = "crear"
 private const val RUTA_PERFIL = "perfil"
 private const val RUTA_PREVISUALIZACION = "previsualizacion"
-private val DESTINOS_PRINCIPALES = setOf(RUTA_EMPRESA, RUTA_PERFIL, RUTA_PREVISUALIZACION)
 
+private val DESTINOS_PRINCIPALES = setOf(
+    RUTA_PANEL,
+    RUTA_EMPRESA,
+    RUTA_CREAR,
+    RUTA_PERFIL,
+    RUTA_PREVISUALIZACION
+)
+
+// HU 42: la app se presenta con una apertura de marca y, al terminar, entra al
+// panel si ya hay sesión o al login si no.
 @Composable
 fun AppAdbrand() {
     val navegador = rememberNavController()
-    val inicio = remember { if (GestorSesion.haySesion()) RUTA_BIENVENIDA else RUTA_LOGIN }
+    val inicio = remember { RUTA_APERTURA }
     val entrada by navegador.currentBackStackEntryAsState()
     val rutaActual = entrada?.destination?.route
     val destinos = remember {
         listOf(
-            ItemNavegacion(RUTA_EMPRESA, "Empresa", Icons.Filled.Home),
+            ItemNavegacion(RUTA_PANEL, "Panel", Icons.Filled.Home),
+            ItemNavegacion(RUTA_EMPRESA, "Empresa", Icons.Filled.Business),
+            ItemNavegacion(RUTA_CREAR, "Crear", Icons.Filled.Add, destacado = true),
             ItemNavegacion(RUTA_PERFIL, "Perfil", Icons.Filled.Person),
             ItemNavegacion(RUTA_PREVISUALIZACION, "Vista", Icons.Filled.Visibility)
         )
     }
 
+    fun irA(ruta: String) {
+        navegador.navigate(ruta) {
+            popUpTo(RUTA_PANEL) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    fun cerrarSesion() {
+        navegador.navigate(RUTA_LOGIN) {
+            popUpTo(RUTA_PANEL) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (rutaActual in DESTINOS_PRINCIPALES) {
-                BarraInferior(rutaActual, destinos, navegador::navegarA)
+                BarraInferior(rutaActual, destinos, ::irA)
             }
         }
     ) { relleno ->
-        NavHost(navegador, startDestination = inicio, modifier = Modifier.padding(relleno)) {
+        NavHost(
+            navController = navegador,
+            startDestination = inicio,
+            modifier = Modifier.padding(relleno),
+            enterTransition = {
+                fadeIn(tween(260)) + slideInHorizontally(tween(300)) { ancho -> ancho / 10 }
+            },
+            exitTransition = { fadeOut(tween(160)) },
+            popEnterTransition = {
+                fadeIn(tween(240)) + slideInHorizontally(tween(280)) { ancho -> -ancho / 12 }
+            },
+            popExitTransition = {
+                fadeOut(tween(150)) + slideOutHorizontally(tween(240)) { ancho -> ancho / 10 }
+            }
+        ) {
+            composable(RUTA_APERTURA) {
+                AperturaMarca(duracionMs = 2100L) {
+                    val destino = if (GestorSesion.haySesion()) RUTA_PANEL else RUTA_LOGIN
+                    navegador.navigate(destino) {
+                        popUpTo(RUTA_APERTURA) { inclusive = true }
+                    }
+                }
+            }
+
             composable(RUTA_LOGIN) {
                 LoginScreen(
-                    alAutenticarse = { navegador.navigate(RUTA_BIENVENIDA) { popUpTo(RUTA_LOGIN) { inclusive = true } } },
+                    alAutenticarse = {
+                        navegador.navigate(RUTA_BIENVENIDA) {
+                            popUpTo(RUTA_LOGIN) { inclusive = true }
+                        }
+                    },
                     irARegistro = { navegador.navigate(RUTA_REGISTRO) },
                     irARecuperar = { navegador.navigate(RUTA_RECUPERAR) }
                 )
             }
-            composable(RUTA_REGISTRO) { RegistroScreen(alVolver = { navegador.popBackStack() }) }
-            composable(RUTA_RECUPERAR) { RecuperarContrasenaScreen(alVolver = { navegador.popBackStack() }) }
+
+            composable(RUTA_REGISTRO) {
+                RegistroScreen(alVolver = { navegador.popBackStack() })
+            }
+
+            composable(RUTA_RECUPERAR) {
+                RecuperarContrasenaScreen(alVolver = { navegador.popBackStack() })
+            }
+
             composable(RUTA_BIENVENIDA) {
                 BienvenidaScreen {
-                    navegador.navigate(RUTA_EMPRESA) { popUpTo(RUTA_BIENVENIDA) { inclusive = true } }
+                    navegador.navigate(RUTA_PANEL) {
+                        popUpTo(RUTA_BIENVENIDA) { inclusive = true }
+                    }
                 }
             }
-            composable(RUTA_EMPRESA) {
-                DatosEmpresaScreen(alCerrarSesion = {
-                    navegador.navigate(RUTA_LOGIN) { popUpTo(RUTA_EMPRESA) { inclusive = true } }
-                })
-            }
-            composable(RUTA_PERFIL) { PerfilNegocioScreen() }
-            composable(RUTA_PREVISUALIZACION) { PrevisualizacionScreen() }
-        }
-    }
-}
 
-private fun androidx.navigation.NavHostController.navegarA(ruta: String) {
-    navigate(ruta) {
-        popUpTo(RUTA_EMPRESA) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+            composable(RUTA_PANEL) {
+                PanelScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
+            }
+
+            composable(RUTA_EMPRESA) {
+                DatosEmpresaScreen(alCerrarSesion = ::cerrarSesion)
+            }
+
+            composable(RUTA_CREAR) {
+                CrearAnuncioScreen(alIrAPerfil = { irA(RUTA_PERFIL) })
+            }
+
+            composable(RUTA_PERFIL) {
+                PerfilNegocioScreen()
+            }
+
+            composable(RUTA_PREVISUALIZACION) {
+                PrevisualizacionScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
+            }
+        }
     }
 }

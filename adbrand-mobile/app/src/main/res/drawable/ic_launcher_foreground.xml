@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monograma AB dibujado a trazos: papel sobre tinta, con regla terracota. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:pathData="M40,36 L28,72 M40,36 L52,72 M33,60 L47,60"
+        android:strokeColor="#FAF6EC"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M60,72 L60,36 L71,36 A8.5,8.5 0 0 1 71,53 L60,53 M60,53 L73,53 A9.5,9.5 0 0 1 73,72 L60,72"
+        android:strokeColor="#FAF6EC"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M28,84 L46,84"
+        android:strokeColor="#C2744E"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+</vector>

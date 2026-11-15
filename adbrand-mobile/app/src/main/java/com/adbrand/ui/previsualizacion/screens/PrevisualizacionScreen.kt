@@ -1,27 +1,31 @@
 package com.adbrand.ui.previsualizacion.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,127 +33,324 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.adbrand.core.theme.AmbarOscuro
+import com.adbrand.core.theme.AmbarSuave
+import com.adbrand.core.theme.Blanco
+import com.adbrand.core.theme.BordeSuave
+import com.adbrand.core.theme.ErrorRojo
+import com.adbrand.core.theme.ErrorSuave
+import com.adbrand.core.theme.ExitoSuave
+import com.adbrand.core.theme.ExitoVerde
+import com.adbrand.core.theme.FondoClaro
+import com.adbrand.core.theme.IndigoAdbrand
+import com.adbrand.core.theme.IndigoOscuro
+import com.adbrand.core.theme.SuperficieBlanca
+import com.adbrand.core.theme.TextoPrincipal
+import com.adbrand.core.theme.TextoSecundario
+import com.adbrand.core.theme.TintaSuave
+import com.adbrand.core.theme.VioletaAdbrand
 import com.adbrand.domain.model.Anuncio
 import com.adbrand.domain.model.KitMarca
 import com.adbrand.domain.model.LogoMarca
-import com.adbrand.core.theme.CoralAdbrand
-import com.adbrand.core.theme.IndigoAdbrand
+import com.adbrand.ui.components.AvisoEstado
+import com.adbrand.ui.components.BotonIcono
+import com.adbrand.ui.components.BotonPrincipal
+import com.adbrand.ui.components.BotonSecundario
+import com.adbrand.ui.components.ChipSuave
+import com.adbrand.ui.components.EncabezadoPantalla
+import com.adbrand.ui.components.EntradaAnimada
+import com.adbrand.ui.components.Esqueleto
+import com.adbrand.ui.components.EstadoVacio
+import com.adbrand.ui.components.FOTO_PORTADA
+import com.adbrand.ui.components.FotoEditorial
 import com.adbrand.ui.components.LogoApp
+import com.adbrand.ui.components.PildoraEstado
+import com.adbrand.ui.components.TarjetaHero
+import com.adbrand.ui.components.TipoAviso
 import com.adbrand.ui.previsualizacion.viewmodel.PrevisualizacionViewModel
 
 // HU 45: aplica el logo, los colores y la tipografía del kit. Si no hay kit, muestra un aviso.
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrevisualizacionScreen(
+    alCrearAnuncio: () -> Unit = {},
     viewModel: PrevisualizacionViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Tu contenido") }) }
-    ) { relleno ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(relleno)
-                .padding(horizontal = 18.dp),
+    val kit = estado.kit
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FondoClaro)
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Column {
+                Spacer(modifier = Modifier.height(14.dp))
+                EntradaAnimada(0) {
+                    EncabezadoPantalla(
+                        titulo = "Vista de marca",
+                        subtitulo = "Así se ve tu identidad en cada publicación.",
+                        accion = {
+                            BotonIcono(
+                                icono = Icons.Filled.Refresh,
+                                descripcion = "Actualizar vista",
+                                onClick = viewModel::cargar
+                            )
+                        }
+                    )
+                }
+            }
+        }
+
+        item {
+            EntradaAnimada(1) {
+                TarjetaHero(
+                    etiqueta = "VISTA DE MARCA",
+                    titulo = kit?.nombreNegocio?.takeIf { it.isNotBlank() }
+                        ?: "Tu contenido, a tu estilo",
+                    subtitulo = "Revisa cómo se ve tu identidad en cada publicación.",
+                    iniciales = inicialesDe(kit?.nombreNegocio.orEmpty())
+                ) {
+                    val colores = coloresDe(kit?.paletaColores.orEmpty())
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChipSuave(
+                            texto = kit?.sector?.ifBlank { "IDENTIDAD VISUAL" }
+                                ?: "IDENTIDAD VISUAL",
+                            colorTexto = Blanco,
+                            colorFondo = Color.White.copy(alpha = 0.18f)
+                        )
+                        if (colores.isNotEmpty()) {
+                            ChipSuave(
+                                texto = "${colores.size} colores",
+                                colorTexto = Blanco,
+                                colorFondo = Color.White.copy(alpha = 0.18f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        kit?.let { marca ->
+            item {
+                EntradaAnimada(2) { PortadaMarca(marca) }
+            }
+        }
+
+        if (!estado.cargado && estado.error == null) {
+            item { EntradaAnimada(2) { VistaCargando() } }
+        }
+
+        estado.error?.let { mensaje ->
+            item {
+                EntradaAnimada(2) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        AvisoEstado(texto = mensaje, tipo = TipoAviso.ERROR)
+                        BotonSecundario(
+                            texto = "Reintentar",
+                            onClick = viewModel::cargar,
+                            icono = Icons.Filled.Refresh
+                        )
+                    }
+                }
+            }
+        }
+
+        if (!estado.cargando && estado.cargado) {
+            if (kit == null) {
+                item {
+                    EntradaAnimada(2) {
+                        EstadoVacio(
+                            icono = Icons.Filled.Palette,
+                            titulo = "Aún no tienes kit de marca",
+                            descripcion = "Genera tu kit para que las publicaciones usen tu logo, tus colores y tu tipografía."
+                        )
+                    }
+                }
+            } else {
+                item { EntradaAnimada(2) { EncabezadoKit(kit) } }
+                item { EntradaAnimada(3) { MuestraTipografia(kit) } }
+            }
+
+            if (estado.anuncios.isEmpty()) {
+                item {
+                    EntradaAnimada(4) {
+                        EstadoVacio(
+                            icono = Icons.Filled.Star,
+                            titulo = "Todavía no generaste anuncios",
+                            descripcion = "Crea tu primer anuncio y aquí verás cómo se ve con la identidad de tu marca."
+                        ) {
+                            BotonPrincipal(
+                                texto = "Crear anuncio",
+                                onClick = alCrearAnuncio,
+                                icono = Icons.Filled.Add
+                            )
+                        }
+                    }
+                }
+            } else {
+                item {
+                    EntradaAnimada(4) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Tus publicaciones",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = TextoPrincipal
+                            )
+                            ChipSuave(texto = "${estado.anuncios.size}")
+                        }
+                    }
+                }
+                itemsIndexed(estado.anuncios, key = { _, anuncio -> anuncio.id ?: anuncio.hashCode().toLong() }) { _, anuncio ->
+                    EntradaAnimada(5) { TarjetaAnuncio(anuncio, kit) }
+                }
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(26.dp)) }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Estados de carga
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun VistaCargando() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = SuperficieBlanca,
+        border = BorderStroke(1.dp, BordeSuave)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(25.dp))
-                        .background(Brush.linearGradient(listOf(IndigoAdbrand, Color(0xFF7853C7), CoralAdbrand)))
-                        .padding(19.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Esqueleto(
+                    modifier = Modifier.size(60.dp),
+                    altura = 60.dp,
+                    forma = RoundedCornerShape(16.dp)
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
-                        LogoApp(tamano = 52.dp, sombra = false)
-                        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Text("VISTA DE MARCA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .78f), fontWeight = FontWeight.Bold)
-                            Text("Tu contenido, a tu estilo", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-                            Text("Revisa cómo se ve tu identidad en cada publicación.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .84f))
-                        }
-                    }
+                    Esqueleto(modifier = Modifier.fillMaxWidth(0.6f), altura = 13.dp)
+                    Esqueleto(modifier = Modifier.fillMaxWidth(0.4f), altura = 11.dp)
                 }
             }
-            item {
-                if (estado.cargando) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-            }
-
-            estado.error?.let { mensaje ->
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(mensaje, color = MaterialTheme.colorScheme.onErrorContainer)
-                            Button(onClick = viewModel::cargar, modifier = Modifier.padding(top = 8.dp)) {
-                                Text("Reintentar")
-                            }
-                        }
-                    }
-                }
-            }
-
-            val kit = estado.kit
-            if (!estado.cargando && estado.cargado) {
-                if (kit == null) {
-                    item { AvisoSinKit() }
-                } else {
-                    item { EncabezadoKit(kit) }
-                    item { MuestraTipografia(kit) }
-                }
-
-                if (estado.anuncios.isEmpty()) {
-                    item {
-                        Text(
-                            text = "Todavía no generaste anuncios.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                } else {
-                    item {
-                        Text(
-                            text = "Tus publicaciones",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                    items(estado.anuncios, key = { it.id ?: it.hashCode().toLong() }) { anuncio ->
-                        TarjetaAnuncio(anuncio, kit)
-                    }
+            Esqueleto(modifier = Modifier.fillMaxWidth(), altura = 12.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                repeat(4) {
+                    Esqueleto(
+                        modifier = Modifier.size(32.dp),
+                        altura = 32.dp,
+                        forma = RoundedCornerShape(10.dp)
+                    )
                 }
             }
         }
     }
 }
 
+// ---------------------------------------------------------------------------
+// Kit de marca
+// ---------------------------------------------------------------------------
+
 @Composable
-private fun AvisoSinKit() {
-    Card(
+private fun PortadaMarca(kit: KitMarca) {
+    val iniciales = inicialesDe(kit.nombreNegocio)
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        shape = RoundedCornerShape(16.dp),
+        color = SuperficieBlanca,
+        border = BorderStroke(1.dp, BordeSuave),
+        shadowElevation = 0.dp
     ) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Aún no tienes kit de marca", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Genera tu kit para que las publicaciones usen tu logo, tus colores y tu tipografía.",
-                style = MaterialTheme.typography.bodyMedium
+        Box(modifier = Modifier.height(212.dp)) {
+            FotoEditorial(
+                recurso = FOTO_PORTADA,
+                modifier = Modifier.matchParentSize(),
+                radio = 0.dp,
+                borde = false
             )
+            // La foto se disuelve en la tarjeta: nada de bordes duros.
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0.34f to Color.Transparent,
+                            1f to SuperficieBlanca
+                        )
+                    )
+            )
+            // Velo superior para que la etiqueta se lea sobre la foto.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(70.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(IndigoOscuro.copy(alpha = 0.55f), Color.Transparent)
+                        )
+                    )
+            )
+            Text(
+                text = "PORTADA · 01",
+                style = MaterialTheme.typography.labelSmall,
+                color = Blanco,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(14.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                LogoApp(tamano = 38.dp, texto = iniciales)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "IDENTIDAD DE MARCA",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TintaSuave
+                    )
+                    Text(
+                        text = kit.nombreNegocio.ifBlank { "Tu negocio" },
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = TextoPrincipal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }
@@ -157,27 +358,38 @@ private fun AvisoSinKit() {
 @Composable
 private fun EncabezadoKit(kit: KitMarca) {
     val colores = coloresDe(kit.paletaColores)
-    val principal = colores.firstOrNull() ?: MaterialTheme.colorScheme.primary
-    val secundario = colores.getOrNull(1) ?: MaterialTheme.colorScheme.secondary
+    val principal = colores.firstOrNull() ?: IndigoAdbrand
+    val secundario = colores.getOrNull(1) ?: VioletaAdbrand
 
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        color = SuperficieBlanca,
+        border = BorderStroke(1.dp, BordeSuave),
+        shadowElevation = 0.dp
     ) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 LogoMarca(kit.logoDiseno, kit.nombreNegocio, principal)
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = kit.nombreNegocio.ifBlank { "Tu negocio" },
                         style = MaterialTheme.typography.titleLarge,
-                        fontFamily = familiaDe(kit.tipografiaPrimaria)
+                        color = TextoPrincipal,
+                        fontFamily = familiaDe(kit.tipografiaPrimaria),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = kit.sector,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = kit.sector.ifBlank { "Tu rubro" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextoSecundario
                     )
                 }
             }
@@ -188,29 +400,24 @@ private fun EncabezadoKit(kit: KitMarca) {
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
-                                .clip(RoundedCornerShape8)
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(color)
+                                .border(1.dp, BordeSuave, RoundedCornerShape(10.dp))
                         )
                     }
                 }
             }
 
-            Text(
-                text = "Color principal de tu marca",
-                style = MaterialTheme.typography.labelLarge,
-                color = principal
-            )
-            Text(
-                text = "Acento",
-                style = MaterialTheme.typography.labelLarge,
-                color = secundario
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                EtiquetaColor(texto = "Color principal", color = principal)
+                EtiquetaColor(texto = "Acento", color = secundario)
+            }
 
             if (kit.vozMarca.isNotBlank()) {
                 Text(
                     text = "Voz de marca: ${kit.vozMarca}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoSecundario
                 )
             }
         }
@@ -218,70 +425,120 @@ private fun EncabezadoKit(kit: KitMarca) {
 }
 
 @Composable
+private fun EtiquetaColor(texto: String, color: Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(9.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(
+            text = texto,
+            style = MaterialTheme.typography.labelSmall,
+            color = TextoSecundario
+        )
+    }
+}
+
+@Composable
 private fun MuestraTipografia(kit: KitMarca) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Así se ve tu tipografía", style = MaterialTheme.typography.labelLarge)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = SuperficieBlanca,
+        border = BorderStroke(1.dp, BordeSuave)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "ASÍ SE VE TU TIPOGRAFÍA",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextoSecundario
+            )
             Text(
                 text = kit.nombreNegocio.ifBlank { "Tu marca" },
                 style = MaterialTheme.typography.headlineMedium,
+                color = TextoPrincipal,
                 fontFamily = familiaDe(kit.tipografiaPrimaria),
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = kit.logoConcepto.ifBlank { "Un anuncio con tu identidad visual." },
                 style = MaterialTheme.typography.bodyLarge,
+                color = TextoSecundario,
                 fontFamily = familiaDe(kit.tipografiaSecundaria)
             )
         }
     }
 }
 
+// ---------------------------------------------------------------------------
+// Publicación
+// ---------------------------------------------------------------------------
+
 @Composable
 private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?) {
     val colores = coloresDe(kit?.paletaColores.orEmpty())
-    val acento = colores.firstOrNull() ?: MaterialTheme.colorScheme.primary
-    val colorEstado = when (anuncio.estado) {
-        "APROBADO" -> Color(0xFF15803D)
-        "DUDOSO" -> Color(0xFFB45309)
-        "RECHAZADO" -> Color(0xFFB91C1C)
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val acento = colores.firstOrNull() ?: IndigoAdbrand
 
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(14.dp),
+        color = SuperficieBlanca,
+        border = BorderStroke(1.dp, BordeSuave),
+        shadowElevation = 0.dp
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = anuncio.redSocial,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = acento
-                )
-                Text(
-                    text = anuncio.estado,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = colorEstado
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(9.dp)
+                            .clip(CircleShape)
+                            .background(acento)
+                    )
+                    Text(
+                        text = anuncio.redSocial,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = acento
+                    )
+                }
+                PildoraEstado(anuncio.estado)
             }
             Text(
                 text = anuncio.texto,
                 style = MaterialTheme.typography.bodyLarge,
+                color = TextoPrincipal,
                 fontFamily = familiaDe(kit?.tipografiaSecundaria.orEmpty())
             )
             Text(
                 text = "Tono ${anuncio.tono.lowercase().replaceFirstChar { it.uppercase() }}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = TextoSecundario
             )
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Logo del kit
+// ---------------------------------------------------------------------------
 
 @Composable
 private fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color) {
@@ -296,7 +553,7 @@ private fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color) {
 
     Box(
         modifier = Modifier
-            .size(64.dp)
+            .size(60.dp)
             .clip(forma)
             .background(fondo),
         contentAlignment = Alignment.Center
@@ -329,5 +586,15 @@ private fun familiaDe(nombre: String): FontFamily = when {
     nombre.contains("serif", ignoreCase = true) ||
         nombre.contains("playfair", ignoreCase = true) ||
         nombre.contains("georgia", ignoreCase = true) -> FontFamily.Serif
+
     else -> FontFamily.SansSerif
+}
+
+private fun inicialesDe(nombre: String): String {
+    val palabras = nombre.trim().split(" ").filter { it.isNotBlank() }
+    return when {
+        palabras.isEmpty() -> "AB"
+        palabras.size == 1 -> palabras.first().take(2).uppercase()
+        else -> (palabras[0].take(1) + palabras[1].take(1)).uppercase()
+    }
 }
