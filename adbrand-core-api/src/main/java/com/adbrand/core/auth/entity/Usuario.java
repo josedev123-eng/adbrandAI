@@ -38,6 +38,13 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
+    // Si el administrador suspendió la cuenta (estado INACTIVO): el porqué y cuándo (V45). Lo escribe Django.
+    @Column(name = "motivo_suspension", length = 300)
+    private String motivoSuspension;
+
+    @Column(name = "fecha_suspension")
+    private java.time.OffsetDateTime fechaSuspension;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -92,6 +99,12 @@ public class Usuario {
 
     public EstadoUsuario getEstado() { return estado; }
     public void setEstado(EstadoUsuario estado) { this.estado = estado; }
+
+    public String getMotivoSuspension() { return motivoSuspension; }
+    public void setMotivoSuspension(String motivoSuspension) { this.motivoSuspension = motivoSuspension; }
+
+    public java.time.OffsetDateTime getFechaSuspension() { return fechaSuspension; }
+    public void setFechaSuspension(java.time.OffsetDateTime fechaSuspension) { this.fechaSuspension = fechaSuspension; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 
