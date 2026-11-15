@@ -64,6 +64,13 @@ public class Contenido {
     @Column(name = "fecha_decision")
     private LocalDateTime fechaDecision;
 
+    // HU 15: quién moderó el contenido (lo escribe Django) y si el dueño todavía no vio esa decisión (V44).
+    @Column(name = "moderador_id")
+    private Long moderadorId;
+
+    @Column(name = "aviso_pendiente", nullable = false)
+    private boolean avisoPendiente;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -114,6 +121,14 @@ public class Contenido {
     public void setDecisionDueno(DecisionDueno decisionDueno) { this.decisionDueno = decisionDueno; }
 
     public LocalDateTime getFechaDecision() { return fechaDecision; }
+
+    public Long getModeradorId() { return moderadorId; }
+    public void setModeradorId(Long moderadorId) { this.moderadorId = moderadorId; }
+
+    public boolean isAvisoPendiente() { return avisoPendiente; }
+    public void setAvisoPendiente(boolean avisoPendiente) { this.avisoPendiente = avisoPendiente; }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
     public void setFechaDecision(LocalDateTime fechaDecision) { this.fechaDecision = fechaDecision; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }

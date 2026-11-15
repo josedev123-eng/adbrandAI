@@ -13,4 +13,9 @@ public interface ContenidoRepository extends JpaRepository<Contenido, Long> {
 
     // HU 53: la lista "por revisar" del móvil (usa el índice de V41).
     List<Contenido> findByUsuarioIdAndDecisionDuenoOrderByFechaCreacionDescIdDesc(Long usuarioId, DecisionDueno decisionDueno);
+
+    // Decisiones del moderador que el dueño todavía no vio (V44).
+    long countByUsuarioIdAndAvisoPendienteTrue(Long usuarioId);
+
+    List<Contenido> findByUsuarioIdAndAvisoPendienteTrue(Long usuarioId);
 }
