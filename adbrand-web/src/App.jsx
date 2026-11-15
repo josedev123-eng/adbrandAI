@@ -11,6 +11,7 @@ import Cargando from './shared/components/Cargando'
 import { SECCIONES } from './shared/components/opcionesMenuUsuario'
 import { useSesion } from './app/context/useSesion'
 import { useTituloPagina } from './shared/hooks/useTituloPagina'
+import { useAvisosModeracion } from './shared/hooks/useAvisosModeracion'
 
 // Optimización: cada pantalla se descarga recién cuando el usuario la abre (code splitting).
 const GenerarAnuncioView = lazy(() => import('./features/contenido/views/GenerarAnuncioView'))
@@ -20,6 +21,7 @@ const MiCuentaView = lazy(() => import('./features/cuenta/views/MiCuentaView'))
 const PlanesView = lazy(() => import('./features/pagos/views/PlanesView'))
 const CalendarioView = lazy(() => import('./features/calendario/views/CalendarioView'))
 const InformeCampanasView = lazy(() => import('./features/reportes/views/InformeCampanasView'))
+const MisAnunciosView = lazy(() => import('./features/misAnuncios/views/MisAnunciosView'))
 
 // HU-22: sin sesión se muestran el inicio de sesión y el registro; con sesión, el menú y las pantallas de siempre.
 function App() {
@@ -33,6 +35,8 @@ function App() {
     ? SECCIONES.flatMap((seccion) => seccion.opciones).find((opcion) => opcion.id === pantalla)?.nombre
     : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña' }[pantallaPublica]
   useTituloPagina(nombrePantalla)
+  // Decisiones del moderador sin ver: el número junto a "Mis anuncios".
+  const { avisos, limpiarAvisos } = useAvisosModeracion(Boolean(usuario), pantalla)
 
   function irALogin(aviso = null) {
     setAvisoLogin(aviso)
@@ -81,6 +85,7 @@ function App() {
         empresa={usuario.nombreEmpresa}
         colorAvatar={usuario.colorAvatar}
         alSalir={cerrarSesion}
+        contadores={{ misAnuncios: avisos }}
       />
       <div className="layout-contenido">
         <div className="barra-superior">
@@ -107,7 +112,10 @@ function App() {
           >
             {pantalla === 'inicio' && <InicioView empresa={usuario.nombreEmpresa} alAbrir={setPantalla} />}
             {pantalla === 'perfil' && <PerfilNegocioView />}
-            {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} />}
+            {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} irAPlanes={() => setPantalla('planes')} />}
+            {pantalla === 'misAnuncios' && (
+              <MisAnunciosView alVerAvisos={limpiarAvisos} irACrear={() => setPantalla('anuncio')} />
+            )}
             {pantalla === 'kit' && <SolicitarKitMarcaView />}
             {pantalla === 'planes' && <PlanesView />}
             {pantalla === 'calendario' && <CalendarioView />}

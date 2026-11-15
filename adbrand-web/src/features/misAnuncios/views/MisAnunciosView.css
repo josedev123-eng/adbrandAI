@@ -1,0 +1,23 @@
+/* Mis anuncios: lista con el estado de cada anuncio. Lo común está en styles/sistema-diseno.css. */
+.pagina.pagina-mis-anuncios { max-width: 880px; }
+
+.mis-anuncios-filtros { display: flex; flex-wrap: wrap; gap: 8px; }
+.filtro { padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+.filtro:hover { background: var(--surface-2); }
+.filtro-activo, .filtro-activo:hover { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+
+.mis-anuncios-lista { display: flex; flex-direction: column; gap: 14px; }
+.mi-anuncio { display: flex; flex-direction: column; gap: 8px; }
+.mi-anuncio-nuevo { border-color: var(--acento); box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15), var(--shadow); }
+.mi-anuncio-cabecera { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mi-anuncio-estado { padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+.estado-aprobado { background: var(--ok-soft); color: var(--ok); }
+.estado-revision { background: var(--warn-soft); color: var(--warn); }
+.estado-rechazado { background: var(--bad-soft); color: var(--bad); }
+.mi-anuncio-novedad { padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: var(--acento-texto); color: #ffffff; }
+.mi-anuncio-fecha { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+.mi-anuncio-oferta { font-size: 1.05rem; }
+.mi-anuncio-texto { margin: 0; white-space: pre-line; color: var(--fg); }
+.mi-anuncio-motivo { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--bad-soft); color: var(--bad); font-size: 0.88rem; }
+.mi-anuncio-motivo-revision { background: var(--warn-soft); color: var(--warn); }
+.mi-anuncio-motivo-aprobado { background: var(--ok-soft); color: var(--ok); }

@@ -27,3 +27,6 @@
   .menu-sesion { grid-template-columns: auto 1fr auto; padding-top: 10px; }
   .menu-salir { grid-column: auto; }
 }
+
+/* Número de decisiones del moderador que el dueño todavía no vio (Mis anuncios). */
+.menu-contador { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--acento-texto); color: #ffffff; font-size: 0.72rem; font-weight: 700; text-align: center; }
