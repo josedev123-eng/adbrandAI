@@ -1,5 +1,8 @@
 package com.adbrand.ui
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,14 +18,22 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.adbrand.core.session.GestorSesion
+import com.adbrand.core.notificaciones.GestorPush
+import com.adbrand.core.notificaciones.MemoriaAvisos
+import com.adbrand.ui.notificaciones.DialogoPermisoAvisos
 import com.adbrand.ui.anuncio.screens.CrearAnuncioScreen
 import com.adbrand.ui.auth.screens.BienvenidaScreen
 import com.adbrand.ui.auth.screens.LoginScreen
@@ -35,6 +46,7 @@ import com.adbrand.ui.panel.screens.PanelScreen
 import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
 import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
+import kotlinx.coroutines.launch
 
 private const val RUTA_APERTURA = "apertura"
 private const val RUTA_LOGIN = "login"
@@ -63,6 +75,27 @@ fun AppAdbrand() {
     val inicio = remember { RUTA_APERTURA }
     val entrada by navegador.currentBackStackEntryAsState()
     val rutaActual = entrada?.destination?.route
+    val contexto = LocalContext.current
+    val alcance = rememberCoroutineScope()
+
+    // HU 50: permiso de avisos con explicación previa y sin insistir cada vez.
+    var pedirPermiso by remember { mutableStateOf(false) }
+    val lanzadorPermiso = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedido ->
+        MemoriaAvisos.marcarPreguntado(contexto)
+        if (concedido) alcance.launch { GestorPush.sincronizar(contexto) }
+    }
+
+    LaunchedEffect(rutaActual) {
+        if (rutaActual in DESTINOS_PRINCIPALES) {
+            GestorPush.sincronizar(contexto)
+            if (!GestorPush.tienePermiso(contexto) && !MemoriaAvisos.yaPreguntado(contexto)) {
+                pedirPermiso = true
+            }
+        }
+    }
+
     val destinos = remember {
         listOf(
             ItemNavegacion(RUTA_PANEL, "Panel", Icons.Filled.Home),
@@ -168,5 +201,17 @@ fun AppAdbrand() {
                 PrevisualizacionScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
             }
         }
+
+        DialogoPermisoAvisos(
+            visible = pedirPermiso,
+            alActivar = {
+                pedirPermiso = false
+                lanzadorPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+            },
+            alCerrar = {
+                pedirPermiso = false
+                MemoriaAvisos.marcarPreguntado(contexto)
+            }
+        )
     }
 }
