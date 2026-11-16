@@ -84,6 +84,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<!-- HU 50: envío de notificaciones push con Firebase Admin SDK -->
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.12.0</version>
+		</dependency>
 		<!-- HU 38: informe de campañas en PDF -->
 		<dependency>
 			<groupId>com.github.librepdf</groupId>
