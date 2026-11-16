@@ -4,6 +4,8 @@ import com.adbrand.core.contenido.dto.ContenidoPorRevisarResponse;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.entity.DecisionDueno;
 import com.adbrand.core.contenido.entity.EstadoContenido;
+import com.adbrand.core.calendario.entity.EstadoPublicacion;
+import com.adbrand.core.calendario.repository.PublicacionProgramadaRepository;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import com.adbrand.core.shared.error.SolicitudInvalidaException;
@@ -12,14 +14,16 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// HU 53: el dueño revisa desde el móvil el contenido generado y lo aprueba con un botón.
+// HU 53 y 54: el dueño revisa desde el móvil el contenido generado y lo aprueba o lo rechaza.
 @Service
 public class RevisionDuenoService {
 
     private final ContenidoRepository contenidos;
+    private final PublicacionProgramadaRepository publicaciones;
 
-    public RevisionDuenoService(ContenidoRepository contenidos) {
+    public RevisionDuenoService(ContenidoRepository contenidos, PublicacionProgramadaRepository publicaciones) {
         this.contenidos = contenidos;
+        this.publicaciones = publicaciones;
     }
 
     // Lista "por revisar": lo que el dueño todavía no aprobó ni rechazó, del más reciente al más antiguo.
@@ -52,6 +56,23 @@ public class RevisionDuenoService {
             contenido.setDecisionDueno(DecisionDueno.APROBADO);
             contenido.setFechaDecision(LocalDateTime.now());
         }
+        return ContenidoPorRevisarResponse.desde(contenidos.save(contenido));
+    }
+
+    // HU 54, criterio 1: el contenido rechazado sale de la lista "por revisar", con un motivo opcional,
+    // y ya no se puede programar en el calendario (CalendarioService lo revisa).
+    // Criterio 2: si ya está programado en el calendario, primero hay que quitarlo de ahí.
+    @Transactional
+    public ContenidoPorRevisarResponse rechazar(Long usuarioId, Long contenidoId, String motivo) {
+        Contenido contenido = propio(usuarioId, contenidoId);
+
+        if (publicaciones.existsByContenidoIdAndEstado(contenidoId, EstadoPublicacion.PROGRAMADA)) {
+            throw new SolicitudInvalidaException("CONTENIDO_PROGRAMADO",
+                    "Este contenido está programado en tu calendario. Quítalo del calendario antes de rechazarlo.");
+        }
+        contenido.setDecisionDueno(DecisionDueno.RECHAZADO);
+        contenido.setMotivoDueno(motivo);
+        contenido.setFechaDecision(LocalDateTime.now());
         return ContenidoPorRevisarResponse.desde(contenidos.save(contenido));
     }
 

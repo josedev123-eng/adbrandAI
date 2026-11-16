@@ -36,4 +36,5 @@ Base: `http://localhost:8080/api`. La usan la web del usuario (`adbrand-web`) y 
 - `POST /auth/recuperar/cambiar` con `{correo, codigo, contrasenaNueva}`: cambia la contraseña; 400 `CODIGO_INVALIDO` si el código está mal, venció o ya se usó (HU 24).
 - `GET /cuenta/empresa` y `PUT /cuenta/empresa` con `{ruc, razonSocial, telefono, direccion}`: datos de la empresa del token, sin id en la URL; 409 `RUC_REPETIDO` (HU 23).
 - `GET /estado`: responde `{"backend": "ACTIVO", "ia": {"estado": "ACTIVO" o "CAIDO", "tiempo_ms", "detalle"}}` (HU 18). La IA se revisa con una petición liviana a `AI_BASE_URL` (no llama al chat ni manda la clave; 5 s de espera); con `AI_MOCK=true` sale ACTIVO con "Modo simulado". La usa Django y queda como ruta pública para que `/api/estado` no pida token.
-
+- `GET /contenido/por-revisar`: contenido que el dueño aún no aprobó ni rechazó (HU 53, móvil).
+- `POST /contenido/{id}/aprobar` (HU 53) y `POST /contenido/{id}/rechazar` con `{"motivo"}` opcional, máx. 300 (HU 54, V48 `motivo_dueno`). Lo rechazado por el dueño no se programa en el calendario (`CONTENIDO_RECHAZADO_POR_DUENO`); lo ya programado no se rechaza (`CONTENIDO_PROGRAMADO`).

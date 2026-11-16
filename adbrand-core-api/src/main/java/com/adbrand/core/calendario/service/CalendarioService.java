@@ -8,6 +8,7 @@ import com.adbrand.core.calendario.entity.PublicacionProgramada;
 import com.adbrand.core.calendario.repository.CampanaRepository;
 import com.adbrand.core.calendario.repository.PublicacionProgramadaRepository;
 import com.adbrand.core.contenido.entity.Contenido;
+import com.adbrand.core.contenido.entity.DecisionDueno;
 import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
@@ -176,6 +177,11 @@ public class CalendarioService {
         if (contenido.getEstado() != EstadoContenido.APROBADO) {
             throw new SolicitudInvalidaException("CONTENIDO_NO_APROBADO",
                     "Este anuncio todavía está en revisión. Solo se programan anuncios aprobados.");
+        }
+        // HU 54: lo que el propio dueño rechazó desde el móvil tampoco se programa.
+        if (contenido.getDecisionDueno() == DecisionDueno.RECHAZADO) {
+            throw new SolicitudInvalidaException("CONTENIDO_RECHAZADO_POR_DUENO",
+                    "Rechazaste este anuncio desde la app, así que no se puede programar.");
         }
         return contenido;
     }

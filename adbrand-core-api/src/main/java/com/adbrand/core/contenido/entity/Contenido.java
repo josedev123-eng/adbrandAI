@@ -64,6 +64,10 @@ public class Contenido {
     @Column(name = "fecha_decision")
     private LocalDateTime fechaDecision;
 
+    // HU 54: motivo opcional del dueño al rechazar (V48).
+    @Column(name = "motivo_dueno", length = 300)
+    private String motivoDueno;
+
     // HU 15: quién moderó el contenido (lo escribe Django) y si el dueño todavía no vio esa decisión (V44).
     @Column(name = "moderador_id")
     private Long moderadorId;
@@ -130,6 +134,8 @@ public class Contenido {
 
     public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
     public void setFechaDecision(LocalDateTime fechaDecision) { this.fechaDecision = fechaDecision; }
+    public String getMotivoDueno() { return motivoDueno; }
+    public void setMotivoDueno(String motivoDueno) { this.motivoDueno = motivoDueno; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }
