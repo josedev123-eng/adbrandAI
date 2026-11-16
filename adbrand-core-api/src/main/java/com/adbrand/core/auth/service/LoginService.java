@@ -50,7 +50,12 @@ public class LoginService {
             throw new NoAutenticadoException("CREDENCIALES_INVALIDAS", MENSAJE_CREDENCIALES);
         }
 
-        Usuario usuario = encontrado.get();
+        return entregarSesion(encontrado.get());
+    }
+
+    // Revisa que la cuenta esté activa y entrega los tokens. La usa también el inicio de sesión con Firebase (app móvil).
+    @Transactional
+    public LoginResponse entregarSesion(Usuario usuario) {
         if (usuario.getEstado() == EstadoUsuario.INACTIVO) {
             // Si la suspendió el administrador, se explica el motivo (V45).
             String mensaje = usuario.getFechaSuspension() == null
