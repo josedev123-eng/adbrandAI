@@ -18,7 +18,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-// HU 53: aprobar contenido desde el móvil, sin red.
+// HU 53 y 54: aprobar o rechazar contenido desde el móvil, sin red.
 @OptIn(ExperimentalCoroutinesApi::class)
 class RevisionViewModelTest {
 
@@ -36,9 +36,16 @@ class RevisionViewModelTest {
 
     private class RepositorioFalso(
         private val lista: Resultado<List<ContenidoRevision>>,
-        private val alAprobar: Resultado<Unit> = Resultado.Exito(Unit)
+        private val alAprobar: Resultado<Unit> = Resultado.Exito(Unit),
+        private val alRechazar: Resultado<Unit> = Resultado.Exito(Unit)
     ) : RevisionRepository {
         val aprobados = mutableListOf<Long>()
+        val rechazados = mutableListOf<Pair<Long, String?>>()
+
+        override suspend fun rechazar(id: Long, motivo: String?): Resultado<Unit> {
+            rechazados += id to motivo
+            return alRechazar
+        }
 
         override suspend fun porRevisar(): Resultado<List<ContenidoRevision>> = lista
 
@@ -124,5 +131,75 @@ class RevisionViewModelTest {
 
         assertEquals("No se pudo cargar el contenido por revisar.", viewModel.estado.value.error)
         assertTrue(viewModel.estado.value.cargado)
+    }
+
+    @Test
+    fun alRechazarConMotivoSaleDeLaListaYAvisa() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(listOf(pendiente, rechazado)))
+        val viewModel = RevisionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+
+        viewModel.pedirRechazo(1L)
+        assertEquals(1L, viewModel.estado.value.porRechazar?.id)
+        viewModel.cambiarMotivo("  El precio está mal  ")
+        viewModel.confirmarRechazo()
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L to "El precio está mal"), repositorio.rechazados)
+        assertEquals(listOf(2L), viewModel.estado.value.contenidos.map { it.id })
+        assertNull(viewModel.estado.value.porRechazar)
+        assertTrue(viewModel.estado.value.aviso!!.contains("rechazado"))
+    }
+
+    @Test
+    fun elMotivoEsOpcionalYTieneLimite() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(listOf(pendiente)))
+        val viewModel = RevisionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+
+        viewModel.pedirRechazo(1L)
+        viewModel.cambiarMotivo("x".repeat(400))
+        assertEquals(300, viewModel.estado.value.motivoRechazo.length)
+        viewModel.cambiarMotivo("   ")
+        viewModel.confirmarRechazo()
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L to null), repositorio.rechazados)
+    }
+
+    @Test
+    fun cancelarNoRechazaNada() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(listOf(pendiente)))
+        val viewModel = RevisionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+
+        viewModel.pedirRechazo(1L)
+        viewModel.cancelarRechazo()
+        advanceUntilIdle()
+
+        assertTrue(repositorio.rechazados.isEmpty())
+        assertEquals(1, viewModel.estado.value.contenidos.size)
+        assertNull(viewModel.estado.value.porRechazar)
+    }
+
+    @Test
+    fun siElServidorNoDejaRechazarloSeQuedaEnLaListaConElMensaje() = runTest {
+        val repositorio = RepositorioFalso(
+            Resultado.Exito(listOf(pendiente)),
+            alRechazar = Resultado.Error("Este contenido está programado en tu calendario. Quítalo del calendario antes de rechazarlo.")
+        )
+        val viewModel = RevisionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+
+        viewModel.pedirRechazo(1L)
+        viewModel.confirmarRechazo()
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.estado.value.contenidos.size)
+        assertTrue(viewModel.estado.value.error!!.contains("calendario"))
     }
 }

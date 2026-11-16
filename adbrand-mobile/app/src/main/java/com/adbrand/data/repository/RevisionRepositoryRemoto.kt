@@ -28,6 +28,15 @@ class RevisionRepositoryRemoto : RevisionRepository {
         return Resultado.Exito(Unit)
     }
 
+    // HU 54: rechazar con un motivo opcional.
+    override suspend fun rechazar(id: Long, motivo: String?): Resultado<Unit> {
+        val respuesta = RevisionApi.rechazar(id, motivo).getOrElse { return errorDeRed(it) }
+        if (!respuesta.esExitosa) {
+            return Resultado.Error(mensajeDeError(respuesta, "No se pudo rechazar el contenido."), respuesta.codigo)
+        }
+        return Resultado.Exito(Unit)
+    }
+
     private fun listaDesde(json: JSONArray): List<ContenidoRevision> = buildList {
         for (indice in 0 until json.length()) {
             val item = json.getJSONObject(indice)

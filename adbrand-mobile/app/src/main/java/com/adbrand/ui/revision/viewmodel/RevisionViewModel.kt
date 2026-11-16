@@ -12,15 +12,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// HU 53: estado de la lista "por revisar".
+// HU 53 y 54: estado de la lista "por revisar".
+// porRechazar: el contenido del que se está preguntando el motivo (la ventanita abierta).
 data class RevisionEstado(
     val cargando: Boolean = false,
     val cargado: Boolean = false,
     val contenidos: List<ContenidoRevision> = emptyList(),
     val procesandoId: Long? = null,
     val error: String? = null,
-    val aviso: String? = null
+    val aviso: String? = null,
+    val porRechazar: ContenidoRevision? = null,
+    val motivoRechazo: String = ""
 )
+
+const val MAXIMO_MOTIVO_RECHAZO = 300
 
 class RevisionViewModel(
     private val repositorio: RevisionRepository = RevisionRepositoryRemoto()
@@ -58,6 +63,44 @@ class RevisionViewModel(
                         procesandoId = null,
                         contenidos = actual.contenidos.filterNot { it.id == id },
                         aviso = "Contenido aprobado. Ya puedes programarlo en el calendario."
+                    )
+                }
+
+                is Resultado.Error -> _estado.update {
+                    it.copy(procesandoId = null, error = resultado.mensaje)
+                }
+            }
+        }
+    }
+
+    // HU 54: abre la ventanita para rechazar; el motivo es opcional.
+    fun pedirRechazo(id: Long) {
+        if (_estado.value.procesandoId != null) return
+        val contenido = _estado.value.contenidos.find { it.id == id } ?: return
+        _estado.update { it.copy(porRechazar = contenido, motivoRechazo = "", error = null, aviso = null) }
+    }
+
+    fun cambiarMotivo(texto: String) {
+        _estado.update { it.copy(motivoRechazo = texto.take(MAXIMO_MOTIVO_RECHAZO)) }
+    }
+
+    fun cancelarRechazo() {
+        _estado.update { it.copy(porRechazar = null, motivoRechazo = "") }
+    }
+
+    // Criterio 1: el contenido rechazado sale de la lista y ya no se puede programar.
+    fun confirmarRechazo() {
+        val contenido = _estado.value.porRechazar ?: return
+        val motivo = _estado.value.motivoRechazo.trim().ifBlank { null }
+        viewModelScope.launch {
+            _estado.update { it.copy(porRechazar = null, procesandoId = contenido.id, error = null, aviso = null) }
+            when (val resultado = repositorio.rechazar(contenido.id, motivo)) {
+                is Resultado.Exito -> _estado.update { actual ->
+                    actual.copy(
+                        procesandoId = null,
+                        motivoRechazo = "",
+                        contenidos = actual.contenidos.filterNot { it.id == contenido.id },
+                        aviso = "Contenido rechazado. No se publicará ni se podrá programar."
                     )
                 }
 

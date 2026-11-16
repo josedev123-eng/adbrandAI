@@ -1,6 +1,6 @@
 package com.adbrand.domain.model
 
-// HU 53: un contenido en la lista "por revisar" del dueño.
+// HU 53 y 54: un contenido en la lista "por revisar" del dueño.
 // estado es lo que decidió el filtro o el moderador; puedeAprobar es false si el moderador lo rechazó
 // o si todavía lo está revisando.
 data class ContenidoRevision(

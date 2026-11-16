@@ -12,6 +12,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,9 +44,10 @@ import com.adbrand.domain.model.ContenidoRevision
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.BotonPrincipal
 import com.adbrand.ui.components.TipoAviso
+import com.adbrand.ui.revision.viewmodel.MAXIMO_MOTIVO_RECHAZO
 import com.adbrand.ui.revision.viewmodel.RevisionViewModel
 
-// HU 53: lista de contenidos por revisar con el botón Aprobar.
+// HU 53 y 54: lista de contenidos por revisar con los botones Aprobar y Rechazar.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RevisionScreen(
@@ -60,7 +69,7 @@ fun RevisionScreen(
         ) {
             item {
                 Text(
-                    "Aprueba con un toque el contenido que quieras publicar.",
+                    "Aprueba lo que quieras publicar o rechaza lo que no te convenza.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -103,10 +112,42 @@ fun RevisionScreen(
                     contenido = contenido,
                     aprobando = estado.procesandoId == contenido.id,
                     ocupado = estado.procesandoId != null,
-                    alAprobar = { viewModel.aprobar(contenido.id) }
+                    alAprobar = { viewModel.aprobar(contenido.id) },
+                    alRechazar = { viewModel.pedirRechazo(contenido.id) }
                 )
             }
         }
+    }
+
+    // HU 54: ventanita para confirmar el rechazo con un motivo opcional.
+    estado.porRechazar?.let { contenido ->
+        AlertDialog(
+            onDismissRequest = viewModel::cancelarRechazo,
+            title = { Text("¿Rechazar este contenido?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "\"${contenido.oferta}\" no se publicará ni se podrá programar en el calendario.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = estado.motivoRechazo,
+                        onValueChange = viewModel::cambiarMotivo,
+                        label = { Text("Motivo (opcional)") },
+                        placeholder = { Text("Ej.: el precio está mal") },
+                        supportingText = { Text("${estado.motivoRechazo.length}/$MAXIMO_MOTIVO_RECHAZO") },
+                        minLines = 2,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmarRechazo) {
+                    Text("Rechazar", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = { TextButton(onClick = viewModel::cancelarRechazo) { Text("Cancelar") } }
+        )
     }
 }
 
@@ -115,7 +156,8 @@ private fun TarjetaRevision(
     contenido: ContenidoRevision,
     aprobando: Boolean,
     ocupado: Boolean,
-    alAprobar: () -> Unit
+    alAprobar: () -> Unit,
+    alRechazar: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -154,6 +196,17 @@ private fun TarjetaRevision(
                     tipo = TipoAviso.ERROR
                 )
                 else -> AvisoEstado("Un moderador lo está revisando. Podrás aprobarlo cuando termine.")
+            }
+
+            // HU 54: cualquier contenido de la lista se puede rechazar (también lo que aún revisa el moderador).
+            OutlinedButton(
+                onClick = alRechazar,
+                enabled = !ocupado,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(if (contenido.estado == "RECHAZADO") "Descartar" else "Rechazar")
             }
         }
     }
