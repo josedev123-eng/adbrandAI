@@ -8,7 +8,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,11 +21,13 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
@@ -31,8 +35,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.adbrand.core.session.GestorSesion
+import com.adbrand.core.notificaciones.BuzonNotificacion
 import com.adbrand.core.notificaciones.GestorPush
 import com.adbrand.core.notificaciones.MemoriaAvisos
+import com.adbrand.core.notificaciones.RutasAviso
+import com.adbrand.ui.notificaciones.BannerAviso
 import com.adbrand.ui.notificaciones.DialogoPermisoAvisos
 import com.adbrand.ui.anuncio.screens.CrearAnuncioScreen
 import com.adbrand.ui.auth.screens.BienvenidaScreen
@@ -46,6 +53,7 @@ import com.adbrand.ui.panel.screens.PanelScreen
 import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
 import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val RUTA_APERTURA = "apertura"
@@ -65,6 +73,16 @@ private val DESTINOS_PRINCIPALES = setOf(
     RUTA_CREAR,
     RUTA_PERFIL,
     RUTA_PREVISUALIZACION
+)
+
+// HU 50: mientras el usuario está en apertura o cuenta no se salta a un aviso;
+// el destino queda pendiente y se abre al entrar al panel.
+private val DESTINOS_SIN_AVISOS = setOf(
+    RUTA_APERTURA,
+    RUTA_LOGIN,
+    RUTA_REGISTRO,
+    RUTA_RECUPERAR,
+    RUTA_BIENVENIDA
 )
 
 // HU 42: la app se presenta con una apertura de marca y, al terminar, entra al
@@ -96,6 +114,30 @@ fun AppAdbrand() {
         }
     }
 
+    // HU 50: aviso en primer plano y navegación al tocar una notificación.
+    val aviso by BuzonNotificacion.aviso.collectAsState()
+    val destinoPendiente by BuzonNotificacion.destino.collectAsState()
+
+    LaunchedEffect(aviso?.id) {
+        if (aviso != null) {
+            delay(6500)
+            BuzonNotificacion.cerrarBanner()
+        }
+    }
+
+    LaunchedEffect(destinoPendiente?.id, rutaActual) {
+        val pendiente = destinoPendiente ?: return@LaunchedEffect
+        if (rutaActual == null || rutaActual in DESTINOS_SIN_AVISOS) return@LaunchedEffect
+
+        BuzonNotificacion.consumirDestino()
+        val ruta = RutasAviso.destino(pendiente)
+        if (ruta != null && ruta != rutaActual) {
+            runCatching {
+                navegador.navigate(ruta) { launchSingleTop = true }
+            }
+        }
+    }
+
     val destinos = remember {
         listOf(
             ItemNavegacion(RUTA_PANEL, "Panel", Icons.Filled.Home),
@@ -121,14 +163,15 @@ fun AppAdbrand() {
         }
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            if (rutaActual in DESTINOS_PRINCIPALES) {
-                BarraInferior(rutaActual, destinos, ::irA)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            bottomBar = {
+                if (rutaActual in DESTINOS_PRINCIPALES) {
+                    BarraInferior(rutaActual, destinos, ::irA)
+                }
             }
-        }
-    ) { relleno ->
+        ) { relleno ->
         NavHost(
             navController = navegador,
             startDestination = inicio,
@@ -212,6 +255,14 @@ fun AppAdbrand() {
                 pedirPermiso = false
                 MemoriaAvisos.marcarPreguntado(contexto)
             }
+        )
+        }
+
+        BannerAviso(
+            aviso = aviso,
+            modifier = Modifier.align(Alignment.TopCenter),
+            alAbrir = { BuzonNotificacion.abrir(it) },
+            alCerrar = { BuzonNotificacion.cerrarBanner() }
         )
     }
 }

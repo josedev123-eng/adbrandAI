@@ -2,6 +2,7 @@ package com.adbrand.core.notificacion;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.adbrand.core.notificacion.controller.NotificacionController;
 import com.adbrand.core.notificacion.dto.DispositivoResponse;
 import com.adbrand.core.notificacion.service.ServicioDispositivos;
+import com.adbrand.core.notificacion.service.ServicioNotificaciones;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,9 @@ class NotificacionControllerTest {
 
     @MockitoBean
     private ServicioDispositivos servicio;
+
+    @MockitoBean
+    private ServicioNotificaciones notificaciones;
 
     @Test
     void registraElDispositivoYDevuelve201() throws Exception {
@@ -76,5 +81,21 @@ class NotificacionControllerTest {
     void eliminaElDispositivoYDevuelve204() throws Exception {
         mvc.perform(delete(URL + "/token-abc").requestAttr("usuarioId", 1L))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void elAvisoDePruebaSeEnviaSoloAlUsuarioDeLaSesion() throws Exception {
+        when(notificaciones.enviarAUsuario(eq(1L), any(), any(), any())).thenReturn(2);
+
+        mvc.perform(post("/api/notificaciones/prueba")
+                        .requestAttr("usuarioId", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"tipo":"system_alert"}
+                                """))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.enviados").value(2));
+
+        verify(notificaciones).enviarAUsuario(eq(1L), any(), any(), any());
     }
 }
