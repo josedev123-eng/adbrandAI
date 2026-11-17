@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HU 48: carpeta de la caché donde se guarda la imagen recortada del anuncio para compartirla. -->
+<paths>
+    <cache-path name="compartidas" path="compartidas/" />
+</paths>
