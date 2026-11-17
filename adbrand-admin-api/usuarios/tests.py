@@ -711,3 +711,65 @@ class RecuperarContrasenaAdminTests(APITestCase):
         self.assertEqual(cambio.status_code, 200)
         login = self.client.post("/api/usuarios/login/", {"correo": "finanzas@prueba.pe", "contrasena": "Nueva2026"}, format="json")
         self.assertEqual(login.status_code, 200)
+
+
+class ContrasenaTemporalTests(APITestCase):
+    """Admins nuevos: la contraseña que pone el superadmin es temporal y se cambia en el primer inicio."""
+
+    def setUp(self):
+        self.superadmin = crear_admin("SUPERADMIN")
+        self.moderador = Rol.objects.create(nombre="MODERADOR")
+        iniciar_sesion(self.client, self.superadmin)
+        respuesta = self.client.post(URL, {
+            "nombres": "Karim", "apellidos": "Sovero", "correo": "karim@adbrand.pe",
+            "contrasena": "Temporal123", "rol_id": self.moderador.id,
+        }, format="json")
+        self.assertEqual(respuesta.status_code, 201)
+        self.assertTrue(respuesta.data["debe_cambiar_contrasena"])
+        self.nuevo = UsuarioAdmin.objects.get(correo="karim@adbrand.pe")
+        self.client.credentials()
+
+    def _login(self, contrasena="Temporal123"):
+        return self.client.post("/api/usuarios/login/", {"correo": "karim@adbrand.pe", "contrasena": contrasena}, format="json")
+
+    def test_al_entrar_con_la_temporal_el_login_avisa_que_debe_cambiarla(self):
+        respuesta = self._login()
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.data["admin"]["debe_cambiar_contrasena"])
+
+    def test_con_la_temporal_solo_puede_ver_su_sesion_y_cambiarla(self):
+        iniciar_sesion(self.client, self.nuevo)
+
+        self.assertEqual(self.client.get("/api/usuarios/sesion/").status_code, 200)
+        bloqueado = self.client.get("/api/moderacion/contenidos/dudosos/")
+        self.assertEqual(bloqueado.status_code, 403)
+        self.assertEqual(bloqueado.data["codigo"], "CAMBIA_TU_CONTRASENA")
+
+    def test_al_cambiarla_ya_puede_usar_el_panel(self):
+        iniciar_sesion(self.client, self.nuevo)
+
+        cambio = self.client.post("/api/usuarios/mi-contrasena/", {"actual": "Temporal123", "nueva": "MiClave2026"}, format="json")
+
+        self.assertEqual(cambio.status_code, 200)
+        self.nuevo.refresh_from_db()
+        self.assertFalse(self.nuevo.debe_cambiar_contrasena)
+        self.assertTrue(check_password("MiClave2026", self.nuevo.contrasena))
+        self.assertNotEqual(self.client.get("/api/moderacion/contenidos/dudosos/").status_code, 403)
+
+    def test_recuperarla_con_el_codigo_tambien_cuenta_como_cambio(self):
+        from django.core import mail
+        import re as _re
+
+        self.client.post("/api/usuarios/recuperar/solicitar/", {"correo": "karim@adbrand.pe"}, format="json")
+        codigo = _re.search(r"\b(\d{6})\b", mail.outbox[-1].body).group(1)
+        self.client.post("/api/usuarios/recuperar/cambiar/", {"correo": "karim@adbrand.pe", "codigo": codigo, "nueva": "MiClave2026"}, format="json")
+
+        self.nuevo.refresh_from_db()
+        self.assertFalse(self.nuevo.debe_cambiar_contrasena)
+
+    def test_el_superadmin_creado_por_consola_no_tiene_que_cambiarla(self):
+        call_command("crear_superadmin", nombres="Jose", apellidos="Rojas", correo="jose@adbrand.pe",
+                     contrasena="Secreta123", stdout=StringIO())
+
+        self.assertFalse(UsuarioAdmin.objects.get(correo="jose@adbrand.pe").debe_cambiar_contrasena)

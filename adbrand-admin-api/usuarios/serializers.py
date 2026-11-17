@@ -68,7 +68,7 @@ class AdministradorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UsuarioAdmin
-        fields = ["id", "nombres", "apellidos", "correo", "rol", "estado", "fecha_creacion"]
+        fields = ["id", "nombres", "apellidos", "correo", "rol", "estado", "fecha_creacion", "debe_cambiar_contrasena"]
 
 
 class DesactivarAdministradorSerializer(serializers.Serializer):

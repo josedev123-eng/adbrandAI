@@ -42,6 +42,11 @@ export function SesionProvider({ children }) {
     setAdmin(datosAdmin)
   }, [])
 
+  // Cambia algunos datos del administrador conectado, por ejemplo al dejar la contraseña temporal.
+  const actualizarAdmin = useCallback((cambios) => {
+    setAdmin((actual) => (actual ? { ...actual, ...cambios } : actual))
+  }, [])
+
   const salir = useCallback(() => {
     borrarToken()
     setAviso(null)
@@ -49,7 +54,7 @@ export function SesionProvider({ children }) {
   }, [])
 
   return (
-    <SesionContext.Provider value={{ admin, cargando, aviso, entrar, salir }}>
+    <SesionContext.Provider value={{ admin, cargando, aviso, entrar, salir, actualizarAdmin }}>
       {children}
     </SesionContext.Provider>
   )

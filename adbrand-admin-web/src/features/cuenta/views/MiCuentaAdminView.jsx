@@ -16,17 +16,24 @@ function Campo({ etiqueta, error, ayuda, children }) {
   )
 }
 
-export default function MiCuentaAdminView() {
+// "obligatorio": primer inicio con la contraseña temporal que puso el superadmin. Solo se ve el formulario
+// para cambiarla (y salir); el resto del panel se abre cuando la cambia.
+export default function MiCuentaAdminView({ obligatorio = false, alSalir }) {
   const { admin } = useSesion()
   const { datos, errores, mensaje, guardando, cambiar, guardar } = useMiCuentaAdmin()
 
   return (
     <main className="pagina pagina-mi-cuenta-admin">
       <header className="pagina-cabecera">
-        <h1>Mi cuenta</h1>
-        <p>Tus datos de administrador y tu contraseña.</p>
+        <h1>{obligatorio ? 'Crea tu contraseña' : 'Mi cuenta'}</h1>
+        <p>
+          {obligatorio
+            ? `Hola, ${admin?.nombres ?? ''}. Entraste con la contraseña temporal que te dio el superadministrador. Por seguridad, elige una propia para continuar.`
+            : 'Tus datos de administrador y tu contraseña.'}
+        </p>
       </header>
 
+      {!obligatorio && (
       <section className="tarjeta" aria-labelledby="mi-cuenta-datos">
         <h2 id="mi-cuenta-datos" className="mi-cuenta-titulo">
           Tus datos
@@ -49,13 +56,14 @@ export default function MiCuentaAdminView() {
         </dl>
         <p className="mi-cuenta-nota">Para cambiar tu nombre, correo o rol, pídeselo al superadministrador.</p>
       </section>
+      )}
 
       <form className="tarjeta formulario" onSubmit={guardar} noValidate aria-labelledby="mi-cuenta-clave">
         <h2 id="mi-cuenta-clave" className="mi-cuenta-titulo">
-          Cambiar contraseña
+          {obligatorio ? 'Tu contraseña nueva' : 'Cambiar contraseña'}
         </h2>
         <Aviso mensaje={mensaje} />
-        <Campo etiqueta="Contraseña actual" error={errores.actual}>
+        <Campo etiqueta={obligatorio ? 'Contraseña temporal' : 'Contraseña actual'} error={errores.actual}>
           <InputContrasena
             autoComplete="current-password"
             value={datos.actual}
@@ -84,8 +92,13 @@ export default function MiCuentaAdminView() {
           />
         </Campo>
         <button type="submit" className="boton-primario" disabled={guardando}>
-          {guardando ? 'Guardando…' : 'Cambiar contraseña'}
+          {guardando ? 'Guardando…' : obligatorio ? 'Guardar y entrar al panel' : 'Cambiar contraseña'}
         </button>
+        {obligatorio && alSalir && (
+          <button type="button" className="boton-secundario" onClick={alSalir}>
+            Cerrar sesión
+          </button>
+        )}
       </form>
     </main>
   )

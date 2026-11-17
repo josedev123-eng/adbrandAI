@@ -43,7 +43,8 @@ class AdministradoresView(VistaAdmin):
     def post(self, request):
         serializer = CrearAdministradorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        administrador = services.crear_administrador(serializer.validated_data)
+        # La contraseña que escribe el superadmin es temporal: el nuevo administrador la cambia al entrar.
+        administrador = services.crear_administrador(serializer.validated_data, contrasena_temporal=True)
         registrar_accion(
             request.user.id, "CREAR_ADMIN", "usuario_admin", administrador.id,
             f"Creó la cuenta de {administrador.correo} con el rol {administrador.rol.nombre}",
@@ -165,12 +166,19 @@ class SesionView(VistaAdmin):
     La web lo usa al recargar la página para saber si la sesión sigue activa y qué rol tiene.
     """
 
+    permite_contrasena_temporal = True
+
     def get(self, request):
         return Response(AdministradorSerializer(request.user).data)
 
 
 class MiContrasenaView(VistaAdmin):
-    """POST /api/usuarios/mi-contrasena/ : el administrador conectado cambia su contraseña (cualquier rol)."""
+    """POST /api/usuarios/mi-contrasena/ : el administrador conectado cambia su contraseña (cualquier rol).
+
+    También es el paso obligatorio cuando entra por primera vez con la contraseña temporal.
+    """
+
+    permite_contrasena_temporal = True
 
     def post(self, request):
         serializer = CambiarMiContrasenaSerializer(data=request.data)

@@ -64,13 +64,18 @@ export default function CrearAdministradorView() {
             />
           </Campo>
 
-          <Campo etiqueta="Contraseña" error={errores.contrasena}>
+          <Campo etiqueta="Contraseña temporal" error={errores.contrasena}>
             <InputContrasena
               value={formulario.contrasena}
               maxLength={128}
               placeholder="Mínimo 8 caracteres"
               onChange={(e) => cambiarCampo('contrasena', e.target.value)}
             />
+            {!errores.contrasena && (
+              <small className="campo-ayuda">
+                Dásela en persona. Al entrar por primera vez, el sistema le pedirá cambiarla por una propia.
+              </small>
+            )}
           </Campo>
 
           <Campo etiqueta="Rol" error={errores.rol_id}>

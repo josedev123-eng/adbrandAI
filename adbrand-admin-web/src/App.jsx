@@ -95,6 +95,21 @@ function App() {
     )
   }
 
+  // Primer inicio con la contraseña temporal del superadmin: antes de todo, debe elegir una propia.
+  if (admin.debe_cambiar_contrasena) {
+    return (
+      <Suspense fallback={<PantallaArranque texto="Abriendo…" />}>
+        <MiCuentaAdminView
+          obligatorio
+          alSalir={() => {
+            navegar('/')
+            salir()
+          }}
+        />
+      </Suspense>
+    )
+  }
+
   const rol = admin.rol?.nombre
   const opciones = pantallasDelRol(rol)
   // Pantalla a mostrar: la de la dirección si es de este rol; "mi-cuenta" la ven todos; otra dirección es un 404.

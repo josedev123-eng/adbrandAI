@@ -6,11 +6,11 @@ import { cambiarMiContrasena } from '../../auth/models/authApi'
 import MiCuentaAdminView from './MiCuentaAdminView'
 
 vi.mock('../../auth/models/authApi', () => ({ cambiarMiContrasena: vi.fn() }))
-vi.mock('../../../app/context/useSesion', () => ({
-  useSesion: () => ({
-    admin: { id: 7, nombres: 'Ana', apellidos: 'Quispe', correo: 'ana@adbrand.pe', rol: { id: 2, nombre: 'MODERADOR' } },
-  }),
-}))
+const sesion = {
+  admin: { id: 7, nombres: 'Ana', apellidos: 'Quispe', correo: 'ana@adbrand.pe', rol: { id: 2, nombre: 'MODERADOR' } },
+  actualizarAdmin: vi.fn(),
+}
+vi.mock('../../../app/context/useSesion', () => ({ useSesion: () => sesion }))
 
 async function llenar(actual, nueva, confirmar = nueva) {
   await userEvent.type(screen.getByLabelText('Contraseña actual'), actual)
@@ -57,5 +57,27 @@ describe('MiCuentaAdminView', () => {
     await llenar('Otra1234', 'Nueva2026')
 
     expect(await screen.findByText('La contraseña actual no es correcta.')).toBeInTheDocument()
+  })
+
+  it('primer inicio con la contraseña temporal: solo pide cambiarla y luego abre el panel', async () => {
+    sesion.admin = { ...sesion.admin, debe_cambiar_contrasena: true }
+    cambiarMiContrasena.mockResolvedValue({ detail: 'Tu contraseña se cambió.' })
+    const alSalir = vi.fn()
+    render(<MiCuentaAdminView obligatorio alSalir={alSalir} />)
+
+    expect(screen.getByRole('heading', { name: 'Crea tu contraseña' })).toBeInTheDocument()
+    expect(screen.queryByText('ana@adbrand.pe')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('Contraseña temporal'), 'Temporal123')
+    await userEvent.type(screen.getByLabelText(/^Contraseña nueva/), 'MiClave2026')
+    await userEvent.type(screen.getByLabelText('Confirmar contraseña nueva'), 'MiClave2026')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar y entrar al panel' }))
+
+    expect(cambiarMiContrasena).toHaveBeenCalledWith('Temporal123', 'MiClave2026')
+    await vi.waitFor(() => expect(sesion.actualizarAdmin).toHaveBeenCalledWith({ debe_cambiar_contrasena: false }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    expect(alSalir).toHaveBeenCalled()
+    delete sesion.admin.debe_cambiar_contrasena
   })
 })

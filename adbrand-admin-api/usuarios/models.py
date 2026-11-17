@@ -28,6 +28,8 @@ class UsuarioAdmin(models.Model):
     # Bloqueo por intentos fallidos (V54): contraseñas equivocadas seguidas y hasta cuándo está bloqueado.
     intentos_fallidos = models.IntegerField(default=0)
     bloqueado_hasta = models.DateTimeField(null=True, blank=True)
+    # Contraseña temporal (V55): la cuenta la creó un superadmin y debe cambiarla al entrar por primera vez.
+    debe_cambiar_contrasena = models.BooleanField(default=False)
 
     class Meta:
         managed = False  # la tabla la crea Flyway (V1)

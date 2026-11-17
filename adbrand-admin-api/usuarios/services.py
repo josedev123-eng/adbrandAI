@@ -75,14 +75,19 @@ def _registrar_fallo(admin, ahora):
     admin.save(update_fields=["intentos_fallidos"])
 
 
-def crear_administrador(datos):
-    """Guarda un administrador nuevo con su contraseña cifrada."""
+def crear_administrador(datos, contrasena_temporal=False):
+    """Guarda un administrador nuevo con su contraseña cifrada.
+
+    Con contrasena_temporal=True (cuentas creadas por el superadmin desde el panel) el administrador
+    debe cambiarla en su primer inicio de sesión.
+    """
     return UsuarioAdmin.objects.create(
         nombres=datos["nombres"].strip(),
         apellidos=datos["apellidos"].strip(),
         correo=datos["correo"],
         contrasena=make_password(datos["contrasena"]),
         rol=datos["rol"],
+        debe_cambiar_contrasena=contrasena_temporal,
     )
 
 
@@ -122,7 +127,9 @@ def cambiar_mi_contrasena(admin, actual, nueva):
     if not check_password(actual, admin.contrasena):
         raise ContrasenaActualIncorrecta()
     admin.contrasena = make_password(nueva)
-    admin.save(update_fields=["contrasena"])
+    # Si era la contraseña temporal, ya cumplió: la cuenta queda libre.
+    admin.debe_cambiar_contrasena = False
+    admin.save(update_fields=["contrasena", "debe_cambiar_contrasena"])
     return admin
 
 
@@ -190,5 +197,7 @@ def cambiar_con_codigo(correo, codigo, nueva):
     # Con la contraseña nueva se quita el bloqueo por intentos fallidos.
     admin.intentos_fallidos = 0
     admin.bloqueado_hasta = None
-    admin.save(update_fields=["contrasena", "intentos_fallidos", "bloqueado_hasta"])
+    # La eligió el propio administrador: ya no es temporal.
+    admin.debe_cambiar_contrasena = False
+    admin.save(update_fields=["contrasena", "intentos_fallidos", "bloqueado_hasta", "debe_cambiar_contrasena"])
     return admin
