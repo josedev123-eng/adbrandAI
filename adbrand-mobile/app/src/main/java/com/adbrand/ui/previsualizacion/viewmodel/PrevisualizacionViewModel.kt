@@ -7,6 +7,8 @@ import com.adbrand.data.repository.PrevisualizacionRepository
 import com.adbrand.data.repository.PrevisualizacionRepositoryRemoto
 import com.adbrand.domain.model.Anuncio
 import com.adbrand.domain.model.FormatoVista
+import com.adbrand.ui.previsualizacion.recorte.AjusteRecorte
+import com.adbrand.ui.previsualizacion.recorte.Recorte
 import com.adbrand.domain.model.KitMarca
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +28,10 @@ data class PrevisualizacionEstado(
     val publicacion: Anuncio? = null,
     val imagen: String? = null,
     val cargandoImagen: Boolean = false,
-    val errorImagen: String? = null
+    val errorImagen: String? = null,
+    // HU 48: zoom y posición del recorte dentro del marco, y el aviso después de guardar/compartir.
+    val ajuste: AjusteRecorte = AjusteRecorte(),
+    val mensajeCompartir: String? = null
 )
 
 class PrevisualizacionViewModel(
@@ -57,6 +62,8 @@ class PrevisualizacionViewModel(
                         kit = resultado.dato.kit,
                         anuncios = anuncios,
                         formato = resultado.dato.formato,
+                        // El marco cambió de forma: el recorte vuelve al original.
+                        ajuste = if (resultado.dato.formato.codigo != actual.formato.codigo) AjusteRecorte() else actual.ajuste,
                         // Si hay un anuncio abierto, se actualiza con su texto ajustado al nuevo formato.
                         publicacion = actual.publicacion?.let { abierto -> anuncios.find { it.id == abierto.id } ?: abierto }
                     )
@@ -75,6 +82,8 @@ class PrevisualizacionViewModel(
             it.copy(
                 publicacion = anuncio,
                 imagen = null,
+                ajuste = AjusteRecorte(),
+                mensajeCompartir = null,
                 errorImagen = null,
                 cargandoImagen = anuncio.id != null
             )
@@ -94,6 +103,29 @@ class PrevisualizacionViewModel(
     }
 
     fun cerrarPublicacion() {
-        _estado.update { it.copy(publicacion = null, imagen = null, cargandoImagen = false, errorImagen = null) }
+        _estado.update {
+            it.copy(publicacion = null, imagen = null, cargandoImagen = false, errorImagen = null, ajuste = AjusteRecorte(), mensajeCompartir = null)
+        }
+    }
+
+    // HU 48, criterio 1: pellizco (zoom) y arrastre dentro del marco del formato. Las medidas las da la pantalla.
+    fun ajustar(zoom: Float, arrastreX: Float, arrastreY: Float, anchoMarco: Float, anchoImagen: Int, altoImagen: Int) {
+        _estado.update { actual ->
+            val formato = actual.formato
+            val proporcion = if (formato.alto > 0) formato.ancho.toFloat() / formato.alto else 1f
+            actual.copy(
+                ajuste = Recorte.aplicarGesto(actual.ajuste, zoom, arrastreX, arrastreY, anchoMarco, anchoImagen, altoImagen, proporcion),
+                mensajeCompartir = null
+            )
+        }
+    }
+
+    // HU 48, criterio 2: vuelve al tamaño y la posición originales.
+    fun restablecer() {
+        _estado.update { it.copy(ajuste = AjusteRecorte(), mensajeCompartir = null) }
+    }
+
+    fun avisarCompartido(mensaje: String) {
+        _estado.update { it.copy(mensajeCompartir = mensaje) }
     }
 }

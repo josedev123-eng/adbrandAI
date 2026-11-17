@@ -160,7 +160,12 @@ fun PrevisualizacionScreen(
             cargandoImagen = estado.cargandoImagen,
             errorImagen = estado.errorImagen,
             alCambiarFormato = viewModel::cambiarFormato,
-            alCerrar = viewModel::cerrarPublicacion
+            alCerrar = viewModel::cerrarPublicacion,
+            ajuste = estado.ajuste,
+            mensajeCompartir = estado.mensajeCompartir,
+            alAjustar = viewModel::ajustar,
+            alRestablecer = viewModel::restablecer,
+            alCompartido = viewModel::avisarCompartido
         )
     }
 }

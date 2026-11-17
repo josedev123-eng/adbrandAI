@@ -1,8 +1,10 @@
 package com.adbrand.ui.previsualizacion.screens
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,21 +20,30 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,6 +52,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.adbrand.domain.model.Anuncio
 import com.adbrand.domain.model.FormatoVista
 import com.adbrand.domain.model.KitMarca
+import com.adbrand.ui.previsualizacion.recorte.AjusteRecorte
+import com.adbrand.ui.previsualizacion.recorte.ExportadorAnuncio
+import com.adbrand.ui.previsualizacion.recorte.Recorte
 
 // HU 46: formatos disponibles para el selector (código, nombre y para qué sirve).
 internal val FORMATOS = listOf(
@@ -97,8 +111,17 @@ fun VistaPublicacion(
     cargandoImagen: Boolean,
     errorImagen: String?,
     alCambiarFormato: (String) -> Unit,
-    alCerrar: () -> Unit
+    alCerrar: () -> Unit,
+    // HU 48: zoom y recorte.
+    ajuste: AjusteRecorte = AjusteRecorte(),
+    mensajeCompartir: String? = null,
+    alAjustar: (zoom: Float, arrastreX: Float, arrastreY: Float, anchoMarco: Float, anchoImagen: Int, altoImagen: Int) -> Unit = { _, _, _, _, _, _ -> },
+    alRestablecer: () -> Unit = {},
+    alCompartido: (String) -> Unit = {}
 ) {
+    val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
+    val contexto = LocalContext.current
+    val acento = coloresDe(kit?.paletaColores.orEmpty()).getOrNull(1) ?: Color(0xFFF97316)
     Dialog(onDismissRequest = alCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFF2F3F7)) {
             Column(
@@ -126,7 +149,37 @@ fun VistaPublicacion(
                     Aviso("Todavía no tienes kit de marca: se usan colores por defecto. Genera tu kit para ver tu logo y tus colores.")
                 }
 
-                AnuncioEnFormato(anuncio, kit, formato, imagen, cargandoImagen)
+                AnuncioEnFormato(anuncio, kit, formato, bitmap, cargandoImagen, ajuste, alAjustar)
+
+                // HU 48: acercar, mover, restablecer y guardar la imagen recortada para compartirla.
+                if (bitmap != null && !cargandoImagen) {
+                    Text(
+                        "Pellizca con dos dedos para acercar o alejar y arrastra para mover. El recorte queda dentro del marco.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = alRestablecer, enabled = !ajuste.esOriginal, modifier = Modifier.weight(1f)) {
+                            Text("Restablecer")
+                        }
+                        Button(
+                            onClick = {
+                                val recorte = Recorte.rectangulo(ajuste, bitmap.width, bitmap.height, proporcion(formato))
+                                val mensaje = runCatching {
+                                    val final = ExportadorAnuncio.crearImagen(
+                                        bitmap, recorte, formato.ancho, formato.alto, anuncio.textoAjustado, acento.toArgb()
+                                    )
+                                    ExportadorAnuncio.guardarYCompartir(
+                                        contexto, final, "adbrand_${anuncio.id ?: 0}_${formato.codigo.lowercase()}"
+                                    )
+                                }.getOrElse { "No se pudo guardar la imagen. Intenta de nuevo." }
+                                alCompartido(mensaje)
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("Guardar y compartir") }
+                    }
+                    mensajeCompartir?.let { Aviso(it) }
+                }
 
                 if (anuncio.recortado) AvisoRecorte(formato)
                 when {
@@ -142,7 +195,15 @@ fun VistaPublicacion(
 // El anuncio en el formato elegido: la imagen (o un fondo con los colores del kit) con la proporción del formato,
 // el logo del kit arriba y el texto con la tipografía de la marca. Solo cambia la forma y dónde va el texto.
 @Composable
-private fun AnuncioEnFormato(anuncio: Anuncio, kit: KitMarca?, formato: FormatoVista, imagen: String?, cargando: Boolean) {
+private fun AnuncioEnFormato(
+    anuncio: Anuncio,
+    kit: KitMarca?,
+    formato: FormatoVista,
+    bitmap: Bitmap?,
+    cargando: Boolean,
+    ajuste: AjusteRecorte,
+    alAjustar: (Float, Float, Float, Float, Int, Int) -> Unit
+) {
     val principal = colorPrincipal(kit)
     val acento = coloresDe(kit?.paletaColores.orEmpty()).getOrNull(1) ?: Color(0xFFF97316)
     val nombre = nombreDe(kit)
@@ -154,7 +215,7 @@ private fun AnuncioEnFormato(anuncio: Anuncio, kit: KitMarca?, formato: FormatoV
             shadowElevation = 3.dp
         ) {
             Box {
-                ImagenAnuncio(anuncio, kit, imagen, cargando, proporcion(formato), mostrarTexto = false)
+                ImagenAnuncio(anuncio, kit, bitmap, cargando, proporcion(formato), ajuste, alAjustar)
                 Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     LogoMarca(kit?.logoDiseno, nombre, principal, tamano = if (vertical) 34.dp else 38.dp)
                     Spacer(Modifier.width(8.dp))
@@ -196,12 +257,15 @@ private fun AnuncioEnFormato(anuncio: Anuncio, kit: KitMarca?, formato: FormatoV
 private fun ImagenAnuncio(
     anuncio: Anuncio,
     kit: KitMarca?,
-    imagen: String?,
+    bitmap: Bitmap?,
     cargando: Boolean,
     proporcion: Float,
-    mostrarTexto: Boolean = true
+    ajuste: AjusteRecorte,
+    alAjustar: (Float, Float, Float, Float, Int, Int) -> Unit,
+    mostrarTexto: Boolean = false
 ) {
-    val bitmap = remember(imagen) { imagen?.let(::decodificar) }
+    val imagenDibujable = remember(bitmap) { bitmap?.asImageBitmap() }
+    var anchoMarco by remember { mutableFloatStateOf(0f) }
     val colores = coloresDe(kit?.paletaColores.orEmpty())
     val fondo = colores.firstOrNull() ?: Color(0xFF4F46E5)
     val acento = colores.getOrNull(1) ?: Color(0xFFF97316)
@@ -214,12 +278,27 @@ private fun ImagenAnuncio(
     ) {
         when {
             cargando -> CircularProgressIndicator(color = Color.White)
-            bitmap != null -> Image(
-                bitmap = bitmap,
-                contentDescription = "Imagen del anuncio",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            bitmap != null && imagenDibujable != null -> {
+                // HU 48: se dibuja solo la parte recortada (según el zoom y la posición) llenando el marco.
+                val recorte = Recorte.rectangulo(ajuste, bitmap.width, bitmap.height, proporcion)
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onSizeChanged { anchoMarco = it.width.toFloat() }
+                        .pointerInput(bitmap) {
+                            detectTransformGestures { _, arrastre, zoom, _ ->
+                                alAjustar(zoom, arrastre.x, arrastre.y, anchoMarco, bitmap.width, bitmap.height)
+                            }
+                        }
+                ) {
+                    drawImage(
+                        image = imagenDibujable,
+                        srcOffset = IntOffset(recorte.izquierda, recorte.arriba),
+                        srcSize = IntSize(recorte.ancho, recorte.alto),
+                        dstSize = IntSize(size.width.toInt(), size.height.toInt())
+                    )
+                }
+            }
             mostrarTexto -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = anuncio.textoAjustado.take(70),
@@ -255,7 +334,7 @@ internal fun proporcion(formato: FormatoVista): Float =
     if (formato.alto <= 0) 1f else formato.ancho.toFloat() / formato.alto.toFloat()
 
 // "data:image/jpeg;base64,..." → imagen. null si no es una imagen que Android pueda dibujar (por ejemplo, SVG).
-private fun decodificar(dataUrl: String): ImageBitmap? = runCatching {
+private fun decodificarBitmap(dataUrl: String): Bitmap? = runCatching {
     val bytes = Base64.decode(dataUrl.substringAfter("base64,"), Base64.DEFAULT)
-    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 }.getOrNull()

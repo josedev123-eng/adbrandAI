@@ -192,6 +192,36 @@ class PrevisualizacionViewModelTest {
         assertEquals("Sin conexión", viewModel.estado.value.errorImagen)
     }
 
+
+    // HU 48: zoom, recorte y restablecer en el estado de la pantalla.
+    @Test
+    fun elZoomSeGuardaYRestablecerLoVuelveAlOriginal() = runTest {
+        val viewModel = PrevisualizacionViewModel(RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio())))))
+        viewModel.cargar()
+        advanceUntilIdle()
+        viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+
+        viewModel.ajustar(zoom = 2f, arrastreX = 40f, arrastreY = 0f, anchoMarco = 500f, anchoImagen = 1000, altoImagen = 1000)
+        assertEquals(2f, viewModel.estado.value.ajuste.escala)
+        assertEquals(false, viewModel.estado.value.ajuste.esOriginal)
+
+        viewModel.restablecer()
+        assertEquals(true, viewModel.estado.value.ajuste.esOriginal)
+    }
+
+    @Test
+    fun alCambiarDeFormatoElRecorteVuelveAlOriginal() = runTest {
+        val viewModel = PrevisualizacionViewModel(RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio())))))
+        viewModel.cargar()
+        advanceUntilIdle()
+        viewModel.ajustar(zoom = 3f, arrastreX = 0f, arrastreY = 0f, anchoMarco = 500f, anchoImagen = 1000, altoImagen = 1000)
+
+        viewModel.cambiarFormato("VERTICAL")
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.estado.value.ajuste.esOriginal)
+    }
 }
 
 private fun formatoDe(codigo: String) = when (codigo) {
