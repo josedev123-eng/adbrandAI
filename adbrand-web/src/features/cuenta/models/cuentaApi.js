@@ -10,3 +10,8 @@ export function obtenerEmpresa() {
 export function guardarEmpresa(datos) {
   return apiRequest('/cuenta/empresa', { method: 'PUT', body: datos })
 }
+
+// Cambiar la contraseña escribiendo la actual. 400 CONTRASENA_ACTUAL_INCORRECTA o CONTRASENA_IGUAL.
+export function cambiarMiContrasena(actual, nueva) {
+  return apiRequest('/cuenta/contrasena', { method: 'POST', body: { actual, nueva } })
+}

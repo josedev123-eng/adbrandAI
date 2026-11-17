@@ -5,6 +5,7 @@ import Cargando from '../../../shared/components/Cargando'
 import { COLORES_AVATAR, colorDeAvatar } from '../../../shared/components/avatar'
 import { iniciales } from '../../../shared/components/opcionesMenuUsuario'
 import { useMiCuenta } from '../viewmodels/useMiCuenta'
+import CambiarContrasena from './CambiarContrasena'
 import './MiCuentaView.css'
 
 function Campo({ etiqueta, error, ayuda, children }) {
@@ -189,6 +190,8 @@ export default function MiCuentaView({ alGuardar, alVerTutorial }) {
           </div>
         </form>
       )}
+
+      <CambiarContrasena />
 
       {alVerTutorial && (
         <section className="tarjeta cuenta-tutorial" aria-labelledby="cuenta-tutorial-titulo">
