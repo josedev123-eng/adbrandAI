@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adbrand.core.network.Resultado
 import com.adbrand.data.repository.AuthRepository
-import com.adbrand.data.repository.AuthRepositoryRemoto
+import com.adbrand.data.repository.AuthRepositoryFirebase
 import com.adbrand.data.repository.CuentaRepository
 import com.adbrand.data.repository.CuentaRepositoryRemoto
 import com.adbrand.domain.model.Empresa
@@ -35,7 +35,7 @@ data class DatosEmpresaEstado(
 
 class DatosEmpresaViewModel(
     private val cuenta: CuentaRepository = CuentaRepositoryRemoto(),
-    private val auth: AuthRepository = AuthRepositoryRemoto()
+    private val auth: AuthRepository = AuthRepositoryFirebase()
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(DatosEmpresaEstado())

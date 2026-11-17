@@ -7,3 +7,6 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Firebase: cada uno pone su propio archivo (trae la clave del proyecto). Nunca a GitHub: el repo es público.
+app/google-services.json
