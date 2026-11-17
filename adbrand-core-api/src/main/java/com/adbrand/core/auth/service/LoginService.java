@@ -7,7 +7,9 @@ import com.adbrand.core.auth.entity.EstadoUsuario;
 import com.adbrand.core.auth.entity.Usuario;
 import com.adbrand.core.auth.repository.UsuarioRepository;
 import com.adbrand.core.shared.error.AccesoDenegadoException;
+import com.adbrand.core.shared.error.DemasiadosIntentosException;
 import com.adbrand.core.shared.error.NoAutenticadoException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +22,9 @@ public class LoginService {
 
     static final String MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos.";
     static final String MENSAJE_CUENTA_INACTIVA = "Tu cuenta está desactivada. Escribe a soporte para activarla.";
+    // Bloqueo por intentos fallidos (V54).
+    static final int INTENTOS_MAXIMOS = 5;
+    static final Duration DURACION_BLOQUEO = Duration.ofMinutes(15);
 
     private final UsuarioRepository usuarios;
     private final PasswordEncoder codificador;
@@ -39,18 +44,49 @@ public class LoginService {
         this.hashDeRelleno = codificador.encode("cuenta-que-no-existe");
     }
 
-    @Transactional
+    // noRollbackFor: el intento fallido se guarda aunque la respuesta sea un error.
+    @Transactional(noRollbackFor = {NoAutenticadoException.class, DemasiadosIntentosException.class})
     public LoginResponse iniciarSesion(LoginRequest datos) {
         Optional<Usuario> encontrado = usuarios.findByCorreo(RegistroService.normalizarCorreo(datos.correo()));
         String hash = encontrado.map(Usuario::getContrasenaHash).orElse(hashDeRelleno);
         boolean contrasenaCorrecta = codificador.matches(datos.contrasena(), hash);
+        LocalDateTime ahora = LocalDateTime.now();
+
+        // Bloqueada: no entra ni con la contraseña correcta hasta que pasen los 15 minutos.
+        if (encontrado.isPresent() && encontrado.get().estaBloqueado(ahora)) {
+            throw bloqueada(encontrado.get(), ahora);
+        }
 
         // El mismo mensaje si el correo no existe o si la contraseña está mal.
         if (encontrado.isEmpty() || !contrasenaCorrecta) {
+            encontrado.ifPresent(usuario -> registrarFallo(usuario, ahora));
             throw new NoAutenticadoException("CREDENCIALES_INVALIDAS", MENSAJE_CREDENCIALES);
         }
 
-        return entregarSesion(encontrado.get());
+        Usuario usuario = encontrado.get();
+        usuario.setIntentosFallidos(0);
+        usuario.setBloqueadoHasta(null);
+        return entregarSesion(usuario);
+    }
+
+    // Suma un intento fallido; al quinto seguido bloquea la cuenta 15 minutos y avisa.
+    private void registrarFallo(Usuario usuario, LocalDateTime ahora) {
+        int intentos = usuario.getIntentosFallidos() + 1;
+        if (intentos >= INTENTOS_MAXIMOS) {
+            usuario.setIntentosFallidos(0);
+            usuario.setBloqueadoHasta(ahora.plus(DURACION_BLOQUEO));
+            usuarios.saveAndFlush(usuario);
+            throw bloqueada(usuario, ahora);
+        }
+        usuario.setIntentosFallidos(intentos);
+        usuarios.saveAndFlush(usuario);
+    }
+
+    private DemasiadosIntentosException bloqueada(Usuario usuario, LocalDateTime ahora) {
+        long minutos = Math.max(1, (Duration.between(ahora, usuario.getBloqueadoHasta()).getSeconds() + 59) / 60);
+        return new DemasiadosIntentosException("CUENTA_BLOQUEADA",
+                "Escribiste mal la contraseña %d veces seguidas. Por seguridad, la cuenta se bloqueó; intenta de nuevo en %d %s o cambia tu contraseña con \"¿Olvidaste tu contraseña?\"."
+                        .formatted(INTENTOS_MAXIMOS, minutos, minutos == 1 ? "minuto" : "minutos"));
     }
 
     // Revisa que la cuenta esté activa y entrega los tokens. La usa también el inicio de sesión con Firebase (app móvil).

@@ -14,25 +14,65 @@ log = logging.getLogger(__name__)
 
 MINUTOS_CODIGO = 15
 INTENTOS_MAXIMOS = 5
+# Bloqueo por intentos fallidos (V54): tras 5 contraseñas equivocadas seguidas, 15 minutos sin poder entrar.
+INTENTOS_LOGIN_MAXIMOS = 5
+MINUTOS_BLOQUEO = 15
 
 
 class CuentaDesactivada(Exception):
     """La contraseña es correcta pero la cuenta está INACTIVA (HU 03)."""
 
 
+class CuentaBloqueada(Exception):
+    """Demasiadas contraseñas equivocadas seguidas: la cuenta espera unos minutos."""
+
+    def __init__(self, minutos):
+        super().__init__(minutos)
+        self.minutos = minutos
+
+
+def _minutos_restantes(admin, ahora):
+    segundos = (admin.bloqueado_hasta - ahora).total_seconds()
+    return max(1, int((segundos + 59) // 60))
+
+
 def iniciar_sesion(correo, contrasena):
     """Sprint 2: devuelve el administrador si el correo y la contraseña son correctos, o None.
 
-    Si la cuenta está desactivada lanza CuentaDesactivada.
+    Si la cuenta está desactivada lanza CuentaDesactivada. Si está bloqueada por intentos
+    fallidos, o este es el quinto intento equivocado seguido, lanza CuentaBloqueada.
     """
     admin = UsuarioAdmin.objects.select_related("rol").filter(correo__iexact=correo).first()
+    ahora = timezone.now()
+
+    # Bloqueado: no entra ni con la contraseña correcta hasta que pasen los minutos.
+    if admin is not None and admin.bloqueado_hasta and admin.bloqueado_hasta > ahora:
+        raise CuentaBloqueada(_minutos_restantes(admin, ahora))
+
     if admin is None or not check_password(contrasena, admin.contrasena):
+        if admin is not None:
+            _registrar_fallo(admin, ahora)
         return None
 
     if admin.estado != UsuarioAdmin.ACTIVO:
         raise CuentaDesactivada()
 
+    if admin.intentos_fallidos or admin.bloqueado_hasta:
+        admin.intentos_fallidos = 0
+        admin.bloqueado_hasta = None
+        admin.save(update_fields=["intentos_fallidos", "bloqueado_hasta"])
     return admin
+
+
+def _registrar_fallo(admin, ahora):
+    """Suma un intento fallido; al quinto seguido bloquea la cuenta."""
+    admin.intentos_fallidos += 1
+    if admin.intentos_fallidos >= INTENTOS_LOGIN_MAXIMOS:
+        admin.intentos_fallidos = 0
+        admin.bloqueado_hasta = ahora + timedelta(minutes=MINUTOS_BLOQUEO)
+        admin.save(update_fields=["intentos_fallidos", "bloqueado_hasta"])
+        raise CuentaBloqueada(MINUTOS_BLOQUEO)
+    admin.save(update_fields=["intentos_fallidos"])
 
 
 def crear_administrador(datos):
@@ -147,5 +187,8 @@ def cambiar_con_codigo(correo, codigo, nueva):
     registro.usado = True
     registro.save(update_fields=["usado"])
     admin.contrasena = make_password(nueva)
-    admin.save(update_fields=["contrasena"])
+    # Con la contraseña nueva se quita el bloqueo por intentos fallidos.
+    admin.intentos_fallidos = 0
+    admin.bloqueado_hasta = None
+    admin.save(update_fields=["contrasena", "intentos_fallidos", "bloqueado_hasta"])
     return admin

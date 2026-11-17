@@ -91,6 +91,9 @@ public class RecuperacionService {
                 .orElseThrow(this::codigoInvalido);
 
         usuario.setContrasenaHash(codificador.encode(datos.contrasenaNueva()));
+        // Con la contraseña nueva se quita el bloqueo por intentos fallidos (V54).
+        usuario.setIntentosFallidos(0);
+        usuario.setBloqueadoHasta(null);
         valido.setUsado(true);
         invalidarCodigos(usuario.getId());
     }

@@ -133,6 +133,19 @@ class LoginView(APIView):
 
         try:
             admin = services.iniciar_sesion(datos["correo"], datos["contrasena"])
+        except services.CuentaBloqueada as bloqueo:
+            minutos = "minuto" if bloqueo.minutos == 1 else "minutos"
+            return Response(
+                {
+                    "detail": (
+                        f"Escribiste mal la contraseña {services.INTENTOS_LOGIN_MAXIMOS} veces seguidas. "
+                        f"Por seguridad, la cuenta se bloqueó; intenta de nuevo en {bloqueo.minutos} {minutos} "
+                        "o cambia tu contraseña con \"¿Olvidaste tu contraseña?\"."
+                    ),
+                    "codigo": "CUENTA_BLOQUEADA",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
         except services.CuentaDesactivada:
             # HU 03, criterio 1: un administrador desactivado ya no puede iniciar sesión.
             return Response(

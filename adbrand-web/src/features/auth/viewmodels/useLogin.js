@@ -40,7 +40,8 @@ export function useLogin(aviso = null) {
     } catch (error) {
       // Por seguridad, la contraseña escrita se borra si no se pudo entrar.
       setFormulario((actual) => ({ ...actual, contrasena: '' }))
-      if (error.status === 401 || error.status === 403) {
+      // 429: la cuenta quedó bloqueada 15 minutos tras 5 contraseñas equivocadas seguidas.
+      if (error.status === 401 || error.status === 403 || error.status === 429) {
         setMensaje({ tipo: 'error', texto: error.message })
       } else if (error.status === 400) {
         setErrores(error.campos)

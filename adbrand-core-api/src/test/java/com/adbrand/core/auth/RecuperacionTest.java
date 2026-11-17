@@ -109,6 +109,16 @@ class RecuperacionTest {
     }
 
     @Test
+    void cambiarLaContrasenaConElCodigoQuitaElBloqueoPorIntentos() throws Exception {
+        usuario.setBloqueadoHasta(java.time.LocalDateTime.now().plusMinutes(10));
+        usuarios.saveAndFlush(usuario);
+
+        cambiar(pedirCodigo(), NUEVA).andExpect(status().isOk());
+
+        iniciarSesion(NUEVA).andExpect(status().isOk());
+    }
+
+    @Test
     void elCodigoSeGuardaConHashYNoEnTextoPlano() throws Exception {
         String codigo = pedirCodigo();
 

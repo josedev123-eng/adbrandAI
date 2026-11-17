@@ -1,8 +1,10 @@
+from datetime import timedelta
 from io import StringIO
 from unittest.mock import patch
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.management import CommandError, call_command
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from auditoria.models import AuditoriaAdmin
@@ -379,6 +381,38 @@ class LoginTests(APITestCase):
         self.assertIn("desactivada", respuesta.data["detail"])
         self.assertNotIn("token", respuesta.data)
 
+    def test_tras_5_contrasenas_malas_se_bloquea_y_ni_la_correcta_entra(self):
+        for _ in range(4):
+            self.assertEqual(self._login("ana@adbrand.pe", "Otra1234").status_code, 401)
+
+        quinta = self._login("ana@adbrand.pe", "Otra1234")
+        self.assertEqual(quinta.status_code, 429)
+        self.assertEqual(quinta.data["codigo"], "CUENTA_BLOQUEADA")
+        self.assertIn("15 minutos", quinta.data["detail"])
+
+        correcta = self._login("ana@adbrand.pe", "Secreta123")
+        self.assertEqual(correcta.status_code, 429)
+        self.assertNotIn("token", correcta.data)
+
+    def test_pasado_el_bloqueo_entra_y_el_contador_vuelve_a_cero(self):
+        self.activo.bloqueado_hasta = timezone.now() - timedelta(minutes=1)
+        self.activo.intentos_fallidos = 3
+        self.activo.save()
+
+        self.assertEqual(self._login("ana@adbrand.pe", "Secreta123").status_code, 200)
+
+        self.activo.refresh_from_db()
+        self.assertEqual(self.activo.intentos_fallidos, 0)
+        self.assertIsNone(self.activo.bloqueado_hasta)
+
+    def test_un_login_correcto_reinicia_los_intentos(self):
+        for _ in range(4):
+            self._login("ana@adbrand.pe", "Otra1234")
+        self.assertEqual(self._login("ana@adbrand.pe", "Secreta123").status_code, 200)
+
+        for _ in range(4):
+            self.assertEqual(self._login("ana@adbrand.pe", "Otra1234").status_code, 401)
+
     def test_faltan_datos(self):
         respuesta = self.client.post(self.URL, {"correo": "ana@adbrand.pe"}, format="json")
         self.assertEqual(respuesta.status_code, 400)
@@ -664,3 +698,16 @@ class RecuperarContrasenaAdminTests(APITestCase):
         self.client.post(self.SOLICITAR, {"correo": "finanzas@prueba.pe"}, format="json")
 
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_cambiar_la_contrasena_con_el_codigo_quita_el_bloqueo(self):
+        self.admin.bloqueado_hasta = timezone.now() + timedelta(minutes=10)
+        self.admin.save()
+        self.client.post(self.SOLICITAR, {"correo": "finanzas@prueba.pe"}, format="json")
+
+        cambio = self.client.post(
+            self.CAMBIAR, {"correo": "finanzas@prueba.pe", "codigo": self._codigo_del_correo(), "nueva": "Nueva2026"}, format="json",
+        )
+
+        self.assertEqual(cambio.status_code, 200)
+        login = self.client.post("/api/usuarios/login/", {"correo": "finanzas@prueba.pe", "contrasena": "Nueva2026"}, format="json")
+        self.assertEqual(login.status_code, 200)

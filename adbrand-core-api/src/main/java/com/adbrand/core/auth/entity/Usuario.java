@@ -76,6 +76,13 @@ public class Usuario {
     @Column(name = "firebase_uid", length = 128, unique = true)
     private String firebaseUid;
 
+    // Bloqueo por intentos fallidos (V54): contraseñas equivocadas seguidas y hasta cuándo está bloqueada.
+    @Column(name = "intentos_fallidos", nullable = false)
+    private int intentosFallidos;
+
+    @Column(name = "bloqueado_hasta")
+    private LocalDateTime bloqueadoHasta;
+
     // Si ya vio o saltó el tutorial guiado de la web (V46).
     @Column(name = "tutorial_visto", nullable = false)
     private boolean tutorialVisto;
@@ -135,6 +142,15 @@ public class Usuario {
     public void setColorAvatar(String colorAvatar) { this.colorAvatar = colorAvatar; }
     public String getFirebaseUid() { return firebaseUid; }
     public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
+    public int getIntentosFallidos() { return intentosFallidos; }
+    public void setIntentosFallidos(int intentosFallidos) { this.intentosFallidos = intentosFallidos; }
+    public LocalDateTime getBloqueadoHasta() { return bloqueadoHasta; }
+    public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) { this.bloqueadoHasta = bloqueadoHasta; }
+
+    public boolean estaBloqueado(LocalDateTime ahora) {
+        return bloqueadoHasta != null && ahora.isBefore(bloqueadoHasta);
+    }
+
     public boolean isTutorialVisto() { return tutorialVisto; }
     public void setTutorialVisto(boolean tutorialVisto) { this.tutorialVisto = tutorialVisto; }
 }

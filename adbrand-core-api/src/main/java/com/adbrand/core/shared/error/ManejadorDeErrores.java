@@ -64,6 +64,13 @@ public class ManejadorDeErrores {
         return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
     }
 
+    // Cuenta bloqueada unos minutos por intentos fallidos (CUENTA_BLOQUEADA).
+    @ExceptionHandler(DemasiadosIntentosException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ErrorResponse demasiadosIntentos(DemasiadosIntentosException ex) {
+        return new ErrorResponse(ex.getCodigo(), ex.getMessage(), Map.of());
+    }
+
     // HU 24: por ejemplo CODIGO_INVALIDO.
     @ExceptionHandler(SolicitudInvalidaException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

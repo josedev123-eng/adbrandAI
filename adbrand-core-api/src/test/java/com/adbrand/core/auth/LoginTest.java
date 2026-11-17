@@ -109,6 +109,47 @@ class LoginTest {
     }
 
     @Test
+    void tras5ContrasenasMalasLaCuentaSeBloqueaYNiLaCorrectaEntra() throws Exception {
+        for (int i = 1; i <= 4; i++) {
+            iniciarSesion(CORREO, "Equivocada1").andExpect(status().isUnauthorized());
+        }
+        iniciarSesion(CORREO, "Equivocada1")
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.codigo").value("CUENTA_BLOQUEADA"))
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("15 minutos")));
+
+        iniciarSesion(CORREO, CONTRASENA)
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.codigo").value("CUENTA_BLOQUEADA"));
+    }
+
+    @Test
+    void pasadoElBloqueoPuedeEntrarYElContadorVuelveACero() throws Exception {
+        usuario.setBloqueadoHasta(java.time.LocalDateTime.now().minusMinutes(1));
+        usuario.setIntentosFallidos(3);
+        usuarios.saveAndFlush(usuario);
+
+        iniciarSesion(CORREO, CONTRASENA).andExpect(status().isOk());
+
+        Usuario guardado = usuarios.findById(usuario.getId()).orElseThrow();
+        assertThat(guardado.getIntentosFallidos()).isZero();
+        assertThat(guardado.getBloqueadoHasta()).isNull();
+    }
+
+    @Test
+    void unLoginCorrectoReiniciaLosIntentosFallidos() throws Exception {
+        for (int i = 1; i <= 4; i++) {
+            iniciarSesion(CORREO, "Equivocada1").andExpect(status().isUnauthorized());
+        }
+        iniciarSesion(CORREO, CONTRASENA).andExpect(status().isOk());
+
+        // Cuatro fallos más no bloquean: el contador empezó de nuevo.
+        for (int i = 1; i <= 4; i++) {
+            iniciarSesion(CORREO, "Equivocada1").andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Test
     void cuentaInactivaDa403() throws Exception {
         usuario.setEstado(EstadoUsuario.INACTIVO);
         usuarios.saveAndFlush(usuario);

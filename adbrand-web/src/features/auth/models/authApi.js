@@ -6,7 +6,8 @@ export function registrar(datos) {
   return apiRequest('/auth/registro', { method: 'POST', body: datos })
 }
 
-// HU-22: responde { token, usuario }; 401 CREDENCIALES_INVALIDAS y 403 CUENTA_INACTIVA.
+// HU-22: responde { token, usuario }; 401 CREDENCIALES_INVALIDAS, 403 CUENTA_INACTIVA
+// y 429 CUENTA_BLOQUEADA (5 contraseñas equivocadas seguidas: 15 minutos sin entrar).
 export function iniciarSesion(correo, contrasena) {
   return apiRequest('/auth/login', { method: 'POST', body: { correo, contrasena } })
 }

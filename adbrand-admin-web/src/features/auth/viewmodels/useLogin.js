@@ -42,8 +42,9 @@ export function useLogin() {
       const { token, admin } = await iniciarSesion(correo.trim(), contrasena)
       entrar(token, admin)
     } catch (e) {
-      if (e.status === 401 || e.status === 403) {
+      if (e.status === 401 || e.status === 403 || e.status === 429) {
         // 401: correo o contraseña incorrectos. 403: cuenta desactivada (HU 03).
+        // 429: bloqueada 15 minutos tras 5 contraseñas equivocadas seguidas.
         setError(e.detalles?.detail || 'No se pudo iniciar sesión.')
       } else if (e.status === 400) {
         setError('Revisa el correo y la contraseña.')

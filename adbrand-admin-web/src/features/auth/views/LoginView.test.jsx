@@ -82,6 +82,16 @@ describe('LoginView (login de administradores)', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Tu cuenta está desactivada')
   })
 
+  it('avisa si la cuenta quedó bloqueada por intentos fallidos', async () => {
+    iniciarSesion.mockRejectedValue(errorHttp(429, 'Escribiste mal la contraseña 5 veces seguidas. Intenta de nuevo en 15 minutos.'))
+    mostrar()
+    await userEvent.type(screen.getByLabelText('Correo'), 'ana@adbrand.pe')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'Mala12345')
+    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('15 minutos')
+  })
+
   it('avisa si Django está apagado', async () => {
     iniciarSesion.mockRejectedValue(new TypeError('Failed to fetch'))
     mostrar()

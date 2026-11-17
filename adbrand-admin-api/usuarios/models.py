@@ -25,6 +25,9 @@ class UsuarioAdmin(models.Model):
     rol = models.ForeignKey(Rol, on_delete=models.PROTECT, db_column="rol_id")
     estado = models.CharField(max_length=20, choices=[(ACTIVO, "Activo"), (INACTIVO, "Inactivo")], default=ACTIVO)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    # Bloqueo por intentos fallidos (V54): contraseñas equivocadas seguidas y hasta cuándo está bloqueado.
+    intentos_fallidos = models.IntegerField(default=0)
+    bloqueado_hasta = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         managed = False  # la tabla la crea Flyway (V1)
