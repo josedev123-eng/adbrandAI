@@ -1,20 +1,25 @@
-/* Campo de contraseña con el botón Mostrar/Ocultar dentro del borde. */
+/* Campo de contraseña con el botón del ojo (mostrar/ocultar) dentro del borde. */
 .contrasena { display: flex; flex-direction: column; gap: 4px; }
 .contrasena-fila { position: relative; display: flex; }
-.contrasena-fila input { flex: 1; padding-right: 86px; }
+/* Más específico que los estilos de cada formulario, para que el texto no quede debajo del ojo. */
+.contrasena .contrasena-fila input { flex: 1; padding-right: 44px; }
 .contrasena-ver {
   position: absolute;
   top: 50%;
   right: 6px;
   transform: translateY(-50%);
-  padding: 5px 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 0;
   border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--fg);
-  font-size: 0.8rem;
-  font-weight: 600;
+  background: transparent;
+  color: var(--muted);
   cursor: pointer;
 }
-.contrasena-ver:hover { background: var(--line); }
+.contrasena-ver:hover { background: var(--surface-2); color: var(--fg); }
+.contrasena-ver:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.contrasena-ver svg { width: 20px; height: 20px; }
 .contrasena-aviso { font-size: 0.78rem; color: var(--warn); }
