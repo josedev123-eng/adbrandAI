@@ -94,6 +94,8 @@ public class RecuperacionService {
         // Con la contraseña nueva se quita el bloqueo por intentos fallidos (V54).
         usuario.setIntentosFallidos(0);
         usuario.setBloqueadoHasta(null);
+        // El código llegó a su correo: eso también confirma que el correo es suyo (V56).
+        usuario.setCorreoVerificado(true);
         valido.setUsado(true);
         invalidarCodigos(usuario.getId());
     }

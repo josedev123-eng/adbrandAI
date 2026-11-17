@@ -5,8 +5,8 @@ import { useLogin } from '../viewmodels/useLogin'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
 
-export default function LoginView({ aviso, irARegistro, irARecuperar, irAInicio }) {
-  const { formulario, errores, mensaje, enviando, cambiarCampo, enviar } = useLogin(aviso)
+export default function LoginView({ aviso, irARegistro, irARecuperar, irAInicio, irAVerificar }) {
+  const { formulario, errores, mensaje, enviando, cambiarCampo, enviar } = useLogin(aviso, irAVerificar)
 
   function alEnviar(evento) {
     evento.preventDefault()

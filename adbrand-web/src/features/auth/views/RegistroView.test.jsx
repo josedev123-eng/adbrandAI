@@ -39,7 +39,18 @@ describe('RegistroView', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 
     expect(registrar).toHaveBeenCalledWith(expect.objectContaining({ correo: 'rosa@panaderia.pe' }))
-    expect(await screen.findByText('Cuenta creada, ahora inicia sesión.')).toBeInTheDocument()
+    expect(await screen.findByText(/Te enviamos un código a tu correo/)).toBeInTheDocument()
+  })
+
+  it('al crear la cuenta abre Confirma tu correo con el correo escrito', async () => {
+    const irAVerificar = vi.fn()
+    render(<RegistroView irALogin={vi.fn()} abrir={vi.fn()} irAVerificar={irAVerificar} />)
+    await llenarFormulario()
+
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    await vi.waitFor(() => expect(irAVerificar).toHaveBeenCalledWith('rosa@panaderia.pe'))
   })
 
   it('los enlaces de la casilla abren los Términos y la Política de privacidad', async () => {

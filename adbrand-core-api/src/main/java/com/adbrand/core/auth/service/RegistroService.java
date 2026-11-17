@@ -20,10 +20,13 @@ public class RegistroService {
 
     private final UsuarioRepository usuarios;
     private final PasswordEncoder codificador;
+    private final VerificacionCorreoService verificacion;
 
-    public RegistroService(UsuarioRepository usuarios, PasswordEncoder codificador) {
+    public RegistroService(UsuarioRepository usuarios, PasswordEncoder codificador,
+                           VerificacionCorreoService verificacion) {
         this.usuarios = usuarios;
         this.codificador = codificador;
+        this.verificacion = verificacion;
     }
 
     // El correo se guarda sin espacios y en minúsculas: "Ana@Mail.com" y "ana@mail.com" son la misma cuenta.
@@ -43,12 +46,17 @@ public class RegistroService {
         usuario.setNombreEmpresa(datos.nombreEmpresa().trim());
         usuario.setCorreo(correo);
         usuario.setContrasenaHash(codificador.encode(datos.contrasena()));
+        // Hasta escribir el código que llega al correo, la cuenta no puede iniciar sesión (V56).
+        usuario.setCorreoVerificado(false);
 
+        Usuario guardado;
         try {
-            return UsuarioResponse.desde(usuarios.saveAndFlush(usuario));
+            guardado = usuarios.saveAndFlush(usuario);
         } catch (DataIntegrityViolationException ex) {
             // Dos registros con el mismo correo al mismo tiempo: la base lo rechaza por el UNIQUE.
             throw new ConflictoException(CORREO_REPETIDO, MENSAJE_CORREO_REPETIDO);
         }
+        verificacion.enviarCodigo(guardado);
+        return UsuarioResponse.desde(guardado);
     }
 }

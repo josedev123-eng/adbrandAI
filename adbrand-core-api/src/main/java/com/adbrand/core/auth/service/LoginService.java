@@ -22,6 +22,7 @@ public class LoginService {
 
     static final String MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos.";
     static final String MENSAJE_CUENTA_INACTIVA = "Tu cuenta está desactivada. Escribe a soporte para activarla.";
+    static final String MENSAJE_CORREO_NO_VERIFICADO = "Antes de entrar, confirma tu correo con el código de 6 dígitos que te enviamos.";
     // Bloqueo por intentos fallidos (V54).
     static final int INTENTOS_MAXIMOS = 5;
     static final Duration DURACION_BLOQUEO = Duration.ofMinutes(15);
@@ -45,7 +46,8 @@ public class LoginService {
     }
 
     // noRollbackFor: el intento fallido se guarda aunque la respuesta sea un error.
-    @Transactional(noRollbackFor = {NoAutenticadoException.class, DemasiadosIntentosException.class})
+    @Transactional(noRollbackFor = {NoAutenticadoException.class, DemasiadosIntentosException.class,
+            AccesoDenegadoException.class})
     public LoginResponse iniciarSesion(LoginRequest datos) {
         Optional<Usuario> encontrado = usuarios.findByCorreo(RegistroService.normalizarCorreo(datos.correo()));
         String hash = encontrado.map(Usuario::getContrasenaHash).orElse(hashDeRelleno);
@@ -66,6 +68,10 @@ public class LoginService {
         Usuario usuario = encontrado.get();
         usuario.setIntentosFallidos(0);
         usuario.setBloqueadoHasta(null);
+        // Registrada en la web pero sin confirmar el correo (V56): la web abre la pantalla del código.
+        if (!usuario.isCorreoVerificado() && usuario.getEstado() == EstadoUsuario.ACTIVO) {
+            throw new AccesoDenegadoException("CORREO_NO_VERIFICADO", MENSAJE_CORREO_NO_VERIFICADO);
+        }
         return entregarSesion(usuario);
     }
 

@@ -14,8 +14,9 @@ function validar(formulario) {
   return errores
 }
 
-// "aviso" es un mensaje que llega de otra pantalla, por ejemplo "Cuenta creada, ahora inicia sesión".
-export function useLogin(aviso = null) {
+// "aviso" es un mensaje que llega de otra pantalla, por ejemplo "Tu contraseña se cambió, inicia sesión".
+// "irAVerificar" abre "Confirma tu correo" si la cuenta todavía no confirmó su correo.
+export function useLogin(aviso = null, irAVerificar = null) {
   const { entrar } = useSesion()
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO)
   const [errores, setErrores] = useState({})
@@ -40,6 +41,10 @@ export function useLogin(aviso = null) {
     } catch (error) {
       // Por seguridad, la contraseña escrita se borra si no se pudo entrar.
       setFormulario((actual) => ({ ...actual, contrasena: '' }))
+      if (error.codigo === 'CORREO_NO_VERIFICADO' && irAVerificar) {
+        irAVerificar(formulario.correo.trim().toLowerCase())
+        return
+      }
       // 429: la cuenta quedó bloqueada 15 minutos tras 5 contraseñas equivocadas seguidas.
       if (error.status === 401 || error.status === 403 || error.status === 429) {
         setMensaje({ tipo: 'error', texto: error.message })

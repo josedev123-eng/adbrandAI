@@ -78,6 +78,8 @@ public class AutenticacionFirebaseService {
         usuario.setCorreo(firebase.correo());
         usuario.setFirebaseUid(firebase.uid());
         usuario.setContrasenaHash(codificador.encode(UUID.randomUUID().toString()));
+        // El correo lo confirma Firebase con su enlace; al entrar por primera vez queda verificado.
+        usuario.setCorreoVerificado(firebase.correoVerificado());
         return UsuarioResponse.desde(usuarios.saveAndFlush(usuario));
     }
 
@@ -105,6 +107,8 @@ public class AutenticacionFirebaseService {
         if (!firebase.correoVerificado()) {
             throw new AccesoDenegadoException("CORREO_NO_VERIFICADO", CORREO_NO_VERIFICADO);
         }
+        // Firebase ya confirmó el correo: también vale para la web (V56).
+        usuario.setCorreoVerificado(true);
         return login.entregarSesion(usuario);
     }
 }

@@ -83,6 +83,10 @@ public class Usuario {
     @Column(name = "bloqueado_hasta")
     private LocalDateTime bloqueadoHasta;
 
+    // Verificación del correo (V56). Las cuentas nuevas de la web empiezan en false hasta escribir el código.
+    @Column(name = "correo_verificado", nullable = false)
+    private boolean correoVerificado = true;
+
     // Si ya vio o saltó el tutorial guiado de la web (V46).
     @Column(name = "tutorial_visto", nullable = false)
     private boolean tutorialVisto;
@@ -150,6 +154,9 @@ public class Usuario {
     public boolean estaBloqueado(LocalDateTime ahora) {
         return bloqueadoHasta != null && ahora.isBefore(bloqueadoHasta);
     }
+
+    public boolean isCorreoVerificado() { return correoVerificado; }
+    public void setCorreoVerificado(boolean correoVerificado) { this.correoVerificado = correoVerificado; }
 
     public boolean isTutorialVisto() { return tutorialVisto; }
     public void setTutorialVisto(boolean tutorialVisto) { this.tutorialVisto = tutorialVisto; }

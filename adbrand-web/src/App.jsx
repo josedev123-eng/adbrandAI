@@ -21,6 +21,7 @@ const cargarRegistro = () => import('./features/auth/views/RegistroView')
 const LoginView = lazy(cargarLogin)
 const RegistroView = lazy(cargarRegistro)
 const RecuperarContrasenaView = lazy(() => import('./features/auth/views/RecuperarContrasenaView'))
+const VerificarCorreoView = lazy(() => import('./features/auth/views/VerificarCorreoView'))
 const InicioView = lazy(() => import('./features/inicio/views/InicioView'))
 const GenerarAnuncioView = lazy(() => import('./features/contenido/views/GenerarAnuncioView'))
 const PerfilNegocioView = lazy(() => import('./features/negocio/views/PerfilNegocioView'))
@@ -60,11 +61,12 @@ const RUTAS_PUBLICAS = {
   login: '/iniciar-sesion',
   registro: '/crear-cuenta',
   recuperar: '/recuperar-contrasena',
+  verificar: '/confirmar-correo',
   terminos: '/terminos',
   privacidad: '/privacidad',
   ayuda: '/ayuda',
 }
-const SOLO_SIN_SESION = ['/', '/iniciar-sesion', '/crear-cuenta', '/recuperar-contrasena']
+const SOLO_SIN_SESION = ['/', '/iniciar-sesion', '/crear-cuenta', '/recuperar-contrasena', '/confirmar-correo']
 
 // Si alguien abre /calendario sin sesión, se le pide entrar y luego se le lleva ahí.
 let rutaPendiente = null
@@ -94,10 +96,12 @@ function App() {
   const [verTutorial, setVerTutorial] = useState(false)
   // HU-24: mensaje para el inicio de sesión, por ejemplo "Tu contraseña se cambió, inicia sesión".
   const [avisoLogin, setAvisoLogin] = useState(null)
+  // "Confirma tu correo" (V56): a qué correo se mandó el código y si se llegó desde el inicio de sesión.
+  const [porVerificar, setPorVerificar] = useState(null)
   // Nombre de la pantalla en la pestaña del navegador.
   const nombrePantalla = usuario
     ? (NOMBRES_LEGALES[pantalla] ?? SECCIONES.flatMap((seccion) => seccion.opciones).find((opcion) => opcion.id === pantalla)?.nombre)
-    : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña', ...NOMBRES_LEGALES }[pantallaPublica]
+    : { login: 'Iniciar sesión', registro: 'Crear cuenta', recuperar: 'Recuperar contraseña', verificar: 'Confirma tu correo', ...NOMBRES_LEGALES }[pantallaPublica]
   const titulo = (usuario ? pantalla : pantallaPublica) === 'noEncontrada' ? 'Página no encontrada' : nombrePantalla
   useTituloPagina(titulo)
   // Decisiones del moderador sin ver: el número junto a "Mis anuncios".
@@ -136,6 +140,11 @@ function App() {
   function irALogin(aviso = null) {
     setAvisoLogin(aviso)
     setPantallaPublica('login')
+  }
+
+  function irAVerificar(correo, desdeLogin) {
+    setPorVerificar({ correo, desdeLogin })
+    setPantallaPublica('verificar')
   }
 
   if (cargando) {
@@ -187,13 +196,38 @@ function App() {
               irARegistro={() => setPantallaPublica('registro')}
               irARecuperar={() => setPantallaPublica('recuperar')}
               irAInicio={() => setPantallaPublica('inicio')}
+              irAVerificar={(correo) => irAVerificar(correo, true)}
             />
           )}
           {registroVisible && (
             <div hidden={enLegal || enAyuda}>
-              <RegistroView irALogin={() => irALogin()} abrir={abrirLegal} irAInicio={() => setPantallaPublica('inicio')} />
+              <RegistroView
+                irALogin={() => irALogin()}
+                abrir={abrirLegal}
+                irAInicio={() => setPantallaPublica('inicio')}
+                irAVerificar={(correo) => irAVerificar(correo, false)}
+              />
             </div>
           )}
+          {pantallaPublica === 'verificar' &&
+            (porVerificar ? (
+              <VerificarCorreoView
+                key={porVerificar.correo}
+                correo={porVerificar.correo}
+                desdeLogin={porVerificar.desdeLogin}
+                irALogin={() => irALogin()}
+              />
+            ) : (
+              // Al recargar la página se pierde a qué correo se mandó el código: se pide iniciar sesión,
+              // y el login vuelve a abrir esta pantalla con un código nuevo.
+              <LoginView
+                aviso={{ tipo: 'info', texto: 'Inicia sesión para recibir un código nuevo y confirmar tu correo.' }}
+                irARegistro={() => setPantallaPublica('registro')}
+                irARecuperar={() => setPantallaPublica('recuperar')}
+                irAInicio={() => setPantallaPublica('inicio')}
+                irAVerificar={(correo) => irAVerificar(correo, true)}
+              />
+            ))}
           {pantallaPublica === 'recuperar' && (
             <RecuperarContrasenaView irALogin={() => irALogin()} alTerminar={(aviso) => irALogin(aviso)} />
           )}

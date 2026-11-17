@@ -25,7 +25,8 @@ function validar(formulario) {
   return errores
 }
 
-export function useRegistro() {
+// "alCrear" recibe el correo de la cuenta nueva para abrir "Confirma tu correo".
+export function useRegistro(alCrear = null) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState(null)
@@ -45,15 +46,17 @@ export function useRegistro() {
 
     setEnviando(true)
     try {
+      const correo = normalizarCorreo(formulario.correo)
       await registrar({
         nombre: formulario.nombre.trim(),
         nombreEmpresa: formulario.nombreEmpresa.trim(),
-        correo: normalizarCorreo(formulario.correo),
+        correo,
         contrasena: formulario.contrasena,
       })
       setFormulario(FORMULARIO_VACIO)
       setCreada(true)
-      setMensaje({ tipo: 'exito', texto: 'Cuenta creada, ahora inicia sesión.' })
+      setMensaje({ tipo: 'exito', texto: 'Cuenta creada. Te enviamos un código a tu correo para confirmarlo.' })
+      alCrear?.(correo)
     } catch (error) {
       if (error.codigo === 'CORREO_REPETIDO') {
         setErrores({ correo: error.message })

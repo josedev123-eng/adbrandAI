@@ -5,8 +5,8 @@ import { useRegistro } from '../viewmodels/useRegistro'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
 
-export default function RegistroView({ irALogin, abrir, irAInicio }) {
-  const { formulario, errores, mensaje, enviando, creada, cambiarCampo, enviar } = useRegistro()
+export default function RegistroView({ irALogin, abrir, irAInicio, irAVerificar }) {
+  const { formulario, errores, mensaje, enviando, creada, cambiarCampo, enviar } = useRegistro(irAVerificar)
 
   function alEnviar(evento) {
     evento.preventDefault()

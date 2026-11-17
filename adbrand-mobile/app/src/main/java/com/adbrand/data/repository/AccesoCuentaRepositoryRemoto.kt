@@ -8,7 +8,7 @@ import org.json.JSONObject
 
 class AccesoCuentaRepositoryRemoto : AccesoCuentaRepository {
     override suspend fun registrar(nombre: String, empresa: String, correo: String, contrasena: String) =
-        convertir(AuthApi.registrar(nombre, empresa, correo, contrasena), "Cuenta creada. Ya puedes iniciar sesión.")
+        convertir(AuthApi.registrar(nombre, empresa, correo, contrasena), "Cuenta creada. Te enviamos un código a tu correo: confírmalo en la web de AdBrand.AI para poder entrar.")
 
     override suspend fun solicitarCodigo(correo: String) =
         convertir(AuthApi.solicitarCodigo(correo), "Si el correo está registrado, te enviamos un código.")
