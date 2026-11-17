@@ -11,4 +11,7 @@ public interface OpcionAnuncioRepository extends JpaRepository<OpcionAnuncio, Lo
     Optional<OpcionAnuncio> findByIdAndGeneracionUsuarioId(Long id, Long usuarioId);
 
     List<OpcionAnuncio> findByGeneracionIdOrderByNumero(Long generacionId);
+
+    // HU 46: la opción elegida de un anuncio guardado (de ahí sale su imagen).
+    Optional<OpcionAnuncio> findFirstByContenidoIdAndElegidaTrue(Long contenidoId);
 }
