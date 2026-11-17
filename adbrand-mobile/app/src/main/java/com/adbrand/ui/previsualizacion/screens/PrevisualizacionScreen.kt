@@ -34,9 +34,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adbrand.domain.model.Anuncio
+import com.adbrand.domain.model.FormatoVista
 import com.adbrand.domain.model.KitMarca
 import com.adbrand.domain.model.LogoMarca
 import com.adbrand.core.theme.CoralAdbrand
@@ -79,6 +81,10 @@ fun PrevisualizacionScreen(
                         }
                     }
                 }
+            }
+            // HU 46, criterio 1: selector de formato.
+            item {
+                SelectorFormato(actual = estado.formato.codigo, habilitado = !estado.cargando, alElegir = viewModel::cambiarFormato)
             }
             item {
                 if (estado.cargando) {
@@ -129,12 +135,33 @@ fun PrevisualizacionScreen(
                             modifier = Modifier.padding(top = 8.dp)
                         )
                     }
+                    item {
+                        Text(
+                            text = "Toca un anuncio para ver cómo se verá publicado.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     items(estado.anuncios, key = { it.id ?: it.hashCode().toLong() }) { anuncio ->
-                        TarjetaAnuncio(anuncio, kit)
+                        TarjetaAnuncio(anuncio, kit, estado.formato, alTocar = { viewModel.abrirPublicacion(anuncio) })
                     }
                 }
             }
         }
+    }
+
+    // HU 46: el anuncio abierto como se verá publicado.
+    estado.publicacion?.let { anuncio ->
+        VistaPublicacion(
+            anuncio = anuncio,
+            kit = estado.kit,
+            formato = estado.formato,
+            imagen = estado.imagen,
+            cargandoImagen = estado.cargandoImagen,
+            errorImagen = estado.errorImagen,
+            alCambiarFormato = viewModel::cambiarFormato,
+            alCerrar = viewModel::cerrarPublicacion
+        )
     }
 }
 
@@ -238,7 +265,7 @@ private fun MuestraTipografia(kit: KitMarca) {
 }
 
 @Composable
-private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?) {
+private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?, formato: FormatoVista, alTocar: () -> Unit) {
     val colores = coloresDe(kit?.paletaColores.orEmpty())
     val acento = colores.firstOrNull() ?: MaterialTheme.colorScheme.primary
     val colorEstado = when (anuncio.estado) {
@@ -249,6 +276,7 @@ private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?) {
     }
 
     Card(
+        onClick = alTocar,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -270,10 +298,12 @@ private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?) {
                 )
             }
             Text(
-                text = anuncio.texto,
+                text = anuncio.textoAjustado,
                 style = MaterialTheme.typography.bodyLarge,
                 fontFamily = familiaDe(kit?.tipografiaSecundaria.orEmpty())
             )
+            // HU 46, criterio 2: aviso si el texto se acortó para entrar en el formato.
+            if (anuncio.recortado) AvisoRecorte(formato)
             Text(
                 text = "Tono ${anuncio.tono.lowercase().replaceFirstChar { it.uppercase() }}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -284,7 +314,7 @@ private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?) {
 }
 
 @Composable
-private fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color) {
+internal fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color, tamano: Dp = 64.dp) {
     val texto = logo?.texto?.ifBlank { null } ?: nombre.take(2).uppercase().ifBlank { "AB" }
     val fondo = colorDesde(logo?.colorFondo, colorPrincipal)
     val colorTexto = colorDesde(logo?.colorTexto, Color.White)
@@ -296,7 +326,7 @@ private fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color) {
 
     Box(
         modifier = Modifier
-            .size(64.dp)
+            .size(tamano)
             .clip(forma)
             .background(fondo),
         contentAlignment = Alignment.Center
@@ -304,7 +334,7 @@ private fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color) {
         Text(
             text = texto,
             color = colorTexto,
-            style = MaterialTheme.typography.titleLarge,
+            style = if (tamano < 48.dp) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleLarge,
             fontFamily = familiaDe(logo?.tipografia.orEmpty()),
             fontWeight = FontWeight.Bold
         )
@@ -313,10 +343,10 @@ private fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color) {
 
 private val RoundedCornerShape8 = RoundedCornerShape(16.dp)
 
-private fun colorDesde(hex: String?, porDefecto: Color): Color =
+internal fun colorDesde(hex: String?, porDefecto: Color): Color =
     runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(porDefecto)
 
-private fun coloresDe(paleta: String): List<Color> =
+internal fun coloresDe(paleta: String): List<Color> =
     Regex("#[0-9A-Fa-f]{6}")
         .findAll(paleta)
         .mapNotNull { runCatching { Color(android.graphics.Color.parseColor(it.value)) }.getOrNull() }
@@ -324,7 +354,7 @@ private fun coloresDe(paleta: String): List<Color> =
         .take(5)
         .toList()
 
-private fun familiaDe(nombre: String): FontFamily = when {
+internal fun familiaDe(nombre: String): FontFamily = when {
     nombre.contains("mono", ignoreCase = true) -> FontFamily.Monospace
     nombre.contains("serif", ignoreCase = true) ||
         nombre.contains("playfair", ignoreCase = true) ||

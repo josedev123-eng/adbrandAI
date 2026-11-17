@@ -4,6 +4,7 @@ import com.adbrand.core.network.RespuestaHttp
 import com.adbrand.core.network.Resultado
 import com.adbrand.data.remote.PrevisualizacionApi
 import com.adbrand.domain.model.Anuncio
+import com.adbrand.domain.model.FormatoVista
 import com.adbrand.domain.model.KitMarca
 import com.adbrand.domain.model.LogoMarca
 import com.adbrand.domain.model.Previsualizacion
@@ -13,12 +14,21 @@ import org.json.JSONObject
 // HU 45: traduce { kit, anuncios } del backend a los modelos de la app.
 class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
 
-    override suspend fun obtener(): Resultado<Previsualizacion> {
-        val respuesta = PrevisualizacionApi.obtener().getOrElse { return errorDeRed(it) }
+    override suspend fun obtener(formato: String): Resultado<Previsualizacion> {
+        val respuesta = PrevisualizacionApi.obtener(formato).getOrElse { return errorDeRed(it) }
         if (!respuesta.esExitosa) {
             return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
         }
         return runCatching { Resultado.Exito(desdeJson(JSONObject(respuesta.cuerpo))) }
+            .getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
+    }
+
+    override suspend fun imagen(contenidoId: Long): Resultado<String?> {
+        val respuesta = PrevisualizacionApi.imagen(contenidoId).getOrElse { return errorDeRed(it) }
+        if (!respuesta.esExitosa) {
+            return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
+        }
+        return runCatching { Resultado.Exito(texto(JSONObject(respuesta.cuerpo), "imagen").ifBlank { null }) }
             .getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
     }
 
@@ -32,7 +42,17 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
                 }
             }
         }
-        return Previsualizacion(kit = kit, anuncios = anuncios)
+        val formato = json.optJSONObject("formato")?.let { f ->
+            FormatoVista(
+                codigo = texto(f, "codigo").ifBlank { "CUADRADO" },
+                nombre = texto(f, "nombre").ifBlank { "Cuadrado" },
+                uso = texto(f, "uso"),
+                ancho = f.optInt("ancho", 1080),
+                alto = f.optInt("alto", 1080),
+                maxCaracteres = f.optInt("maxCaracteres", 125)
+            )
+        } ?: FormatoVista()
+        return Previsualizacion(kit = kit, anuncios = anuncios, formato = formato)
     }
 
     private fun kitDesde(json: JSONObject): KitMarca {
@@ -61,6 +81,8 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
     private fun anuncioDesde(json: JSONObject): Anuncio = Anuncio(
         id = json.optLong("id").takeIf { it > 0 },
         texto = texto(json, "texto"),
+        textoAjustado = texto(json, "textoAjustado").ifBlank { texto(json, "texto") },
+        recortado = json.optBoolean("recortado", false),
         redSocial = texto(json, "redSocial").ifBlank { "INSTAGRAM" },
         tono = texto(json, "tono").ifBlank { "CERCANO" },
         estado = texto(json, "estado").ifBlank { "APROBADO" },
