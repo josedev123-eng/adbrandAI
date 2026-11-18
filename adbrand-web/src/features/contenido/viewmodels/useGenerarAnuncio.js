@@ -1,6 +1,7 @@
 // ViewModel: "Generar → Elegir". Pide 4 opciones de anuncio (texto + imagen), deja elegir una
 // y la guarda como anuncio. Después se puede copiar o regenerar (HU-10, HU-12).
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 import { elegirOpcion, generarOpciones, regenerarAnuncio, retocarImagen, usarVersion } from '../models/anunciosApi'
 
 export const MAXIMO_OFERTA = 300
@@ -33,6 +34,17 @@ export function useGenerarAnuncio() {
   const [errorInstruccion, setErrorInstruccion] = useState(null)
   const [historial, setHistorial] = useState(null)
   const [retocando, setRetocando] = useState(false)
+
+  // Criterio 1 (HU 9): si todavía no hay perfil del negocio, se avisa desde que entra, no recién al generar.
+  useEffect(() => {
+    let activo = true
+    obtenerPerfil()
+      .then(() => activo && setFaltaPerfil(false))
+      .catch((error) => activo && error?.status === 404 && setFaltaPerfil(true))
+    return () => {
+      activo = false
+    }
+  }, [])
 
   function cambiarCampo(campo, valor) {
     setSolicitud((actual) => ({ ...actual, [campo]: valor }))

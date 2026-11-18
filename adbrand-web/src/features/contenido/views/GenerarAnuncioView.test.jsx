@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { elegirOpcion, generarOpciones, retocarImagen, usarVersion } from '../models/anunciosApi'
+import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 import GenerarAnuncioView from './GenerarAnuncioView'
 
 vi.mock('../models/anunciosApi', async (importOriginal) => ({
@@ -12,6 +13,11 @@ vi.mock('../models/anunciosApi', async (importOriginal) => ({
   regenerarAnuncio: vi.fn(),
   retocarImagen: vi.fn(),
   usarVersion: vi.fn(),
+}))
+
+vi.mock('../../negocio/models/perfilNegocioApi', async (importOriginal) => ({
+  ...(await importOriginal()),
+  obtenerPerfil: vi.fn(() => Promise.resolve({ nombreComercial: 'Panadería Rosa' })),
 }))
 
 const ESTILOS = ['Foto realista', 'Ilustración', 'Minimalista', 'Colorido']
@@ -192,5 +198,14 @@ describe('GenerarAnuncioView: límite de tokens del plan', () => {
     expect(await screen.findByText(/Usaste los 10 000 tokens de IA del plan gratuito/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Ver planes' }))
     expect(irAPlanes).toHaveBeenCalled()
+  })
+
+  it('sin perfil del negocio avisa desde que entra y no deja generar', async () => {
+    obtenerPerfil.mockRejectedValueOnce(Object.assign(new Error('No existe'), { status: 404 }))
+    render(<GenerarAnuncioView />)
+
+    expect(await screen.findByText(/Primero completa el perfil de tu negocio/)).toBeInTheDocument()
+    expect(screen.getByText('Falta tu perfil')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '✦ Generar 4 opciones' })).toBeDisabled()
   })
 })

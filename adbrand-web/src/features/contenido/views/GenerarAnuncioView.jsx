@@ -2,6 +2,7 @@
 // y la tarjeta del anuncio elegido. La lógica está en useGenerarAnuncio.
 import { NOMBRES_TONO, REDES } from '../models/anunciosApi'
 import { MAXIMO_OFERTA, useGenerarAnuncio } from '../viewmodels/useGenerarAnuncio'
+import { useSegundosEsperando } from '../viewmodels/useSegundosEsperando'
 import './GenerarAnuncioView.css'
 
 function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
@@ -60,6 +61,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes }) {
   // HU 13: si el filtro lo marcó como dudoso, no se puede copiar para publicarlo.
   const enRevision = anuncio?.estado === 'DUDOSO'
   const cargando = generando || regenerando
+  const segundosEsperando = useSegundosEsperando(generando)
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -80,7 +82,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes }) {
           <strong>Una idea puede convertirse en tu próxima campaña.</strong>
           <p>Elige una red, cuéntanos tu oferta y compara 4 propuestas con el estilo de tu marca.</p>
         </div>
-        <span className="anuncio-bienvenida-etiqueta">Listo para crear</span>
+        <span className="anuncio-bienvenida-etiqueta">{faltaPerfil ? 'Falta tu perfil' : 'Listo para crear'}</span>
       </section>
 
       {faltaPerfil && (
@@ -140,7 +142,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes }) {
             {errores.redSocial && <small className="campo-error">{errores.redSocial}</small>}
           </fieldset>
 
-          <button className="boton-ia" type="submit" disabled={cargando || eligiendoId !== null}>
+          <button className="boton-ia" type="submit" disabled={cargando || eligiendoId !== null || faltaPerfil}>
             {generando ? 'Creando 4 opciones...' : '✦ Generar 4 opciones'}
           </button>
         </form>
@@ -270,7 +272,13 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes }) {
               <span className="opcion-linea opcion-linea-corta" />
             </div>
           ))}
-          <p className="opciones-ayuda">La IA está escribiendo los textos y dibujando las imágenes...</p>
+          <p className="opciones-ayuda" role="status">
+            La IA está escribiendo los textos y dibujando las imágenes... ({segundosEsperando} s)
+            <br />
+            {segundosEsperando < 60
+              ? 'Suele tardar entre 1 y 3 minutos. No cierres esta página.'
+              : 'Está tardando más de lo normal: la IA puede estar ocupada. Seguimos esperando.'}
+          </p>
         </section>
       )}
 
