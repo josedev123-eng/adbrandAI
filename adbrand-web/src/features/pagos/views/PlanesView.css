@@ -55,3 +55,8 @@
 .plan-acciones .boton-secundario {
   flex: 1 1 auto;
 }
+
+/* Plan que la empresa tiene hoy. */
+.plan-actual-aviso { margin: 0; }
+.plan-tarjeta-actual { border: 2px solid var(--primary); }
+.plan-actual-etiqueta { margin-left: 8px; padding: 3px 9px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 0.72rem; font-weight: 700; vertical-align: middle; }
