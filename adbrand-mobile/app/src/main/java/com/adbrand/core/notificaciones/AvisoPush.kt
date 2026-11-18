@@ -94,12 +94,13 @@ object AvisosPush {
     }
 }
 
-// HU 49 y 52: cada tipo de aviso abre su pantalla. En este paso solo el aviso
-// del sistema tiene destino; las campañas y el plan se conectan en sus HUs.
+// HU 49 y 52: cada tipo de aviso abre su pantalla. El aviso de campaña lleva
+// el id para abrir su ficha; el del plan se conecta en la HU 52.
 object RutasAviso {
 
     fun destino(aviso: AvisoPush): String? = when (aviso.tipo) {
         TipoAviso.SISTEMA -> "panel"
+        TipoAviso.CAMPANA -> aviso.campanaId?.let { "campana/$it" }
         else -> null
     }
 }

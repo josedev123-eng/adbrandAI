@@ -30,10 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.adbrand.core.session.GestorSesion
 import com.adbrand.core.notificaciones.BuzonNotificacion
 import com.adbrand.core.notificaciones.GestorPush
@@ -46,6 +48,7 @@ import com.adbrand.ui.auth.screens.BienvenidaScreen
 import com.adbrand.ui.auth.screens.LoginScreen
 import com.adbrand.ui.auth.screens.RecuperarContrasenaScreen
 import com.adbrand.ui.auth.screens.RegistroScreen
+import com.adbrand.ui.campana.screens.DetalleCampanaScreen
 import com.adbrand.ui.components.AperturaMarca
 import com.adbrand.ui.components.BarraInferior
 import com.adbrand.ui.components.ItemNavegacion
@@ -66,6 +69,7 @@ private const val RUTA_EMPRESA = "empresa"
 private const val RUTA_CREAR = "crear"
 private const val RUTA_PERFIL = "perfil"
 private const val RUTA_PREVISUALIZACION = "previsualizacion"
+private const val RUTA_CAMPANA = "campana/{id}"
 
 private val DESTINOS_PRINCIPALES = setOf(
     RUTA_PANEL,
@@ -242,6 +246,18 @@ fun AppAdbrand() {
 
             composable(RUTA_PREVISUALIZACION) {
                 PrevisualizacionScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
+            }
+
+            // HU 49: ficha de campaña que se abre desde el aviso de recordatorio.
+            composable(
+                route = RUTA_CAMPANA,
+                arguments = listOf(navArgument("id") { type = NavType.LongType })
+            ) { entrada ->
+                val id = entrada.arguments?.getLong("id") ?: 0L
+                DetalleCampanaScreen(
+                    id = id,
+                    alVolver = { navegador.popBackStack() }
+                )
             }
         }
 
