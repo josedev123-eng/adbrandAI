@@ -121,20 +121,85 @@ class CrearAnuncioViewModel(
         viewModelScope.launch {
             _estado.update { it.copy(eligiendoId = opcionId, aviso = null, mensajeExito = null) }
             when (val resultado = opcionesRepositorio.elegir(opcionId)) {
-                is Resultado.Exito -> _estado.update { estado ->
-                    estado.copy(
-                        eligiendoId = null,
-                        anuncio = resultado.dato.anuncio,
-                        opcionElegida = resultado.dato.opcion,
-                        opciones = estado.opciones.map { opcion ->
-                            opcion.copy(elegida = opcion.id == opcionId)
-                        },
-                        mensajeExito = "Guardamos tu anuncio con la imagen elegida."
-                    )
+                is Resultado.Exito -> {
+                    _estado.update { estado ->
+                        estado.copy(
+                            eligiendoId = null,
+                            anuncio = resultado.dato.anuncio,
+                            opcionElegida = resultado.dato.opcion,
+                            opciones = estado.opciones.map { opcion ->
+                                opcion.copy(elegida = opcion.id == opcionId)
+                            },
+                            mensajeExito = "Guardamos tu anuncio con la imagen elegida."
+                        )
+                    }
+                    // Se pide el historial para mostrar el límite de retoques del mes.
+                    when (val versiones = opcionesRepositorio.versiones(opcionId)) {
+                        is Resultado.Exito -> _estado.update { it.copy(historial = versiones.dato) }
+                        is Resultado.Error -> Unit
+                    }
                 }
 
                 is Resultado.Error -> _estado.update { estado ->
                     estado.conError(resultado)
+                }
+            }
+        }
+    }
+
+    // IA de imágenes: retocar la imagen elegida. Cada instrucción crea una versión nueva.
+    fun retocar() {
+        val actual = _estado.value
+        val opcion = actual.opcionElegida ?: return
+        if (actual.cargando) return
+
+        val errorLocal = validarInstruccion(actual.instruccion)
+        if (errorLocal != null) {
+            _estado.update { it.copy(errorInstruccion = errorLocal) }
+            return
+        }
+
+        viewModelScope.launch {
+            _estado.update {
+                it.copy(retocando = true, errorInstruccion = null, aviso = null, mensajeExito = null)
+            }
+            when (val resultado = opcionesRepositorio.retocar(opcion.id, actual.instruccion.trim())) {
+                is Resultado.Exito -> _estado.update { estado ->
+                    estado.copy(
+                        retocando = false,
+                        historial = resultado.dato,
+                        opcionElegida = estado.opcionElegida?.copy(imagen = resultado.dato.imagenActual),
+                        instruccion = "",
+                        mensajeExito = "La IA retocó tu imagen. Puedes seguir ajustándola."
+                    )
+                }
+
+                is Resultado.Error -> _estado.update { estado -> estado.conErrorRetoque(resultado) }
+            }
+        }
+    }
+
+    // Historial: volver a una versión anterior sin gastar otro retoque.
+    fun volverAVersion(numero: Int) {
+        val actual = _estado.value
+        val opcion = actual.opcionElegida ?: return
+        if (actual.cargando) return
+        if (actual.historial?.versionActual == numero) return
+
+        viewModelScope.launch {
+            _estado.update { it.copy(retocando = true, aviso = null, mensajeExito = null) }
+            when (val resultado = opcionesRepositorio.usarVersion(opcion.id, numero)) {
+                is Resultado.Exito -> _estado.update { estado ->
+                    estado.copy(
+                        retocando = false,
+                        historial = resultado.dato,
+                        opcionElegida = estado.opcionElegida?.copy(imagen = resultado.dato.imagenActual),
+                        mensajeExito = "Ahora se usa la versión $numero de tu imagen."
+                    )
+                }
+
+                is Resultado.Error -> _estado.update {
+                    it.copy(retocando = false, aviso = resultado.mensaje)
                 }
             }
         }
@@ -184,6 +249,20 @@ class CrearAnuncioViewModel(
         oferta.isBlank() -> "Escribe la oferta que quieres anunciar."
         oferta.length > MAXIMO_OFERTA -> "Máximo $MAXIMO_OFERTA caracteres."
         else -> null
+    }
+
+    private fun validarInstruccion(instruccion: String): String? = when {
+        instruccion.isBlank() -> "Escribe qué quieres cambiar de la imagen."
+        instruccion.length > MAXIMO_INSTRUCCION -> "Máximo $MAXIMO_INSTRUCCION caracteres."
+        else -> null
+    }
+
+    private fun CrearAnuncioEstado.conErrorRetoque(resultado: Resultado.Error): CrearAnuncioEstado {
+        val errorCampo = resultado.campos["instruccion"]
+        return when {
+            errorCampo != null -> copy(retocando = false, errorInstruccion = errorCampo)
+            else -> copy(retocando = false, aviso = resultado.mensaje)
+        }
     }
 
     private fun CrearAnuncioEstado.conError(

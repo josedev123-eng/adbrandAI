@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,6 +75,7 @@ import com.adbrand.domain.model.RedSocial
 import com.adbrand.ui.anuncio.components.ImagenIa
 import com.adbrand.ui.anuncio.viewmodel.CrearAnuncioEstado
 import com.adbrand.ui.anuncio.viewmodel.CrearAnuncioViewModel
+import com.adbrand.ui.anuncio.viewmodel.MAXIMO_INSTRUCCION
 import com.adbrand.ui.anuncio.viewmodel.MAXIMO_OFERTA
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.BotonPrincipal
@@ -227,7 +229,10 @@ fun CrearAnuncioScreen(
                     }
                 },
                 alRegenerar = viewModel::regenerar,
-                alNuevaVersion = viewModel::generar
+                alNuevaVersion = viewModel::generar,
+                alCambiarInstruccion = viewModel::actualizarInstruccion,
+                alRetocar = viewModel::retocar,
+                alUsarVersion = viewModel::volverAVersion
             )
         }
 
@@ -477,7 +482,10 @@ private fun TarjetaResultado(
     estado: CrearAnuncioEstado,
     alCopiar: () -> Unit,
     alRegenerar: () -> Unit,
-    alNuevaVersion: () -> Unit
+    alNuevaVersion: () -> Unit,
+    alCambiarInstruccion: (String) -> Unit,
+    alRetocar: () -> Unit,
+    alUsarVersion: (Int) -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -529,6 +537,37 @@ private fun TarjetaResultado(
                                         .fillMaxWidth()
                                         .height(190.dp)
                                 )
+
+                                if (estado.retocando) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = VioletaAdbrand
+                                        )
+                                        Spacer(modifier = Modifier.size(8.dp))
+                                        Text(
+                                            text = "La IA está retocando tu imagen...",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextoSecundario
+                                        )
+                                    }
+                                }
+
+                                FormularioRetoque(
+                                    estado = estado,
+                                    alCambiarInstruccion = alCambiarInstruccion,
+                                    alRetocar = alRetocar
+                                )
+
+                                ListaVersiones(
+                                    estado = estado,
+                                    alUsarVersion = alUsarVersion
+                                )
                             }
                             ContenidoAnuncio(
                                 anuncio = anuncio,
@@ -540,6 +579,99 @@ private fun TarjetaResultado(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FormularioRetoque(
+    estado: CrearAnuncioEstado,
+    alCambiarInstruccion: (String) -> Unit,
+    alRetocar: () -> Unit
+) {
+    val restantes = estado.historial?.retoquesRestantes
+    val ayuda = when {
+        estado.errorInstruccion != null -> null
+        restantes != null -> "Te quedan $restantes retoques este mes."
+        else -> "${estado.instruccion.length} / $MAXIMO_INSTRUCCION"
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "¿Qué quieres cambiar de la imagen?",
+            style = MaterialTheme.typography.labelMedium,
+            color = TextoSecundario
+        )
+        CampoAdbrand(
+            valor = estado.instruccion,
+            alCambiar = alCambiarInstruccion,
+            etiqueta = "Retoque",
+            marcador = "Ej.: pon el fondo más claro",
+            ayuda = ayuda,
+            error = estado.errorInstruccion,
+            habilitado = !estado.retocando,
+            unaLinea = true,
+            accionIme = ImeAction.Done
+        )
+        BotonPrincipal(
+            texto = if (estado.retocando) "Retocando..." else "Retocar imagen",
+            onClick = alRetocar,
+            cargando = estado.retocando,
+            habilitado = estado.instruccion.isNotBlank(),
+            icono = Icons.Filled.AutoAwesome
+        )
+    }
+}
+
+@Composable
+private fun ListaVersiones(
+    estado: CrearAnuncioEstado,
+    alUsarVersion: (Int) -> Unit
+) {
+    val historial = estado.historial ?: return
+    if (historial.versiones.size <= 1) return
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Versiones de la imagen",
+            style = MaterialTheme.typography.labelMedium,
+            color = TextoSecundario
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            historial.versiones.forEach { version ->
+                val seleccionada = version.actual
+                Column(
+                    modifier = Modifier
+                        .width(96.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(
+                            enabled = !seleccionada && !estado.retocando,
+                            onClick = { alUsarVersion(version.numero) }
+                        )
+                        .padding(4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    ImagenIa(
+                        dataUrl = version.imagen,
+                        etiqueta = "Versión ${version.numero}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                    )
+                    Text(
+                        text = if (seleccionada) "v${version.numero} · actual" else "v${version.numero}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (seleccionada) IndigoAdbrand else TextoSecundario,
+                        fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal
+                    )
                 }
             }
         }

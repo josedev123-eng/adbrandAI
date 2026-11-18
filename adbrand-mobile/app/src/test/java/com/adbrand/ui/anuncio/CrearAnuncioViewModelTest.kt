@@ -9,6 +9,7 @@ import com.adbrand.domain.model.OpcionElegida
 import com.adbrand.domain.model.OpcionesAnuncio
 import com.adbrand.domain.model.RedSocial
 import com.adbrand.domain.model.Tono
+import com.adbrand.domain.model.VersionAnuncio
 import com.adbrand.domain.model.VersionesAnuncio
 import com.adbrand.ui.anuncio.viewmodel.CrearAnuncioViewModel
 import com.adbrand.ui.anuncio.viewmodel.MAXIMO_OFERTA
@@ -64,11 +65,15 @@ class CrearAnuncioViewModelTest {
         private val generadas: Resultado<OpcionesAnuncio> = Resultado.Exito(opciones()),
         private val elegida: Resultado<OpcionElegida> = Resultado.Exito(
             OpcionElegida(anuncio = anuncio(), opcion = opcion(numero = 2, elegida = true))
-        )
+        ),
+        private val retocada: Resultado<VersionesAnuncio> = Resultado.Exito(versiones(actual = 2)),
+        private val historial: Resultado<VersionesAnuncio> = Resultado.Exito(versiones(actual = 1))
     ) : AnuncioOpcionesRepository {
         var ofertaEnviada: String? = null
         var redEnviada: RedSocial? = null
         var idElegido: Long? = null
+        var instruccionEnviada: String? = null
+        var versionUsada: Int? = null
 
         override suspend fun generar(oferta: String, redSocial: RedSocial): Resultado<OpcionesAnuncio> {
             ofertaEnviada = oferta
@@ -81,14 +86,17 @@ class CrearAnuncioViewModelTest {
             return elegida
         }
 
-        override suspend fun retocar(opcionId: Long, instruccion: String): Resultado<VersionesAnuncio> =
-            Resultado.Error("No se usa en esta prueba.")
+        override suspend fun retocar(opcionId: Long, instruccion: String): Resultado<VersionesAnuncio> {
+            instruccionEnviada = instruccion
+            return retocada
+        }
 
-        override suspend fun versiones(opcionId: Long): Resultado<VersionesAnuncio> =
-            Resultado.Error("No se usa en esta prueba.")
+        override suspend fun versiones(opcionId: Long): Resultado<VersionesAnuncio> = historial
 
-        override suspend fun usarVersion(opcionId: Long, numero: Int): Resultado<VersionesAnuncio> =
-            Resultado.Error("No se usa en esta prueba.")
+        override suspend fun usarVersion(opcionId: Long, numero: Int): Resultado<VersionesAnuncio> {
+            versionUsada = numero
+            return Resultado.Exito(versiones(actual = numero))
+        }
     }
 
     @Test
@@ -215,6 +223,92 @@ class CrearAnuncioViewModelTest {
     }
 
     @Test
+    fun retocarGuardaLaNuevaVersionYActualizaLaImagen() = runTest {
+        val opciones = OpcionesFalso()
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), opciones)
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+
+        viewModel.actualizarInstruccion("Fondo más claro")
+        viewModel.retocar()
+        advanceUntilIdle()
+
+        assertEquals("Fondo más claro", opciones.instruccionEnviada)
+        assertEquals(2, viewModel.estado.value.historial?.versionActual)
+        assertEquals("data:image/png;base64,NUEVA", viewModel.estado.value.opcionElegida?.imagen)
+        assertEquals("", viewModel.estado.value.instruccion)
+        assertEquals(
+            "La IA retocó tu imagen. Puedes seguir ajustándola.",
+            viewModel.estado.value.mensajeExito
+        )
+        assertFalse(viewModel.estado.value.retocando)
+    }
+
+    @Test
+    fun retocarSinInstruccionNoLlamaAlBackend() = runTest {
+        val opciones = OpcionesFalso()
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), opciones)
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+
+        viewModel.retocar()
+        advanceUntilIdle()
+
+        assertEquals("Escribe qué quieres cambiar de la imagen.", viewModel.estado.value.errorInstruccion)
+        assertNull(opciones.instruccionEnviada)
+    }
+
+    @Test
+    fun volverAUnaVersionAnteriorNoGastaOtroRetoque() = runTest {
+        val opciones = OpcionesFalso(historial = Resultado.Exito(versiones(actual = 2)))
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), opciones)
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+
+        viewModel.volverAVersion(1)
+        advanceUntilIdle()
+
+        assertEquals(1, opciones.versionUsada)
+        assertEquals(1, viewModel.estado.value.historial?.versionActual)
+        assertEquals("Ahora se usa la versión 1 de tu imagen.", viewModel.estado.value.mensajeExito)
+    }
+
+    @Test
+    fun elLimiteDeRetoquesSeMuestraComoAviso() = runTest {
+        val viewModel = CrearAnuncioViewModel(
+            AnuncioFalso(),
+            OpcionesFalso(
+                retocada = Resultado.Error(
+                    mensaje = "Llegaste al límite de retoques del mes.",
+                    codigo = 400,
+                    codigoError = "LIMITE_RETOQUES"
+                )
+            )
+        )
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+
+        viewModel.actualizarInstruccion("Cambia el color")
+        viewModel.retocar()
+        advanceUntilIdle()
+
+        assertEquals("Llegaste al límite de retoques del mes.", viewModel.estado.value.aviso)
+        assertFalse(viewModel.estado.value.retocando)
+    }
+
+    @Test
     fun copiarMarcaElAnuncioComoCopiado() = runTest {
         val viewModel = CrearAnuncioViewModel(AnuncioFalso(), OpcionesFalso())
         viewModel.actualizarOferta("Oferta válida")
@@ -261,6 +355,23 @@ class CrearAnuncioViewModelTest {
             oferta = "Oferta",
             redSocial = RedSocial.INSTAGRAM,
             opciones = (1..4).map { opcion(it) }
+        )
+
+        fun versiones(actual: Int, restantes: Int? = 19) = VersionesAnuncio(
+            opcionId = 1L,
+            versionActual = actual,
+            imagenActual = if (actual == 2) "data:image/png;base64,NUEVA" else "data:image/svg+xml;base64,AAA",
+            retoquesRestantes = restantes,
+            versiones = (1..actual).map { numero ->
+                VersionAnuncio(
+                    numero = numero,
+                    instruccion = if (numero == 1) "" else "Fondo más claro",
+                    imagen = if (numero == 2) "data:image/png;base64,NUEVA" else "data:image/svg+xml;base64,AAA",
+                    proveedorImagen = "simulado",
+                    imagenSimulada = numero == 1,
+                    actual = numero == actual
+                )
+            }
         )
     }
 }
