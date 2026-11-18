@@ -146,3 +146,6 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:5174"]
 TEST_RUNNER = "core.test_runner.PruebasConTablasFlyway"
 # HU 18: dirección de Spring Boot para revisar si el backend y la IA están activos.
 CORE_API_URL = os.getenv("CORE_API_URL", "http://localhost:8080")
+
+# Control de gasto de imágenes: retoques de pago por empresa al mes (el mismo valor que usa Spring).
+LIMITE_RETOQUES_MES = int(os.getenv("AI_IMAGE_RETOUCH_LIMIT", "20"))

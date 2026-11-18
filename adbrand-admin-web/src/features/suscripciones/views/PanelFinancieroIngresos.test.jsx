@@ -79,4 +79,16 @@ describe('Ingresos por mes en el panel financiero (HU-06)', () => {
     expect(await screen.findByText(/No se pudo cargar el panel/)).toBeInTheDocument()
     expect(screen.queryAllByRole('listitem')).toHaveLength(0)
   })
+
+  it('compara el último mes con el anterior con una flechita', async () => {
+    obtenerSuscripcionesActivas.mockResolvedValue({ total: 2 })
+    obtenerIngresosMensuales.mockResolvedValue([
+      { mes: '2026-09', total: '200.00' },
+      { mes: '2026-10', total: '150.00' },
+    ])
+    render(<PanelFinancieroView />)
+
+    expect(await screen.findByText('Último mes')).toBeInTheDocument()
+    expect(screen.getByText(/Baja 25 % frente a setiembre de 2026/)).toBeInTheDocument()
+  })
 })

@@ -1,4 +1,4 @@
-.pagina.pagina-suscripciones { max-width: 1000px; }
+.pagina.pagina-suscripciones { max-width: 1200px; }
 
 .filtros { margin-bottom: 16px; }
 
@@ -16,7 +16,7 @@
 
 .lista-vacia { text-align: center; color: var(--muted); padding: 24px; }
 
-.badge-estado { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.badge-estado { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
 
 .badge-activa { background: var(--ok-soft); color: var(--ok); }
 .badge-vencida { background: var(--bad-soft); color: var(--bad); }

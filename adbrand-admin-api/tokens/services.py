@@ -3,7 +3,9 @@ from django.utils import timezone
 
 from moderacion.models import PerfilNegocio
 
-from .models import ConsumoMensual, ConsumoToken, LimiteTokens
+from django.conf import settings
+
+from .models import ConsumoImagen, ConsumoMensual, ConsumoToken, LimiteTokens
 
 
 def inicio_del_mes_actual():
@@ -74,6 +76,40 @@ def consumo_del_mes_actual():
         "total": sum(fila["tokens"] for fila in filas),
         "empresas": filas,
         "alertas": alertas,
+        "imagenes": imagenes_del_mes(inicio),
+    }
+
+
+def imagenes_del_mes(inicio=None):
+    """Control de gasto de imágenes en el mes actual: borradores (gratis) y retoques (de pago) por empresa.
+
+    Solo cuenta las imágenes reales (las de prueba no gastan). "limite_retoques" es el tope de retoques de pago
+    por empresa al mes (el mismo que usa Spring); "en_limite" marca a las empresas que ya llegaron.
+    """
+    inicio = inicio or inicio_del_mes_actual()
+    limite = settings.LIMITE_RETOQUES_MES
+    filas = list(
+        ConsumoImagen.objects.filter(fecha__gte=inicio, simulado=False)
+        .values("usuario_id")
+        .annotate(
+            borradores=Count("id", filter=Q(tipo=ConsumoImagen.BORRADOR)),
+            retoques=Count("id", filter=Q(tipo=ConsumoImagen.RETOQUE)),
+            ultima=Max("fecha"),
+        )
+        .order_by("-retoques", "-borradores", "usuario_id")
+    )
+    nombres = dict(
+        PerfilNegocio.objects.filter(usuario_id__in=[fila["usuario_id"] for fila in filas])
+        .values_list("usuario_id", "nombre_comercial")
+    )
+    for fila in filas:
+        fila["empresa"] = nombres.get(fila["usuario_id"], f"Empresa #{fila['usuario_id']}")
+        fila["en_limite"] = fila["retoques"] >= limite
+    return {
+        "borradores": sum(fila["borradores"] for fila in filas),
+        "retoques": sum(fila["retoques"] for fila in filas),
+        "limite_retoques": limite,
+        "empresas": filas,
     }
 
 

@@ -3,6 +3,7 @@
 import { formatearHora } from '../models/servidorApi'
 import { useEstadoServidor } from '../viewmodels/useEstadoServidor'
 import './EstadoServidorView.css'
+import Cargando from '../../../shared/components/Cargando'
 
 function TarjetaServicio({ servicio }) {
   const activo = servicio.estado === 'ACTIVO'
@@ -41,12 +42,22 @@ export default function EstadoServidorView() {
       </header>
 
       {error && <div className="aviso aviso-error">{error}</div>}
-      {cargando && <p className="estado-cargando">Verificando servicios...</p>}
+      {cargando && <Cargando texto="Verificando servicios..." />}
 
       {caidos.length > 0 && (
         <div className="aviso aviso-error" role="alert">
           {caidos.length === 1 ? 'Hay un servicio caído: ' : 'Hay servicios caídos: '}
           {caidos.map((servicio) => servicio.nombre).join(', ')}.
+        </div>
+      )}
+
+      {estado && caidos.length === 0 && (
+        <div className="estado-resumen" role="status">
+          <span className="servicio-luz" aria-hidden="true" />
+          <span>
+            <strong>Todos los servicios están activos</strong>
+            <small>Última revisión a las {formatearHora(estado.verificado_en)} · se revisa solo cada 15 segundos</small>
+          </span>
         </div>
       )}
 

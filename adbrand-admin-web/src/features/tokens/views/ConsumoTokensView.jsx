@@ -4,6 +4,8 @@
 import { formatearFecha, formatearMes, formatearPorcentaje, formatearTokens } from '../models/tokensApi'
 import { useConsumoTokens } from '../viewmodels/useConsumoTokens'
 import './ConsumoTokensView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 function AlertasConsumo({ alertas }) {
   if (!alertas?.length) return null
@@ -24,6 +26,81 @@ function AlertasConsumo({ alertas }) {
   )
 }
 
+// Gráfico de barras de tokens por empresa, de la que más gastó a la que menos.
+// Es solo dibujo (la tabla de abajo tiene los mismos datos), por eso los textos van en atributos y no se repiten.
+function GraficoEmpresas({ empresas }) {
+  const ordenadas = [...empresas].sort((a, b) => b.tokens - a.tokens)
+  const mayor = Math.max(1, ...ordenadas.map((fila) => fila.tokens))
+  return (
+    <div className="consumo-grafico" aria-hidden="true">
+      {ordenadas.map((fila) => (
+        <div
+          key={fila.usuario_id}
+          className={fila.alerta ? 'consumo-barra consumo-barra-alerta' : 'consumo-barra'}
+          data-empresa={fila.empresa}
+          data-tokens={formatearTokens(fila.tokens)}
+        >
+          <span className="consumo-barra-relleno" style={{ width: `${Math.max(Math.round((fila.tokens / mayor) * 100), 2)}%` }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Control de gasto de las IA de imágenes en el mes: borradores (gratis) y retoques (de pago) por empresa.
+function ImagenesDelMes({ imagenes }) {
+  return (
+    <section className="tarjeta consumo-imagenes" aria-label="Imágenes con IA">
+      <h2>Imágenes con IA</h2>
+      <div className="consumo-imagenes-cifras">
+        <div>
+          <strong>{imagenes.borradores}</strong>
+          <span>borradores (gratis)</span>
+        </div>
+        <div>
+          <strong className="consumo-imagenes-pago">{imagenes.retoques}</strong>
+          <span>retoques (de pago)</span>
+        </div>
+        <div>
+          <strong className="consumo-imagenes-limite">{imagenes.limite_retoques}</strong>
+          <span>retoques por empresa al mes</span>
+        </div>
+      </div>
+
+      {imagenes.empresas.length === 0 ? (
+        <SinResultados>Ninguna empresa ha generado imágenes con IA este mes.</SinResultados>
+      ) : (
+        <table className="tabla-consumo">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th className="consumo-numero">Borradores</th>
+              <th className="consumo-numero">Retoques</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {imagenes.empresas.map((fila) => (
+              <tr key={fila.usuario_id} className={fila.en_limite ? 'consumo-fila-alerta' : undefined}>
+                <td className="consumo-empresa">{fila.empresa}</td>
+                <td className="consumo-numero">{fila.borradores}</td>
+                <td className="consumo-numero">
+                  {fila.retoques} / {imagenes.limite_retoques}
+                </td>
+                <td>
+                  <span className={fila.en_limite ? 'consumo-estado consumo-estado-limite' : 'consumo-estado'}>
+                    {fila.en_limite ? 'Llegó al límite' : 'Dentro del límite'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  )
+}
+
 export default function ConsumoTokensView() {
   const { consumo, cargando, error, actualizando, actualizar } = useConsumoTokens()
 
@@ -41,7 +118,7 @@ export default function ConsumoTokensView() {
 
       {error && <div className="aviso aviso-error">{error}</div>}
 
-      {cargando && <p className="consumo-vacio">Cargando consumo...</p>}
+      {cargando && <Cargando texto="Cargando consumo..." />}
 
       {consumo && (
         <>
@@ -57,34 +134,39 @@ export default function ConsumoTokensView() {
             <h2>Por empresa</h2>
 
             {consumo.empresas.length === 0 ? (
-              <p className="consumo-vacio">Ninguna empresa ha usado la IA este mes.</p>
+              <SinResultados>Ninguna empresa ha usado la IA este mes.</SinResultados>
             ) : (
-              <table className="tabla-consumo">
-                <thead>
-                  <tr>
-                    <th>Empresa</th>
-                    <th className="consumo-numero">Tokens</th>
-                    <th className="consumo-numero">% del límite</th>
-                    <th className="consumo-numero">Generaciones</th>
-                    <th>Última generación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {consumo.empresas.map((fila) => (
-                    <tr key={fila.usuario_id} className={fila.alerta ? 'consumo-fila-alerta' : undefined}>
-                      <td className="consumo-empresa">{fila.empresa}</td>
-                      <td className="consumo-numero">{formatearTokens(fila.tokens)}</td>
-                      <td className="consumo-numero">
-                        {fila.porcentaje == null ? '—' : `${formatearPorcentaje(fila.porcentaje)}%`}
-                      </td>
-                      <td className="consumo-numero">{fila.generaciones}</td>
-                      <td className="consumo-fecha">{formatearFecha(fila.ultima_generacion)}</td>
+              <>
+                <GraficoEmpresas empresas={consumo.empresas} />
+                <table className="tabla-consumo">
+                  <thead>
+                    <tr>
+                      <th>Empresa</th>
+                      <th className="consumo-numero">Tokens</th>
+                      <th className="consumo-numero">% del límite</th>
+                      <th className="consumo-numero">Generaciones</th>
+                      <th>Última generación</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {consumo.empresas.map((fila) => (
+                      <tr key={fila.usuario_id} className={fila.alerta ? 'consumo-fila-alerta' : undefined}>
+                        <td className="consumo-empresa">{fila.empresa}</td>
+                        <td className="consumo-numero">{formatearTokens(fila.tokens)}</td>
+                        <td className="consumo-numero">
+                          {fila.porcentaje == null ? '—' : `${formatearPorcentaje(fila.porcentaje)}%`}
+                        </td>
+                        <td className="consumo-numero">{fila.generaciones}</td>
+                        <td className="consumo-fecha">{formatearFecha(fila.ultima_generacion)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
             )}
           </section>
+
+          {consumo.imagenes && <ImagenesDelMes imagenes={consumo.imagenes} />}
         </>
       )}
     </main>

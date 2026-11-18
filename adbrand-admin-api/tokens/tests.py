@@ -6,7 +6,9 @@ from rest_framework.test import APITestCase
 from core.pruebas import con_sesion, crear_admin, iniciar_sesion
 from moderacion.models import PerfilNegocio
 
-from .models import ConsumoMensual, ConsumoToken, LimiteTokens
+from django.test import override_settings
+
+from .models import ConsumoImagen, ConsumoMensual, ConsumoToken, LimiteTokens
 from .services import inicio_del_mes_actual, limite_de_empresa
 
 URL = "/api/tokens/consumo-actual/"
@@ -335,3 +337,72 @@ class HistorialTests(APITestCase):
         respuesta = self.client.get(f"{URL_HISTORIAL}?desde=2026-08&hasta=2026-10")
 
         self.assertEqual(respuesta.status_code, 403)
+
+
+def imagen(usuario_id, tipo, proveedor="cloudflare", simulado=False, fecha=None):
+    return ConsumoImagen.objects.create(
+        usuario_id=usuario_id, tipo=tipo, proveedor=proveedor, simulado=simulado, fecha=fecha or timezone.now(),
+    )
+
+
+@override_settings(LIMITE_RETOQUES_MES=3)
+class ConsumoImagenesTests(APITestCase):
+    """Control de gasto de imágenes: borradores (gratis) y retoques (de pago) por empresa en el mes actual."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.tecnico = crear_admin("TECNICO")
+        PerfilNegocio.objects.create(usuario_id=1, nombre_comercial="Panadería Doña Rosa", rubro="Panadería")
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.tecnico)
+
+    def imagenes(self):
+        respuesta = self.client.get(URL)
+        self.assertEqual(respuesta.status_code, 200)
+        return respuesta.data["imagenes"]
+
+    def test_sin_imagenes_todo_en_cero(self):
+        datos = self.imagenes()
+
+        self.assertEqual(datos["borradores"], 0)
+        self.assertEqual(datos["retoques"], 0)
+        self.assertEqual(datos["limite_retoques"], 3)
+        self.assertEqual(datos["empresas"], [])
+
+    def test_cuenta_borradores_y_retoques_de_cada_empresa(self):
+        for _ in range(4):
+            imagen(1, ConsumoImagen.BORRADOR)
+        imagen(1, ConsumoImagen.RETOQUE, proveedor="openrouter")
+        imagen(2, ConsumoImagen.BORRADOR)
+
+        datos = self.imagenes()
+
+        self.assertEqual(datos["borradores"], 5)
+        self.assertEqual(datos["retoques"], 1)
+        rosa = datos["empresas"][0]
+        self.assertEqual(rosa["empresa"], "Panadería Doña Rosa")
+        self.assertEqual((rosa["borradores"], rosa["retoques"]), (4, 1))
+        self.assertEqual(datos["empresas"][1]["empresa"], "Empresa #2")
+
+    def test_no_cuenta_las_imagenes_de_prueba_ni_las_de_meses_anteriores(self):
+        imagen(1, ConsumoImagen.RETOQUE, proveedor="simulado", simulado=True)
+        imagen(1, ConsumoImagen.RETOQUE, proveedor="openrouter", fecha=inicio_del_mes_actual() - timedelta(days=2))
+
+        datos = self.imagenes()
+
+        self.assertEqual(datos["retoques"], 0)
+        self.assertEqual(datos["empresas"], [])
+
+    def test_marca_a_la_empresa_que_llego_al_limite_de_retoques(self):
+        for _ in range(3):
+            imagen(1, ConsumoImagen.RETOQUE, proveedor="openrouter")
+        imagen(2, ConsumoImagen.RETOQUE, proveedor="openrouter")
+
+        empresas = {fila["usuario_id"]: fila for fila in self.imagenes()["empresas"]}
+
+        self.assertTrue(empresas[1]["en_limite"])
+        self.assertFalse(empresas[2]["en_limite"])
+        # La que más retoques hizo va primero.
+        self.assertEqual(self.imagenes()["empresas"][0]["usuario_id"], 1)
+

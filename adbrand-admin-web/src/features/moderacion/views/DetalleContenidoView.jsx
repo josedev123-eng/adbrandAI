@@ -5,6 +5,7 @@ import { formatearFecha, NOMBRES_ESTADO, NOMBRES_RED, NOMBRES_TONO } from '../mo
 import { useDetalleContenido } from '../viewmodels/useDetalleContenido'
 import { useState } from 'react'
 import './DetalleContenidoView.css'
+import Cargando from '../../../shared/components/Cargando'
 
 function Dato({ etiqueta, children }) {
   return (
@@ -56,7 +57,7 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
         ← Volver a la bandeja
       </button>
 
-      {cargando && <p className="bandeja-vacia">Cargando detalle...</p>}
+      {cargando && <Cargando texto="Cargando detalle..." />}
       {error && <div className="aviso aviso-error">{error}</div>}
 
       {contenido && (

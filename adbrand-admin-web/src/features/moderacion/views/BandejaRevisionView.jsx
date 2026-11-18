@@ -3,6 +3,8 @@ import { formatearFecha, NOMBRES_RED } from '../models/moderacionApi'
 import { useBandejaRevision } from '../viewmodels/useBandejaRevision'
 import DetalleContenidoView from './DetalleContenidoView'
 import './BandejaRevisionView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 export default function BandejaRevisionView() {
   const { contenidos, cargando, error, recargar, seleccionadoId, abrir, volverALaBandeja } = useBandejaRevision()
@@ -32,10 +34,10 @@ export default function BandejaRevisionView() {
             {!cargando && !error && <span className="contador">{contenidos.length}</span>}
           </div>
 
-          {cargando && <p className="bandeja-vacia">Cargando contenidos...</p>}
+          {cargando && <Cargando texto="Cargando contenidos..." />}
 
           {!cargando && !error && contenidos.length === 0 && (
-            <p className="bandeja-vacia">No hay contenidos pendientes. Todo lo generado pasó el filtro automático.</p>
+            <SinResultados>No hay contenidos pendientes. Todo lo generado pasó el filtro automático.</SinResultados>
           )}
 
           {!cargando && contenidos.length > 0 && (

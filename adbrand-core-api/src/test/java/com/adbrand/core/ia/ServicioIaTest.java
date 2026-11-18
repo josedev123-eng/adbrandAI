@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,9 @@ import com.adbrand.core.ia.service.IaNoDisponibleException;
 import com.adbrand.core.ia.service.RegistroConsumoIa;
 import com.adbrand.core.ia.service.ServicioIa;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 
 // Prueba el modo simulado y los fallos de la IA sin conectarse a ningún servidor.
@@ -78,5 +82,43 @@ class ServicioIaTest {
 
         assertThatThrownBy(() -> servicio(false).generarTexto("reglas", "pedido"))
                 .isInstanceOf(IaNoDisponibleException.class);
+    }
+
+    private ServicioIa servicioSinEspera() {
+        ServicioIa servicio = servicio(false);
+        servicio.cambiarEsperaEntreReintentos(0);
+        return servicio;
+    }
+
+    // Gemini gratis a veces responde 503 "high demand" unos segundos: se reintenta y sale bien.
+    @Test
+    void siLaIaEstaSaturadaReintentaYDevuelveElTexto() {
+        when(cliente.completar("reglas", "pedido"))
+                .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE))
+                .thenReturn("Anuncio listo");
+
+        assertThat(servicioSinEspera().generarTexto("reglas", "pedido")).isEqualTo("Anuncio listo");
+        verify(cliente, times(2)).completar("reglas", "pedido");
+    }
+
+    @Test
+    void siSigueSaturadaDespuesDeLosReintentosLanzaIaNoDisponible() {
+        when(cliente.completar(anyString(), anyString()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS));
+
+        assertThatThrownBy(() -> servicioSinEspera().generarTexto("reglas", "pedido"))
+                .isInstanceOf(IaNoDisponibleException.class);
+        verify(cliente, times(ServicioIa.REINTENTOS + 1)).completar("reglas", "pedido");
+    }
+
+    // Un error que no es pasajero (por ejemplo, modelo inexistente o clave mala) no se reintenta.
+    @Test
+    void unErrorQueNoEsPasajeroNoSeReintenta() {
+        when(cliente.completar(anyString(), anyString()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        assertThatThrownBy(() -> servicioSinEspera().generarTexto("reglas", "pedido"))
+                .isInstanceOf(IaNoDisponibleException.class);
+        verify(cliente, times(1)).completar("reglas", "pedido");
     }
 }

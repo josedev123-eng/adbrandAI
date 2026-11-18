@@ -19,6 +19,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .tabla-administradores tr:hover td {
@@ -39,6 +40,7 @@
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 
 .badge-estado.activo {
@@ -58,6 +60,17 @@
 .boton-pequeno {
   padding: 6px 12px;
   font-size: 0.8rem;
+}
+
+/* En la tabla, "Desactivar cuenta" va solo con borde rojo; el rojo lleno queda para la confirmación. */
+.tabla-administradores .boton-peligro {
+  background: transparent;
+  color: var(--bad);
+  border: 1px solid var(--bad);
+}
+
+.tabla-administradores .boton-peligro:hover:not(:disabled) {
+  background: var(--bad-soft);
 }
 
 .texto-inactivo {

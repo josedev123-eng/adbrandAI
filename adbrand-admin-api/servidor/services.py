@@ -17,7 +17,9 @@ NOMBRES = {
     VerificacionServidor.BASE_DATOS: "Base de datos",
     VerificacionServidor.IA: "Servicio de IA",
 }
-ESPERA_BACKEND = 3  # segundos
+# Spring espera hasta 5 s a la IA antes de responder /api/estado; Django espera más para no marcar
+# el backend como caído cuando solo la IA está lenta.
+ESPERA_BACKEND = 8  # segundos
 IA_SIN_BACKEND = "No se pudo verificar porque el backend no responde"
 
 

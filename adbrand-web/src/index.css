@@ -38,3 +38,14 @@ body {
 h1, h2 { font-family: var(--f-display); line-height: 1.2; margin: 0; }
 
 button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Menú lateral a la izquierda y la pantalla elegida a la derecha (igual que la web de administración) */
+.layout-usuario { display: flex; min-height: 100vh; }
+.layout-contenido { flex: 1; min-width: 0; }
+@media (max-width: 860px) { .layout-usuario { flex-direction: column; } }
+
+/* Barra superior: empresa, sección actual y fecha de hoy */
+.barra-superior { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: 0.85rem; color: var(--muted); }
+.barra-superior strong { color: var(--fg); font-weight: 700; }
+.barra-fecha::first-letter { text-transform: uppercase; }
+@media (max-width: 860px) { .barra-superior { padding: 10px 16px; } .barra-fecha { display: none; } }

@@ -129,4 +129,24 @@ class KitMarcaServiceTest {
 
         verify(ia).generarTexto(anyString(), anyString(), eq(1L), eq(OrigenConsumo.KIT_MARCA));
     }
+
+    // Gemini devuelve la paleta como lista y a veces envuelve el JSON en ```json; el kit se guarda igual,
+    // con un color por línea (el formato que usa la web).
+    @Test
+    void aceptaLaPaletaComoListaYElJsonEnBloqueMarkdown() {
+        perfilDelUsuario();
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("""
+                ```json
+                {"logo_concepto": "Un trigo dorado", "tipografia_primaria": "Lora",
+                 "tipografia_secundaria": "Inter",
+                 "paleta_colores": ["#C8102E - Rojo - Pasión", {"hex": "#F4E1C1", "nombre": "Crema", "uso": "Fondos"}],
+                 "voz_marca": ["Cercana", "Alegre"]}
+                ```""");
+
+        KitMarcaGeneradoResponse kit = servicio.generar(1L, datos());
+
+        assertThat(kit.paletaColores()).isEqualTo("#C8102E - Rojo - Pasión\n#F4E1C1 - Crema - Fondos");
+        assertThat(kit.vozMarca()).isEqualTo("Cercana\nAlegre");
+        assertThat(kit.logoConcepto()).isEqualTo("Un trigo dorado");
+    }
 }

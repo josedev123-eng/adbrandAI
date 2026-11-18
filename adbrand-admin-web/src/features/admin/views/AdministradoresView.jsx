@@ -5,6 +5,7 @@ import { useAdministradores } from '../viewmodels/useAdministradores'
 import { useEditarPermisos } from '../viewmodels/useEditarPermisos'
 import EditarPermisosModal from './EditarPermisosModal'
 import './AdministradoresView.css'
+import SinResultados from '../../../shared/components/SinResultados'
 
 function BadgeEstado({ estado }) {
   const esActivo = estado === 'ACTIVO'
@@ -59,7 +60,7 @@ export default function AdministradoresView() {
         <h2>Administradores registrados</h2>
 
         {administradores.length === 0 && (
-          <p className="lista-vacia">No hay administradores registrados.</p>
+          <SinResultados>No hay administradores registrados.</SinResultados>
         )}
 
         <table className="tabla-administradores">

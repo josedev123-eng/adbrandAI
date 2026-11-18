@@ -2,6 +2,30 @@
 import { formatearMes, formatearSoles } from '../models/suscripcionesApi'
 import { usePanelFinanciero } from '../viewmodels/usePanelFinanciero'
 import './PanelFinancieroView.css'
+import Cargando from '../../../shared/components/Cargando'
+
+// Compara el último mes de las barras con el anterior: cuánto subió o bajó, en porcentaje.
+function compararUltimoMes(ingresos) {
+  if (ingresos.length < 2) return null
+  const ultimo = ingresos[ingresos.length - 1]
+  const anterior = ingresos[ingresos.length - 2]
+  if (anterior.total === 0) return { ultimo, anterior, tendencia: ultimo.total > 0 ? 'sube' : 'igual', porcentaje: null }
+  const porcentaje = Math.round(((ultimo.total - anterior.total) / anterior.total) * 100)
+  const tendencia = porcentaje > 0 ? 'sube' : porcentaje < 0 ? 'baja' : 'igual'
+  return { ultimo, anterior, tendencia, porcentaje: Math.abs(porcentaje) }
+}
+
+const FLECHAS = { sube: '▲', baja: '▼', igual: '●' }
+
+function TextoTendencia({ comparacion }) {
+  const { tendencia, porcentaje, anterior } = comparacion
+  const frente = `frente a ${formatearMes(anterior.mes)}`
+  if (porcentaje === null) {
+    return tendencia === 'sube' ? `Sube ${frente}, que no tuvo ingresos` : `Igual ${frente}: sin ingresos`
+  }
+  if (tendencia === 'igual') return `Igual ${frente}`
+  return `${tendencia === 'sube' ? 'Sube' : 'Baja'} ${porcentaje} % ${frente}`
+}
 
 export default function PanelFinancieroView() {
   const {
@@ -18,6 +42,8 @@ export default function PanelFinancieroView() {
     aplicarRango,
     quitarRango,
   } = usePanelFinanciero()
+
+  const comparacion = !cargando && !error ? compararUltimoMes(ingresos) : null
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -61,6 +87,18 @@ export default function PanelFinancieroView() {
             {hayRango ? 'Pagos recibidos en el rango elegido.' : 'Pagos recibidos en los últimos 6 meses.'}
           </p>
         </section>
+
+        {/* Último mes de las barras con una flechita de sube o baja frente al mes anterior */}
+        {comparacion && (
+          <section className="tarjeta panel-indicador">
+            <h2>Último mes</h2>
+            <p className="panel-numero">{formatearSoles(comparacion.ultimo.total)}</p>
+            <p className={`panel-tendencia tendencia-${comparacion.tendencia}`}>
+              <span aria-hidden="true">{FLECHAS[comparacion.tendencia]}</span>{' '}
+              <TextoTendencia comparacion={comparacion} />
+            </p>
+          </section>
+        )}
       </div>
 
       {/* HU-06: ingresos generados por mes */}
@@ -99,7 +137,7 @@ export default function PanelFinancieroView() {
 
         {errorRango && <p className="campo-error panel-rango-error">{errorRango}</p>}
 
-        {cargando && <p className="panel-vacio">Cargando ingresos...</p>}
+        {cargando && <Cargando texto="Cargando ingresos..." />}
 
         {!cargando && !error && (
           <ul className="panel-ingresos">
@@ -107,7 +145,10 @@ export default function PanelFinancieroView() {
               <li key={ingreso.mes} className="panel-ingreso">
                 <span className="panel-ingreso-mes">{formatearMes(ingreso.mes)}</span>
                 <span className="panel-ingreso-barra">
-                  <span className="panel-ingreso-relleno" style={{ width: `${ingreso.porcentaje}%` }} />
+                  <span
+                    className="panel-ingreso-relleno"
+                    style={{ width: `${ingreso.porcentaje}%`, '--alto': `${Math.max(ingreso.porcentaje, 2)}%` }}
+                  />
                 </span>
                 <span className="panel-ingreso-monto">{formatearSoles(ingreso.total)}</span>
               </li>

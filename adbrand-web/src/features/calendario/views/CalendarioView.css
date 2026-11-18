@@ -1,6 +1,6 @@
 /* HU 33: calendario mensual en grilla de 7 columnas. */
 .pagina-calendario {
-  max-width: 900px;
+  max-width: 1200px;
 }
 
 .calendario {
@@ -118,6 +118,21 @@
 .calendario-aviso {
   background: var(--warn-soft);
   color: var(--warn);
+}
+
+/* HU 35: los días que dura una campaña llevan un fondo suave de su color y una línea arriba. */
+.calendario-dia-campana {
+  background: color-mix(in srgb, var(--color-campana) 12%, white);
+  border-top: 3px solid var(--color-campana);
+}
+
+.calendario-nombre-campana {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-campana);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* HU 35: publicaciones de una campaña, pintadas con su color. */

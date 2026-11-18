@@ -4,6 +4,8 @@ import { Fragment } from 'react'
 import { formatearFechaHora, NOMBRES_ESTADO } from '../models/moderacionApi'
 import { useHistorialContenidos } from '../viewmodels/useHistorialContenidos'
 import './HistorialContenidosView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 export default function HistorialContenidosView() {
   const { filtros, historial, aviso, error, cargando, abiertoId, cambiarFiltro, filtrar, irAPagina, alternarTexto } =
@@ -49,10 +51,10 @@ export default function HistorialContenidosView() {
       {error && <div className="aviso aviso-error">{error}</div>}
 
       <section className="tarjeta">
-        {cargando && <p className="historial-contenidos-vacio">Cargando historial...</p>}
+        {cargando && <Cargando texto="Cargando historial..." />}
 
         {!cargando && historial?.resultados.length === 0 && (
-          <p className="historial-contenidos-vacio">No hay contenidos aprobados ni rechazados con esos filtros.</p>
+          <SinResultados>No hay contenidos aprobados ni rechazados con esos filtros.</SinResultados>
         )}
 
         {!cargando && historial?.resultados.length > 0 && (

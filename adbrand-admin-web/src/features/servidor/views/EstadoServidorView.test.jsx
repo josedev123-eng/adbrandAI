@@ -60,6 +60,14 @@ describe('EstadoServidorView (HU-18)', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
+  it('con todo activo muestra el resumen con la hora de la última revisión', async () => {
+    verificarEstado.mockResolvedValue(TODO_ACTIVO)
+    render(<EstadoServidorView />)
+
+    const resumen = (await screen.findByText('Todos los servicios están activos')).closest('.estado-resumen')
+    expect(resumen).toHaveTextContent(`Última revisión a las ${formatearHora(HORA)}`)
+  })
+
   it('marca como caído el servicio que no responde, con el motivo (criterio 2)', async () => {
     verificarEstado.mockResolvedValue(BACKEND_CAIDO)
     render(<EstadoServidorView />)

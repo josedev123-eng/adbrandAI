@@ -5,14 +5,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { SesionProvider } from './app/context/SesionProvider'
 import { obtenerSesion } from './features/auth/models/authApi'
+import { listarDudosos } from './features/moderacion/models/moderacionApi'
 import { EVENTO_SESION_VENCIDA } from './shared/services/apiClient'
 import { guardarToken, leerToken } from './shared/services/sesionToken'
 
+vi.mock('./features/moderacion/models/moderacionApi', () => ({ listarDudosos: vi.fn() }))
 vi.mock('./features/auth/models/authApi', () => ({
   iniciarSesion: vi.fn(),
   obtenerSesion: vi.fn(),
 }))
 // Las pantallas reales llaman a Django; aquí basta saber cuál se muestra.
+vi.mock('./features/inicio/views/InicioView', () => ({ default: () => <p>Pantalla de inicio</p> }))
 vi.mock('./features/moderacion/views/BandejaRevisionView', () => ({ default: () => <p>Pantalla de revisión</p> }))
 vi.mock('./features/moderacion/views/HistorialContenidosView', () => ({ default: () => <p>Pantalla de historial de contenidos</p> }))
 vi.mock('./features/admin/views/CrearAdministradorView', () => ({ default: () => <p>Pantalla de crear</p> }))
@@ -42,6 +45,7 @@ function opcionesDelMenu() {
 describe('App (login y menú por rol)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    listarDudosos.mockResolvedValue([])
     localStorage.clear()
   })
 
@@ -57,12 +61,13 @@ describe('App (login y menú por rol)', () => {
     mostrar()
 
     expect(screen.getByText('Cargando tu sesión…')).toBeInTheDocument()
-    expect(await screen.findByText('Pantalla de revisión')).toBeInTheDocument()
+    expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
     expect(screen.getByText('Superadministrador')).toBeInTheDocument()
     expect(opcionesDelMenu()).toEqual([
+      'Inicio',
       'Revisión de contenido',
       'Historial de contenidos',
-      'Administradores',
+      'Crear administrador',
       'Lista de administradores',
       'Auditoría',
       'Panel financiero',
@@ -77,26 +82,26 @@ describe('App (login y menú por rol)', () => {
     obtenerSesion.mockResolvedValue(adminCon('MODERADOR'))
     mostrar()
 
-    expect(await screen.findByText('Pantalla de revisión')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Revisión de contenido', 'Historial de contenidos'])
+    expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
+    expect(opcionesDelMenu()).toEqual(['Inicio', 'Revisión de contenido', 'Historial de contenidos'])
   })
 
-  it('FINANZAS entra directo al panel financiero', async () => {
+  it('FINANZAS entra al Inicio y solo ve el panel financiero', async () => {
     guardarToken('token-guardado')
     obtenerSesion.mockResolvedValue(adminCon('FINANZAS'))
     mostrar()
 
-    expect(await screen.findByText('Pantalla financiera')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Panel financiero'])
+    expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
+    expect(opcionesDelMenu()).toEqual(['Inicio', 'Panel financiero'])
   })
 
-  it('TECNICO entra directo al consumo de IA (HU 17)', async () => {
+  it('TECNICO entra al Inicio y ve el consumo de IA y el servidor (HU 17)', async () => {
     guardarToken('token-guardado')
     obtenerSesion.mockResolvedValue(adminCon('TECNICO'))
     mostrar()
 
-    expect(await screen.findByText('Pantalla de consumo de IA')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Consumo de IA', 'Historial de IA', 'Estado del servidor'])
+    expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
+    expect(opcionesDelMenu()).toEqual(['Inicio', 'Consumo de IA', 'Historial de IA', 'Estado del servidor'])
     expect(screen.queryByText(/Tu rol todavía no tiene pantallas/)).toBeNull()
   })
 
@@ -114,7 +119,7 @@ describe('App (login y menú por rol)', () => {
     obtenerSesion.mockResolvedValue(adminCon('SUPERADMIN'))
     mostrar()
 
-    await screen.findByText('Pantalla de revisión')
+    await screen.findByText('Pantalla de inicio')
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
     expect(screen.getByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
@@ -126,10 +131,28 @@ describe('App (login y menú por rol)', () => {
     obtenerSesion.mockResolvedValue(adminCon('SUPERADMIN'))
     mostrar()
 
-    await screen.findByText('Pantalla de revisión')
+    await screen.findByText('Pantalla de inicio')
     act(() => window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA)))
 
     expect(screen.getByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(screen.getByText('Tu sesión venció. Vuelve a iniciar sesión.')).toBeInTheDocument()
+  })
+
+  it('muestra cuántos contenidos esperan revisión junto a la opción del menú', async () => {
+    listarDudosos.mockResolvedValue([{ id: 1 }, { id: 2 }, { id: 3 }])
+    guardarToken('token-guardado')
+    obtenerSesion.mockResolvedValue(adminCon('MODERADOR'))
+    mostrar()
+
+    expect(await screen.findByLabelText('3 pendientes')).toBeInTheDocument()
+  })
+
+  it('FINANZAS no ve la revisión, así que no se piden los pendientes', async () => {
+    guardarToken('token-guardado')
+    obtenerSesion.mockResolvedValue(adminCon('FINANZAS'))
+    mostrar()
+
+    await screen.findByText('Pantalla de inicio')
+    expect(listarDudosos).not.toHaveBeenCalled()
   })
 })

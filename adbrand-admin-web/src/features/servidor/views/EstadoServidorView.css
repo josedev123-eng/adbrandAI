@@ -40,7 +40,21 @@
 
 .servicio-caido .servicio-estado { background: var(--bad-soft); color: var(--bad); }
 
-.servicio-luz { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.servicio-luz { width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex-shrink: 0; animation: luz-latido 1.6s ease-out infinite; }
+
+/* La luz "late": un anillo del mismo color que crece y se desvanece. */
+@keyframes luz-latido {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .servicio-luz { animation: none; } }
+
+/* Resumen arriba de las tarjetas cuando todo está activo */
+.estado-resumen { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; background: var(--ok-soft); color: var(--ok); border: 1px solid #bfe3c9; }
+.estado-resumen .servicio-luz { width: 14px; height: 14px; }
+.estado-resumen strong { display: block; color: var(--ok); }
+.estado-resumen small { display: block; color: var(--muted); font-size: 0.85rem; }
 
 .servicio-tiempo { font-family: var(--f-mono); font-size: 0.85rem; color: var(--muted); }
 

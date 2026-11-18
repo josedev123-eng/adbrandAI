@@ -1,0 +1,49 @@
+/* Pantalla de Inicio de la PYME: bienvenida y tarjetas resumen */
+.pagina.pagina-inicio { max-width: 1100px; }
+
+.inicio-bienvenida { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; border: 1px solid #e8ddf5; border-radius: 18px; background: linear-gradient(112deg, #f1ebff 0%, #fff4f7 100%); box-shadow: 0 12px 32px rgba(62, 39, 91, .06); }
+.inicio-bienvenida h1 { margin: 4px 0; color: #25143c; font-size: clamp(1.6rem, 3.5vw, 2.1rem); letter-spacing: -.03em; }
+.inicio-bienvenida p { margin: 0; color: #766d81; }
+.inicio-kicker { color: #7940a8; font-size: .72rem; font-weight: 800; letter-spacing: .15em; }
+.inicio-bienvenida-acciones { display: flex; flex-wrap: wrap; gap: 10px; }
+.inicio-aviso { background: var(--warn-soft); color: var(--warn); }
+
+.inicio-tarjetas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.inicio-tarjeta { display: flex; flex-direction: column; gap: 12px; border: 1px solid #e9e5f0; border-radius: 18px; box-shadow: 0 14px 36px rgba(39, 25, 62, .07); }
+.inicio-tarjeta-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.inicio-tarjeta-cabecera h2 { font-size: 1rem; }
+.inicio-enlace { border: 0; background: transparent; padding: 4px 0; color: var(--primary); font-weight: 700; font-size: .85rem; cursor: pointer; }
+.inicio-enlace:hover { text-decoration: underline; }
+
+.inicio-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.inicio-cifras div { display: flex; flex-direction: column; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.inicio-cifras strong { font-family: var(--f-display); font-size: 1.8rem; line-height: 1.1; color: var(--primary); }
+.inicio-cifras strong.inicio-ok { color: var(--ok); }
+.inicio-cifras strong.inicio-atencion { color: var(--warn); }
+.inicio-cifras span { font-size: .78rem; color: var(--muted); }
+.inicio-nota { margin: 0; font-size: .88rem; color: var(--muted); }
+.inicio-nota b { color: var(--fg); }
+.inicio-vacio { margin: 0; padding: 14px; border: 1.5px dashed var(--line); border-radius: 12px; text-align: center; color: var(--muted); font-size: .88rem; }
+
+.inicio-colores { display: flex; gap: 8px; }
+.inicio-color { width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, .08); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .4); }
+
+.inicio-publicaciones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.inicio-publicaciones li { display: grid; grid-template-columns: auto 90px 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: .88rem; }
+.inicio-punto { width: 10px; height: 10px; border-radius: 50%; }
+.inicio-publicacion-dia { color: var(--muted); font-weight: 600; text-transform: capitalize; }
+.inicio-publicacion-titulo { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inicio-publicacion-red { font-size: .75rem; color: var(--muted); }
+
+.inicio-cargando { display: flex; flex-direction: column; gap: 8px; }
+.inicio-cargando span { display: block; height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: inicio-brillo 1.2s ease-in-out infinite; }
+.inicio-cargando span:last-child { width: 60%; }
+@keyframes inicio-brillo { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .inicio-cargando span { animation: none; } }
+
+@media (max-width: 760px) {
+  .inicio-tarjetas { grid-template-columns: 1fr; }
+  .inicio-publicaciones li { grid-template-columns: auto 1fr auto; }
+  .inicio-publicacion-dia { grid-column: 2; }
+  .inicio-publicacion-titulo { grid-column: 2; grid-row: 2; }
+}

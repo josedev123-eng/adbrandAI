@@ -2,6 +2,8 @@
 import { ESTADOS_CON_DEUDA, ESTADOS_SUSCRIPCION } from '../models/suscripcionesApi'
 import { useSuscripciones } from '../viewmodels/useSuscripciones'
 import './SuscripcionesView.css'
+import Cargando from '../../../shared/components/Cargando'
+import SinResultados from '../../../shared/components/SinResultados'
 
 function BadgeEstado({ estado }) {
   const cls = `badge-estado ${estado.toLowerCase().replace('_', '-')}`
@@ -33,10 +35,10 @@ export default function SuscripcionesView() {
           </label>
         </div>
 
-        {cargando && <p className="lista-vacia">Cargando suscripciones...</p>}
+        {cargando && <Cargando texto="Cargando suscripciones..." />}
 
         {!cargando && suscripciones.length === 0 && (
-          <p className="lista-vacia">No hay suscripciones con deuda pendiente.</p>
+          <SinResultados>No hay suscripciones con deuda pendiente.</SinResultados>
         )}
 
         {!cargando && suscripciones.length > 0 && (

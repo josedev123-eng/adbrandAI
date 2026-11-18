@@ -1,5 +1,5 @@
 /* PanelFinancieroView.css (HU-05) */
-.pagina.pagina-panel { max-width: 1000px; }
+.pagina.pagina-panel { max-width: 1200px; }
 
 .panel-cabecera {
   display: flex;
@@ -38,6 +38,13 @@
   font-size: 0.85rem;
   color: var(--muted);
 }
+
+/* Flechita del último mes: verde si sube, rojo si baja, gris si quedó igual */
+.panel-tendencia { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 4px 10px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+.panel-tendencia::first-letter { text-transform: uppercase; }
+.tendencia-sube { background: var(--ok-soft); color: var(--ok); }
+.tendencia-baja { background: var(--bad-soft); color: var(--bad); }
+.tendencia-igual { background: var(--surface-2); color: var(--muted); }
 
 /* HU-07: selector del rango de meses */
 .panel-rango {
@@ -112,6 +119,19 @@
   font-family: var(--f-mono);
   font-size: 0.85rem;
   text-align: right;
+}
+
+/* Gráfico de columnas: cada mes es una columna que crece hacia arriba según lo cobrado.
+   En celular vuelve a las barras horizontales de arriba. */
+@media (min-width: 561px) {
+  .panel-ingresos { flex-direction: row; align-items: stretch; gap: 10px; min-height: 240px; padding-top: 8px; }
+  .panel-ingreso { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .panel-ingreso-monto { order: 1; text-align: center; font-size: 0.75rem; color: var(--muted); }
+  .panel-ingreso-barra { order: 2; flex: 1; width: 100%; max-width: 64px; min-height: 160px; height: auto; display: flex; align-items: flex-end; border-radius: 10px 10px 4px 4px; }
+  /* El ancho en línea es de las barras horizontales; en columnas manda la altura. */
+  .panel-ingreso-relleno { width: 100% !important; height: var(--alto); border-radius: 10px 10px 4px 4px; background: linear-gradient(180deg, #6d64f0, var(--primary)); transition: height 0.4s ease; }
+  .panel-ingreso:hover .panel-ingreso-relleno { background: var(--ia); }
+  .panel-ingreso-mes { order: 3; font-size: 0.8rem; text-align: center; color: var(--muted); line-height: 1.2; }
 }
 
 @media (max-width: 560px) {

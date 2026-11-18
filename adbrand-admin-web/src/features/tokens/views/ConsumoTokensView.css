@@ -34,6 +34,14 @@
   margin: 0;
 }
 
+.consumo-grafico { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 20px; }
+.consumo-barra { display: grid; grid-template-columns: minmax(120px, 200px) 1fr 90px; align-items: center; gap: 12px; font-size: 0.85rem; }
+.consumo-barra::before { content: attr(data-empresa); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.consumo-barra::after { content: attr(data-tokens); grid-column: 3; grid-row: 1; text-align: right; font-family: var(--f-mono); color: var(--muted); }
+.consumo-barra-relleno { grid-column: 2; grid-row: 1; display: block; height: 14px; border-radius: 999px; background: linear-gradient(90deg, var(--primary), #8b84f3); }
+.consumo-barra-alerta .consumo-barra-relleno { background: linear-gradient(90deg, var(--warn), #e0a24a); }
+@media (max-width: 560px) { .consumo-barra { grid-template-columns: 1fr auto; } .consumo-barra-relleno { grid-column: 1 / -1; grid-row: 2; } .consumo-barra::after { grid-column: 2; } }
+
 .tabla-consumo {
   width: 100%;
   border-collapse: collapse;
@@ -80,3 +88,15 @@
 .consumo-alerta-excedida { font-weight: 700; }
 
 .tabla-consumo .consumo-fila-alerta td { background: var(--warn-soft); }
+
+/* Control de gasto de las IA de imágenes */
+.consumo-imagenes { display: flex; flex-direction: column; gap: 14px; }
+.consumo-imagenes-cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.consumo-imagenes-cifras div { display: flex; flex-direction: column; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); }
+.consumo-imagenes-cifras strong { font-family: var(--f-display); font-size: 1.8rem; line-height: 1.1; color: var(--primary); }
+.consumo-imagenes-cifras strong.consumo-imagenes-pago { color: var(--ia); }
+.consumo-imagenes-cifras strong.consumo-imagenes-limite { color: var(--muted); }
+.consumo-imagenes-cifras span { font-size: .8rem; color: var(--muted); }
+.consumo-estado { display: inline-block; white-space: nowrap; padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; background: var(--ok-soft); color: var(--ok); }
+.consumo-estado-limite { background: var(--bad-soft); color: var(--bad); }
+@media (max-width: 560px) { .consumo-imagenes-cifras { grid-template-columns: 1fr; } }

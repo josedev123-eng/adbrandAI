@@ -18,6 +18,25 @@ public class PlantillaPromptAnuncio {
             No prometas curas, resultados de salud ni resultados garantizados.
             Responde solo con el texto del anuncio, sin títulos ni explicaciones.""";
 
+    // Para "Generar 4 opciones": las mismas reglas, pero pide varias versiones distintas en un JSON.
+    private static final String SISTEMA_OPCIONES = """
+            Eres un redactor publicitario para pequeñas empresas del Perú.
+            Escribes anuncios cortos para redes sociales, en español sencillo.
+            No inventes precios, descuentos, direcciones ni datos que no estén en la información del negocio.
+            No prometas curas, resultados de salud ni resultados garantizados.
+            Esta vez escribe %d versiones DISTINTAS del mismo anuncio (cambia el inicio, el enfoque y el ritmo).
+            Para cada versión escribe también, EN INGLÉS, una escena corta para la imagen del anuncio:
+            qué producto se ve y dónde (por ejemplo "a golden sweet bread loaf on a rustic wooden table").
+            La escena no debe mencionar textos, letras, precios, números, carteles ni logos.
+            Responde SOLO con un JSON válido, sin markdown ni explicaciones, con esta forma exacta:
+            {"opciones": [{"texto": "versión 1", "escena": "scene in English"}, ...]}""";
+
+    public PromptAnuncio construirOpciones(PerfilNegocioResponse perfil, String oferta, RedSocial red,
+                                           IdentidadMarca identidad, int cantidad) {
+        PromptAnuncio uno = construir(perfil, oferta, red, identidad);
+        return new PromptAnuncio(SISTEMA_OPCIONES.formatted(cantidad), uno.usuario());
+    }
+
     public PromptAnuncio construir(PerfilNegocioResponse perfil, String oferta, RedSocial red) {
         return construir(perfil, oferta, red, null);
     }
