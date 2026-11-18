@@ -75,7 +75,7 @@ export default function InformeCampanasView() {
           <span>Hasta</span>
           <input type="date" value={filtros.hasta} onChange={(evento) => cambiarFiltro('hasta', evento.target.value)} />
         </label>
-        <label className="campo">
+        <label className="campo informe-filtro-campana">
           <span>Campaña</span>
           <select value={filtros.campanaId} onChange={(evento) => cambiarFiltro('campanaId', evento.target.value)}>
             <option value="">Todas las campañas</option>

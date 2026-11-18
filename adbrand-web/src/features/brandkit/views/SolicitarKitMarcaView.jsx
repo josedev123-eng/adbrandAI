@@ -146,7 +146,7 @@ export default function SolicitarKitMarcaView() {
       )}
 
       <section className="tarjeta">
-        <h2>Datos de tu marca</h2>
+        <h2 className="kit-datos-titulo">Datos de tu marca</h2>
 
         <form className="formulario" onSubmit={alEnviar} noValidate>
           <Campo etiqueta="Nombre del negocio" error={errores.nombreNegocio}>

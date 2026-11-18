@@ -46,3 +46,11 @@
   .menu-cuenta { grid-template-columns: auto 1fr auto; padding-top: 10px; }
   .menu-salir { grid-column: auto; }
 }
+
+/* Pantallas anchas: el menú no se desplaza entero (ni de lado). Solo la lista de opciones tiene scroll,
+   así el nombre, "Mi cuenta" y "Cerrar sesión" quedan siempre a la vista abajo. */
+@media (min-width: 861px) {
+  .menu-admin { box-sizing: border-box; overflow: hidden; }
+  .menu-contenido { min-height: 0; }
+  .menu-secciones { min-height: 0; overflow-y: auto; overflow-x: hidden; margin-right: -6px; padding-right: 6px; }
+}

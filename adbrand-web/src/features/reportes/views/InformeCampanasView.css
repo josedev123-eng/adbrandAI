@@ -71,3 +71,6 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* El nombre de la campaña es lo más largo: su selector toma más espacio. */
+.informe-filtros .informe-filtro-campana { flex: 2 1 220px; }

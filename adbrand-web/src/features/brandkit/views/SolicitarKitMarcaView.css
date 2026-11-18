@@ -30,3 +30,6 @@
 .kit-guardado-colores span { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--line); }
 .kit-guardado-nombre { font-weight: 600; }
 .kit-guardado-sector { font-size: 0.85rem; color: var(--muted); }
+
+/* Título de la tarjeta con aire antes del primer campo. */
+.kit-datos-titulo { margin: 0 0 16px; }
