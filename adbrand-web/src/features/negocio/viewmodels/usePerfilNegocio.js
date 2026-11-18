@@ -1,6 +1,7 @@
 // ViewModel: carga el perfil guardado, valida los campos y lo guarda (HU-09).
 // Con perfil guardado se muestra el resumen; "Editar" abre el formulario y al guardar vuelve al resumen.
 import { useEffect, useState } from 'react'
+import { useSesion } from '../../../app/context/useSesion'
 import { guardarPerfil, obtenerPerfil } from '../models/perfilNegocioApi'
 import { useCambiosSinGuardar } from '../../../shared/hooks/useCambiosSinGuardar'
 
@@ -18,6 +19,9 @@ function validar(perfil) {
 }
 
 export function usePerfilNegocio() {
+  // El nombre que la empresa escribió al registrarse: se propone como nombre comercial para no pedirlo dos veces.
+  const { usuario } = useSesion()
+  const perfilInicial = { ...PERFIL_VACIO, nombreComercial: usuario?.nombreEmpresa ?? '' }
   const [perfil, setPerfil] = useState(PERFIL_VACIO)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState(null)
@@ -30,7 +34,7 @@ export function usePerfilNegocio() {
   const [editando, setEditando] = useState(false)
   // Aviso de cambios sin guardar: lo escrito en el formulario frente a lo guardado.
   useCambiosSinGuardar(perfil, {
-    original: guardado ? { ...guardado, descripcion: guardado.descripcion ?? '' } : PERFIL_VACIO,
+    original: guardado ? { ...guardado, descripcion: guardado.descripcion ?? '' } : perfilInicial,
     activo: editando && !cargando,
   })
 
@@ -43,12 +47,16 @@ export function usePerfilNegocio() {
         setExiste(true)
       })
       .catch((error) => {
-        if (error.status === 404) setEditando(true)
-        else {
+        if (error.status === 404) {
+          setPerfil(perfilInicial)
+          setEditando(true)
+        } else {
           setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
         }
       })
       .finally(() => setCargando(false))
+    // Solo al abrir la pantalla: el nombre del registro no cambia mientras se está en ella.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function empezarEdicion() {

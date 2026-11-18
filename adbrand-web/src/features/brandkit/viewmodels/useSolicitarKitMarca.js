@@ -1,6 +1,7 @@
 // ViewModel: estado del formulario, validaciones y envío (HU-11).
 import { useEffect, useState } from 'react'
 import { generarKitMarca, listarKitsMarca, obtenerKitMarca, ESTILOS_VISUALES } from '../models/brandkitApi'
+import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 
 const FORMULARIO_VACIO = {
   nombreNegocio: '',
@@ -38,6 +39,24 @@ export function useSolicitarKitMarca() {
     listarKitsMarca()
       .then(setKitsGuardados)
       .catch(() => setKitsGuardados([]))
+  }, [])
+
+  // Nombre y rubro ya están en "Mi negocio": se rellenan solos (se pueden cambiar) para no pedirlos dos veces.
+  useEffect(() => {
+    let activo = true
+    obtenerPerfil()
+      .then((perfil) => {
+        if (!activo) return
+        setFormulario((actual) => ({
+          ...actual,
+          nombreNegocio: actual.nombreNegocio || perfil.nombreComercial || '',
+          sector: actual.sector || perfil.rubro || '',
+        }))
+      })
+      .catch(() => {})
+    return () => {
+      activo = false
+    }
   }, [])
 
   function cambiarCampo(campo, valor) {

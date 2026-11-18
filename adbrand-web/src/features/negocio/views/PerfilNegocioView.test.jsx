@@ -11,6 +11,10 @@ vi.mock('../models/perfilNegocioApi', async (importOriginal) => ({
   guardarPerfil: vi.fn(),
 }))
 
+vi.mock('../../../app/context/useSesion', () => ({
+  useSesion: () => ({ usuario: { id: 1, nombreEmpresa: 'Bodega Don Lucho' } }),
+}))
+
 const PERFIL = {
   nombreComercial: 'Cafetería Don Pepe',
   rubro: 'Restaurante y comida',
@@ -65,5 +69,7 @@ describe('PerfilNegocioView', () => {
 
     expect(await screen.findByRole('heading', { name: 'Completa el perfil de tu negocio' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument()
+    // El nombre que puso al registrarse se propone como nombre comercial.
+    expect(screen.getByDisplayValue('Bodega Don Lucho')).toBeInTheDocument()
   })
 })
