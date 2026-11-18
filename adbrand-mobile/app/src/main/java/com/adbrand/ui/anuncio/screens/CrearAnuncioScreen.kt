@@ -5,13 +5,11 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,24 +20,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,11 +49,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adbrand.core.theme.AmbarOscuro
@@ -72,8 +66,12 @@ import com.adbrand.core.theme.IndigoOscuro
 import com.adbrand.core.theme.SuperficieBlanca
 import com.adbrand.core.theme.TextoPrincipal
 import com.adbrand.core.theme.TextoSecundario
+import com.adbrand.core.theme.VioletaAdbrand
+import com.adbrand.core.theme.VioletaClaro
 import com.adbrand.domain.model.AnuncioGenerado
+import com.adbrand.domain.model.OpcionAnuncio
 import com.adbrand.domain.model.RedSocial
+import com.adbrand.ui.anuncio.components.ImagenIa
 import com.adbrand.ui.anuncio.viewmodel.CrearAnuncioEstado
 import com.adbrand.ui.anuncio.viewmodel.CrearAnuncioViewModel
 import com.adbrand.ui.anuncio.viewmodel.MAXIMO_OFERTA
@@ -84,12 +82,14 @@ import com.adbrand.ui.components.CampoAdbrand
 import com.adbrand.ui.components.ChipSuave
 import com.adbrand.ui.components.EncabezadoPantalla
 import com.adbrand.ui.components.EntradaAnimada
+import com.adbrand.ui.components.Esqueleto
 import com.adbrand.ui.components.IconoDestacado
 import com.adbrand.ui.components.PantallaScroll
 import com.adbrand.ui.components.TarjetaSeccion
 import com.adbrand.ui.components.TipoAviso
 
-// HU 10, 12 y 13: crear un anuncio con IA, regenerarlo y copiarlo.
+// HU 10, 12 y 13 + IA de imágenes: la IA propone 4 anuncios con texto e imagen,
+// el dueño elige uno y desde ahí puede copiarlo o regenerar el texto.
 @Composable
 fun CrearAnuncioScreen(
     alIrAPerfil: () -> Unit = {},
@@ -107,7 +107,7 @@ fun CrearAnuncioScreen(
         EntradaAnimada(indice = 0) {
             EncabezadoPantalla(
                 titulo = "Crear anuncio",
-                subtitulo = "Escribe tu oferta y la IA arma el texto con el tono de tu marca."
+                subtitulo = "Escribe tu oferta y la IA te propone 4 opciones con texto e imagen."
             )
         }
 
@@ -135,6 +135,15 @@ fun CrearAnuncioScreen(
             EntradaAnimada(indice = 1) {
                 Column {
                     AvisoEstado(texto = mensaje, tipo = TipoAviso.ERROR)
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+            }
+        }
+
+        estado.mensajeExito?.let { mensaje ->
+            EntradaAnimada(indice = 1) {
+                Column {
+                    AvisoEstado(texto = mensaje, tipo = TipoAviso.EXITO)
                     Spacer(modifier = Modifier.height(14.dp))
                 }
             }
@@ -181,17 +190,32 @@ fun CrearAnuncioScreen(
 
         EntradaAnimada(indice = 3) {
             BotonPrincipal(
-                texto = "Generar con IA",
+                texto = if (estado.generando) "Creando 4 opciones..." else "Generar 4 opciones",
                 onClick = viewModel::generar,
                 cargando = estado.generando,
-                habilitado = !estado.regenerando,
-                icono = Icons.AutoMirrored.Filled.Send
+                habilitado = estado.eligiendoId == null,
+                icono = Icons.Filled.AutoAwesome
             )
         }
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        EntradaAnimada(indice = 4) {
+        when {
+            estado.generando -> EntradaAnimada(indice = 4) {
+                TarjetaOpcionesCargando()
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+
+            estado.hayOpciones -> EntradaAnimada(indice = 4) {
+                TarjetaOpciones(
+                    estado = estado,
+                    alElegir = viewModel::elegir
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+        }
+
+        EntradaAnimada(indice = 5) {
             TarjetaResultado(
                 estado = estado,
                 alCopiar = {
@@ -208,6 +232,239 @@ fun CrearAnuncioScreen(
         }
 
         Spacer(modifier = Modifier.height(28.dp))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Las 4 opciones propuestas
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun TarjetaOpciones(
+    estado: CrearAnuncioEstado,
+    alElegir: (Long) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(VioletaClaro),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.AutoAwesome,
+                    contentDescription = null,
+                    tint = VioletaAdbrand,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = "Elige tu opción favorita",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextoPrincipal
+                )
+                Text(
+                    text = "Cada propuesta tiene su texto y su estilo de imagen.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoSecundario
+                )
+            }
+        }
+
+        estado.opciones.forEach { opcion ->
+            TarjetaOpcion(
+                opcion = opcion,
+                eligiendo = estado.eligiendoId == opcion.id,
+                habilitado = estado.eligiendoId == null,
+                alElegir = { alElegir(opcion.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TarjetaOpcion(
+    opcion: OpcionAnuncio,
+    eligiendo: Boolean,
+    habilitado: Boolean,
+    alElegir: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = SuperficieBlanca,
+        border = BorderStroke(
+            width = if (opcion.elegida) 1.5.dp else 1.dp,
+            color = if (opcion.elegida) IndigoAdbrand else BordeSuave
+        )
+    ) {
+        Column {
+            Box {
+                ImagenIa(
+                    dataUrl = opcion.imagen,
+                    etiqueta = "Opción ${opcion.numero}: ${opcion.estilo}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(172.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ChipSuave(
+                        texto = "Opción ${opcion.numero}",
+                        colorTexto = Blanco,
+                        colorFondo = IndigoOscuro.copy(alpha = 0.82f)
+                    )
+                    ChipSuave(
+                        texto = opcion.estilo,
+                        colorTexto = IndigoOscuro,
+                        colorFondo = SuperficieBlanca.copy(alpha = 0.92f)
+                    )
+                }
+
+                if (opcion.elegida) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                    ) {
+                        ChipSuave(
+                            texto = "Elegida",
+                            colorTexto = Blanco,
+                            colorFondo = IndigoAdbrand
+                        )
+                    }
+                }
+
+                if (eligiendo) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(IndigoOscuro.copy(alpha = 0.45f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(26.dp),
+                            strokeWidth = 2.5.dp,
+                            color = Blanco
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = opcion.texto,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextoPrincipal
+                )
+
+                if (opcion.imagenSimulada || opcion.textoSimulado) {
+                    ChipSuave(
+                        texto = "Contenido de prueba",
+                        colorTexto = AmbarOscuro,
+                        colorFondo = AmbarSuave
+                    )
+                }
+
+                if (opcion.elegida) {
+                    BotonSecundario(
+                        texto = "Elegida",
+                        onClick = {},
+                        icono = Icons.Filled.Check,
+                        habilitado = false
+                    )
+                } else {
+                    BotonPrincipal(
+                        texto = if (eligiendo) "Guardando..." else "Elegir esta",
+                        onClick = alElegir,
+                        cargando = eligiendo,
+                        habilitado = habilitado,
+                        icono = Icons.Filled.Check
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaOpcionesCargando() {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(VioletaClaro),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.AutoAwesome,
+                    contentDescription = null,
+                    tint = VioletaAdbrand,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = "La IA está creando 4 propuestas",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextoPrincipal
+                )
+                Text(
+                    text = "Escribe los textos y dibuja una imagen para cada una.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoSecundario
+                )
+            }
+        }
+
+        repeat(2) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = SuperficieBlanca,
+                border = BorderStroke(1.dp, BordeSuave)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Esqueleto(
+                        modifier = Modifier.fillMaxWidth(),
+                        altura = 150.dp,
+                        forma = RoundedCornerShape(14.dp)
+                    )
+                    Esqueleto(modifier = Modifier.fillMaxWidth())
+                    Esqueleto(modifier = Modifier.fillMaxWidth(0.72f))
+                }
+            }
+        }
+
+        Text(
+            text = "La IA está escribiendo los textos y dibujando las imágenes...",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextoSecundario,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -261,9 +518,18 @@ private fun TarjetaResultado(
             ) { etapa ->
                 when (etapa) {
                     "cargando" -> EstadoEscribiendo()
-                    "vacio" -> EstadoSinAnuncio()
+                    "vacio" -> EstadoSinAnuncio(hayOpciones = estado.hayOpciones)
                     else -> estado.anuncio?.let { anuncio ->
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            estado.opcionElegida?.let { opcion ->
+                                ImagenIa(
+                                    dataUrl = opcion.imagen,
+                                    etiqueta = "Imagen del anuncio (${opcion.estilo})",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(190.dp)
+                                )
+                            }
                             ContenidoAnuncio(
                                 anuncio = anuncio,
                                 copiado = estado.copiado,
@@ -431,7 +697,7 @@ private fun EstadoEscribiendo() {
     ) {
         CircularProgressIndicator(color = IndigoAdbrand)
         Text(
-            text = "La IA está escribiendo tu anuncio...",
+            text = "La IA está preparando tus propuestas...",
             style = MaterialTheme.typography.bodyMedium,
             color = TextoSecundario
         )
@@ -439,7 +705,7 @@ private fun EstadoEscribiendo() {
 }
 
 @Composable
-private fun EstadoSinAnuncio() {
+private fun EstadoSinAnuncio(hayOpciones: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -447,16 +713,21 @@ private fun EstadoSinAnuncio() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        IconoDestacado(icono = Icons.AutoMirrored.Filled.Send)
+        IconoDestacado(icono = Icons.Filled.AutoAwesome)
         Text(
-            text = "Aquí aparecerá tu anuncio",
+            text = if (hayOpciones) "Elige una de las 4 opciones" else "Aquí aparecerá tu anuncio",
             style = MaterialTheme.typography.titleMedium,
             color = TextoPrincipal
         )
         Text(
-            text = "El texto quedará listo para copiar y pegar en tu red social.",
+            text = if (hayOpciones) {
+                "Cuando elijas, verás aquí el anuncio con su imagen y su texto listo para copiar."
+            } else {
+                "Escribe tu oferta, genera 4 propuestas y quédate con la que más te guste."
+            },
             style = MaterialTheme.typography.bodySmall,
-            color = TextoSecundario
+            color = TextoSecundario,
+            textAlign = TextAlign.Center
         )
     }
 }
