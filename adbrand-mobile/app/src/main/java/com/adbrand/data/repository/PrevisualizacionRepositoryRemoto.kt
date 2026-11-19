@@ -32,6 +32,12 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
             .getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
     }
 
+    override suspend fun registrarCompartido(contenidoId: Long, formato: String): Resultado<Unit> {
+        val respuesta = PrevisualizacionApi.registrarCompartido(contenidoId, formato).getOrElse { return errorDeRed(it) }
+        return if (respuesta.esExitosa) Resultado.Exito(Unit)
+        else Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
+    }
+
     private fun desdeJson(json: JSONObject): Previsualizacion {
         val kit = json.optJSONObject("kit")?.let(::kitDesde)
         val anunciosJson = json.optJSONArray("anuncios")

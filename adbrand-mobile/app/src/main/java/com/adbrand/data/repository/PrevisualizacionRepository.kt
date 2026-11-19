@@ -11,4 +11,7 @@ interface PrevisualizacionRepository {
 
     // HU 46: imagen del anuncio ("data:image/...;base64,...") o null si no tiene.
     suspend fun imagen(contenidoId: Long): Resultado<String?>
+
+    // HU 47: registrar en el backend que se compartió el anuncio.
+    suspend fun registrarCompartido(contenidoId: Long, formato: String): Resultado<Unit>
 }

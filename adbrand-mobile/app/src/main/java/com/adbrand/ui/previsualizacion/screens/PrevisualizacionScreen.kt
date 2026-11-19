@@ -165,7 +165,8 @@ fun PrevisualizacionScreen(
             mensajeCompartir = estado.mensajeCompartir,
             alAjustar = viewModel::ajustar,
             alRestablecer = viewModel::restablecer,
-            alCompartido = viewModel::avisarCompartido
+            alGuardar = { guardar -> viewModel.guardar(guardar) },
+            alCompartir = { generar, abrirMenu -> viewModel.compartir(generar, abrirMenu) }
         )
     }
 }

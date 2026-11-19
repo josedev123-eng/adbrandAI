@@ -1,6 +1,7 @@
 package com.adbrand.ui.previsualizacion.screens
 
 import android.graphics.Bitmap
+import android.net.Uri
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Canvas
@@ -54,6 +55,8 @@ import com.adbrand.domain.model.FormatoVista
 import com.adbrand.domain.model.KitMarca
 import com.adbrand.ui.previsualizacion.recorte.AjusteRecorte
 import com.adbrand.ui.previsualizacion.recorte.ExportadorAnuncio
+import com.adbrand.ui.previsualizacion.recorte.MarcaImagen
+import com.adbrand.ui.previsualizacion.recorte.MensajeCompartir
 import com.adbrand.ui.previsualizacion.recorte.Recorte
 
 // HU 46: formatos disponibles para el selector (código, nombre y para qué sirve).
@@ -117,11 +120,31 @@ fun VistaPublicacion(
     mensajeCompartir: String? = null,
     alAjustar: (zoom: Float, arrastreX: Float, arrastreY: Float, anchoMarco: Float, anchoImagen: Int, altoImagen: Int) -> Unit = { _, _, _, _, _, _ -> },
     alRestablecer: () -> Unit = {},
-    alCompartido: (String) -> Unit = {}
+    // HU 48: guardar en la galería. HU 47: generar la imagen y abrir el menú de compartir.
+    alGuardar: (guardar: () -> Boolean) -> Unit = {},
+    alCompartir: (generar: () -> Uri?, abrirMenu: (Uri) -> Unit) -> Unit = { _, _ -> }
 ) {
     val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
     val contexto = LocalContext.current
     val acento = coloresDe(kit?.paletaColores.orEmpty()).getOrNull(1) ?: Color(0xFFF97316)
+    val principal = colorPrincipal(kit)
+    val nombreArchivo = "adbrand_${anuncio.id ?: 0}_${formato.codigo.lowercase()}"
+
+    // La imagen del anuncio con la marca, recortada como se ve en el marco (HU 46, 47 y 48).
+    fun imagenFinal(): Bitmap {
+        val recorte = bitmap?.let { Recorte.rectangulo(ajuste, it.width, it.height, proporcion(formato)) }
+        val logo = kit?.logoDiseno
+        val nombre = nombreDe(kit)
+        val marca = MarcaImagen(
+            nombreNegocio = nombre,
+            textoLogo = logo?.texto?.ifBlank { null } ?: nombre.take(2).uppercase(),
+            colorFondoLogo = colorDesde(logo?.colorFondo, principal).toArgb(),
+            colorTextoLogo = colorDesde(logo?.colorTexto, Color.White).toArgb(),
+            colorPrincipal = principal.toArgb(),
+            colorAcento = acento.toArgb()
+        )
+        return ExportadorAnuncio.crearImagen(bitmap, recorte, formato.ancho, formato.alto, anuncio.textoAjustado, marca)
+    }
     Dialog(onDismissRequest = alCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFF2F3F7)) {
             Column(
@@ -151,7 +174,7 @@ fun VistaPublicacion(
 
                 AnuncioEnFormato(anuncio, kit, formato, bitmap, cargandoImagen, ajuste, alAjustar)
 
-                // HU 48: acercar, mover, restablecer y guardar la imagen recortada para compartirla.
+                // HU 48: acercar, mover, restablecer y guardar la imagen recortada.
                 if (bitmap != null && !cargandoImagen) {
                     Text(
                         "Pellizca con dos dedos para acercar o alejar y arrastra para mover. El recorte queda dentro del marco.",
@@ -162,24 +185,29 @@ fun VistaPublicacion(
                         OutlinedButton(onClick = alRestablecer, enabled = !ajuste.esOriginal, modifier = Modifier.weight(1f)) {
                             Text("Restablecer")
                         }
-                        Button(
-                            onClick = {
-                                val recorte = Recorte.rectangulo(ajuste, bitmap.width, bitmap.height, proporcion(formato))
-                                val mensaje = runCatching {
-                                    val final = ExportadorAnuncio.crearImagen(
-                                        bitmap, recorte, formato.ancho, formato.alto, anuncio.textoAjustado, acento.toArgb()
-                                    )
-                                    ExportadorAnuncio.guardarYCompartir(
-                                        contexto, final, "adbrand_${anuncio.id ?: 0}_${formato.codigo.lowercase()}"
-                                    )
-                                }.getOrElse { "No se pudo guardar la imagen. Intenta de nuevo." }
-                                alCompartido(mensaje)
-                            },
+                        OutlinedButton(
+                            onClick = { alGuardar { ExportadorAnuncio.guardarEnGaleria(contexto, imagenFinal(), nombreArchivo) } },
                             modifier = Modifier.weight(1f)
-                        ) { Text("Guardar y compartir") }
+                        ) { Text("Guardar") }
                     }
-                    mensajeCompartir?.let { Aviso(it) }
                 }
+
+                // HU 47: compartir la imagen del anuncio con la marca por WhatsApp, correo u otra aplicación.
+                Button(
+                    onClick = {
+                        alCompartir(
+                            { ExportadorAnuncio.prepararParaCompartir(contexto, imagenFinal(), nombreArchivo) },
+                            { uri ->
+                                ExportadorAnuncio.abrirMenuCompartir(
+                                    contexto, uri, MensajeCompartir.para(nombreDe(kit), anuncio.textoAjustado)
+                                )
+                            }
+                        )
+                    },
+                    enabled = !cargandoImagen,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Compartir") }
+                mensajeCompartir?.let { Aviso(it) }
 
                 if (anuncio.recortado) AvisoRecorte(formato)
                 when {

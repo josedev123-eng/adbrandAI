@@ -125,7 +125,38 @@ class PrevisualizacionViewModel(
         _estado.update { it.copy(ajuste = AjusteRecorte(), mensajeCompartir = null) }
     }
 
-    fun avisarCompartido(mensaje: String) {
-        _estado.update { it.copy(mensajeCompartir = mensaje) }
+    // HU 48: guarda la imagen recortada en la galería (la pantalla hace el guardado y avisa si funcionó).
+    fun guardar(guardarEnGaleria: () -> Boolean) {
+        val guardada = runCatching { guardarEnGaleria() }.getOrDefault(false)
+        _estado.update {
+            it.copy(
+                mensajeCompartir = if (guardada) "Imagen guardada en tu galería (carpeta AdBrand)."
+                else "No se pudo guardar la imagen en la galería. Intenta de nuevo."
+            )
+        }
+    }
+
+    // HU 47: C1, se genera la imagen del anuncio con la marca y se abre el menú de compartir; queda registrado en el backend.
+    // C2: si la imagen no se pudo generar, se muestra un mensaje y NO se abre el menú.
+    fun <T : Any> compartir(generar: () -> T?, abrirMenu: (T) -> Unit) {
+        val archivo = runCatching { generar() }.getOrNull()
+        if (archivo == null) {
+            _estado.update { it.copy(mensajeCompartir = MENSAJE_NO_SE_PUDO_COMPARTIR) }
+            return
+        }
+        val abierto = runCatching { abrirMenu(archivo) }.isSuccess
+        if (!abierto) {
+            _estado.update { it.copy(mensajeCompartir = "No se pudo abrir el menú para compartir. Intenta de nuevo.") }
+            return
+        }
+        _estado.update { it.copy(mensajeCompartir = null) }
+        val id = _estado.value.publicacion?.id ?: return
+        val formato = _estado.value.formato.codigo
+        // Si el registro falla (por ejemplo, sin internet), el anuncio igual se compartió: no se molesta al usuario.
+        viewModelScope.launch { repositorio.registrarCompartido(id, formato) }
+    }
+
+    companion object {
+        const val MENSAJE_NO_SE_PUDO_COMPARTIR = "No se pudo generar la imagen del anuncio para compartirla. Intenta de nuevo."
     }
 }
