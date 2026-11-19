@@ -18,6 +18,9 @@ export default function PiePagina({ abrir, compacto = false }) {
         <button type="button" className="pie-enlace" onClick={() => abrir('privacidad')}>
           Política de privacidad
         </button>
+        <button type="button" className="pie-enlace" onClick={() => abrir('ayuda')}>
+          Ayuda
+        </button>
         <a className="pie-enlace" href={`mailto:${CORREO_CONTACTO}`}>
           Contacto
         </a>

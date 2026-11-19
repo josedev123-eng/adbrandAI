@@ -24,6 +24,7 @@ export const SECCIONES = [
       { id: 'perfil', nombre: 'Mi negocio' },
       { id: 'planes', nombre: 'Planes' },
       { id: 'cuenta', nombre: 'Mi cuenta' },
+      { id: 'ayuda', nombre: 'Ayuda' },
     ],
   },
 ]

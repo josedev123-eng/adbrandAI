@@ -1,0 +1,13 @@
+/* Ayuda / Preguntas frecuentes. */
+.pagina.pagina-ayuda { max-width: 760px; }
+.ayuda-volver { align-self: flex-start; }
+.ayuda-buscador input { width: 100%; }
+.ayuda-tema { display: flex; flex-direction: column; gap: 4px; }
+.ayuda-tema h2, .ayuda-contacto h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.ayuda-pregunta { border-top: 1px solid var(--line); padding: 10px 0; }
+.ayuda-pregunta:first-of-type { border-top: 0; }
+.ayuda-pregunta summary { cursor: pointer; font-weight: 600; list-style-position: outside; }
+.ayuda-pregunta summary:hover { color: var(--primary); }
+.ayuda-pregunta p { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
+.ayuda-sin-resultados { color: var(--muted); }
+.ayuda-contacto p { margin: 0; color: var(--muted); }
