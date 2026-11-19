@@ -49,6 +49,11 @@ class PrevisualizacionViewModelTest {
             return if (resultado is Resultado.Exito) Resultado.Exito(resultado.dato.copy(formato = formatoDe(formato))) else resultado
         }
         override suspend fun imagen(contenidoId: Long): Resultado<String?> = alPedirImagen.also { imagenesPedidas += contenidoId }
+        val compartidos = mutableListOf<Pair<Long, String>>()
+        override suspend fun registrarCompartido(contenidoId: Long, formato: String): Resultado<Unit> {
+            compartidos += contenidoId to formato
+            return Resultado.Exito(Unit)
+        }
     }
 
     private fun kit() = KitMarca(
@@ -221,6 +226,66 @@ class PrevisualizacionViewModelTest {
         advanceUntilIdle()
 
         assertEquals(true, viewModel.estado.value.ajuste.esOriginal)
+    }
+
+    // HU 47: compartir la previsualización.
+    private suspend fun kotlinx.coroutines.test.TestScope.abierto(repositorio: RepositorioFalso): PrevisualizacionViewModel {
+        val viewModel = PrevisualizacionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+        viewModel.cambiarFormato("VERTICAL")
+        advanceUntilIdle()
+        viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+        return viewModel
+    }
+
+    @Test
+    fun alCompartirSeAbreElMenuYQuedaRegistradoConElFormato() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        val viewModel = abierto(repositorio)
+        val menusAbiertos = mutableListOf<String>()
+
+        viewModel.compartir({ "imagen-generada.jpg" }, { menusAbiertos += it })
+        advanceUntilIdle()
+
+        assertEquals(listOf("imagen-generada.jpg"), menusAbiertos)
+        assertEquals(listOf(10L to "VERTICAL"), repositorio.compartidos)
+        assertNull(viewModel.estado.value.mensajeCompartir)
+    }
+
+    @Test
+    fun siNoSePudoGenerarLaImagenAvisaYNoAbreElMenu() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        val viewModel = abierto(repositorio)
+        val menusAbiertos = mutableListOf<String>()
+
+        viewModel.compartir<String>({ null }, { menusAbiertos += it })
+        viewModel.compartir<String>({ throw IllegalStateException("sin memoria") }, { menusAbiertos += it })
+        advanceUntilIdle()
+
+        assertEquals(emptyList<String>(), menusAbiertos)
+        assertEquals(emptyList<Pair<Long, String>>(), repositorio.compartidos)
+        assertEquals(PrevisualizacionViewModel.MENSAJE_NO_SE_PUDO_COMPARTIR, viewModel.estado.value.mensajeCompartir)
+    }
+
+    @Test
+    fun guardarEnLaGaleriaAvisaSiFuncionoONo() = runTest {
+        val viewModel = abierto(RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio())))))
+
+        viewModel.guardar { true }
+        assertEquals(true, viewModel.estado.value.mensajeCompartir!!.contains("galería"))
+        viewModel.guardar { false }
+        assertEquals(true, viewModel.estado.value.mensajeCompartir!!.startsWith("No se pudo guardar"))
+    }
+
+    @Test
+    fun elMensajeParaWhatsAppYCorreoLlevaElTextoYElNegocio() {
+        val mensaje = com.adbrand.ui.previsualizacion.recorte.MensajeCompartir.para("Panadería Doña Rosa", " 2x1 en pan de yema ")
+
+        assertEquals("Anuncio de Panadería Doña Rosa", mensaje.asunto)
+        assertEquals("2x1 en pan de yema\n\n— Panadería Doña Rosa", mensaje.cuerpo)
+        assertEquals("Anuncio de mi negocio", com.adbrand.ui.previsualizacion.recorte.MensajeCompartir.para("", "Hola").asunto)
     }
 }
 
