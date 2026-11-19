@@ -1,6 +1,7 @@
 // ViewModel: editar a mano colores, tipografías y logotipo del kit de marca (HU-32).
 import { useEffect, useState } from 'react'
 import { editarKitMarca, leerPaleta, listarVersionesKitMarca } from '../models/brandkitApi'
+import { useCambiosSinGuardar } from '../../../shared/hooks/useCambiosSinGuardar'
 
 export const MAXIMO_COLORES = 8
 const COLOR_VALIDO = /^#[0-9A-Fa-f]{6}$/
@@ -30,6 +31,8 @@ function validar(formulario) {
 export function useEditarKitMarca(kit, alGuardar) {
   const [formulario, setFormulario] = useState(() => formularioDesde(kit))
   const [errores, setErrores] = useState({})
+  // Aviso si sale del editor con cambios sin guardar.
+  useCambiosSinGuardar(formulario)
   const [mensaje, setMensaje] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [versiones, setVersiones] = useState([])

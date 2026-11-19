@@ -1,6 +1,7 @@
 // ViewModel: editor interactivo del logo (HU-29). La vista previa usa el mismo diseño que se va a guardar.
 import { useState } from 'react'
 import { guardarLogoKitMarca, leerPaleta, TIPOGRAFIAS_LOGO } from '../models/brandkitApi'
+import { useCambiosSinGuardar } from '../../../shared/hooks/useCambiosSinGuardar'
 
 const COLOR_VALIDO = /^#[0-9A-Fa-f]{6}$/
 
@@ -41,6 +42,8 @@ function validar(diseno) {
 export function useEditarLogo(kit, alGuardar) {
   const [diseno, setDiseno] = useState(() => disenoInicial(kit))
   const [errores, setErrores] = useState({})
+  // Aviso si sale del editor con cambios sin guardar.
+  useCambiosSinGuardar(diseno)
   const [mensaje, setMensaje] = useState(null)
   const [guardando, setGuardando] = useState(false)
 
