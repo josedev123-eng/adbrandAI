@@ -2,7 +2,12 @@ package com.adbrand.core.previsualizacion.controller;
 
 import com.adbrand.core.previsualizacion.dto.PrevisualizacionResponse;
 import com.adbrand.core.previsualizacion.service.PrevisualizacionService;
+import com.adbrand.core.previsualizacion.dto.CompartidoDtos;
 import com.adbrand.core.previsualizacion.dto.FormatoAnuncio;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import com.adbrand.core.previsualizacion.dto.ImagenAnuncioResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +36,15 @@ public class PrevisualizacionController {
 
     // HU 46: la imagen de un anuncio para su vista previa como publicación. Va aparte porque pesa:
     // la app la pide solo cuando se abre ese anuncio.
+    // HU 47: la app avisa que el anuncio se compartió (WhatsApp, correo, etc.). { "formato": "VERTICAL" } opcional.
+    @PostMapping("/anuncios/{contenidoId}/compartido")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CompartidoDtos.CompartidoResponse compartido(@RequestAttribute("usuarioId") Long usuarioId,
+                                                        @PathVariable Long contenidoId,
+                                                        @RequestBody(required = false) CompartidoDtos.CompartidoRequest datos) {
+        return servicio.registrarCompartido(usuarioId, contenidoId, datos == null ? null : datos.formato());
+    }
+
     @GetMapping("/anuncios/{contenidoId}/imagen")
     public ImagenAnuncioResponse imagen(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long contenidoId) {
         return servicio.imagen(usuarioId, contenidoId);

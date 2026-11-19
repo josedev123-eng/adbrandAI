@@ -43,7 +43,8 @@ class PrevisualizacionServiceTest {
         contenidos = mock(ContenidoRepository.class);
         opciones = mock(OpcionAnuncioRepository.class);
         versiones = mock(VersionAnuncioRepository.class);
-        servicio = new PrevisualizacionService(kits, contenidos, opciones, versiones);
+        servicio = new PrevisualizacionService(kits, contenidos, opciones, versiones,
+                mock(com.adbrand.core.previsualizacion.repository.AnuncioCompartidoRepository.class));
     }
 
     private Contenido anuncio(String texto) {

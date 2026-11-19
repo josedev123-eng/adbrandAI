@@ -4,7 +4,10 @@ import com.adbrand.core.contenido.entity.VersionAnuncio;
 import com.adbrand.core.contenido.repository.OpcionAnuncioRepository;
 import com.adbrand.core.contenido.repository.VersionAnuncioRepository;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
+import com.adbrand.core.previsualizacion.dto.CompartidoDtos;
 import com.adbrand.core.previsualizacion.dto.FormatoAnuncio;
+import com.adbrand.core.previsualizacion.entity.AnuncioCompartido;
+import com.adbrand.core.previsualizacion.repository.AnuncioCompartidoRepository;
 import com.adbrand.core.previsualizacion.dto.ImagenAnuncioResponse;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
@@ -27,22 +30,40 @@ public class PrevisualizacionService {
     private final ContenidoRepository contenidos;
     private final OpcionAnuncioRepository opciones;
     private final VersionAnuncioRepository versiones;
+    private final AnuncioCompartidoRepository compartidos;
 
     public PrevisualizacionService(KitMarcaRepository kits, ContenidoRepository contenidos,
-                                   OpcionAnuncioRepository opciones, VersionAnuncioRepository versiones) {
+                                   OpcionAnuncioRepository opciones, VersionAnuncioRepository versiones,
+                                   AnuncioCompartidoRepository compartidos) {
         this.kits = kits;
         this.contenidos = contenidos;
         this.opciones = opciones;
         this.versiones = versiones;
+        this.compartidos = compartidos;
+    }
+
+    // HU 47: la app avisa cada vez que se comparte un anuncio; queda anotado cuándo y en qué formato.
+    @Transactional
+    public CompartidoDtos.CompartidoResponse registrarCompartido(Long usuarioId, Long contenidoId, String formato) {
+        propio(usuarioId, contenidoId);
+        AnuncioCompartido registro = compartidos.save(
+                AnuncioCompartido.nuevo(contenidoId, usuarioId, FormatoAnuncio.desde(formato)));
+        return new CompartidoDtos.CompartidoResponse(contenidoId, registro.getFormato().name(), registro.getFecha(),
+                compartidos.countByContenidoId(contenidoId));
+    }
+
+    // Solo anuncios de la propia empresa; el de otra se trata como inexistente.
+    private void propio(Long usuarioId, Long contenidoId) {
+        contenidos.findById(contenidoId)
+                .filter(contenido -> contenido.getUsuarioId().equals(usuarioId))
+                .orElseThrow(() -> new RecursoNoEncontradoException("CONTENIDO_NO_ENCONTRADO", "El anuncio no existe."));
     }
 
     // HU 46: imagen actual del anuncio (la versión retocada que se está usando o la original de la opción elegida).
     // Solo de la propia empresa; un anuncio sin imagen (por ejemplo, de la HU 10, solo texto) devuelve imagen null.
     @Transactional(readOnly = true)
     public ImagenAnuncioResponse imagen(Long usuarioId, Long contenidoId) {
-        contenidos.findById(contenidoId)
-                .filter(contenido -> contenido.getUsuarioId().equals(usuarioId))
-                .orElseThrow(() -> new RecursoNoEncontradoException("CONTENIDO_NO_ENCONTRADO", "El anuncio no existe."));
+        propio(usuarioId, contenidoId);
 
         return opciones.findFirstByContenidoIdAndElegidaTrue(contenidoId)
                 .map(opcion -> {
