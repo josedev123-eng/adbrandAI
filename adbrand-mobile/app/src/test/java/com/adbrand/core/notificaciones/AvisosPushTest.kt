@@ -30,7 +30,7 @@ class AvisosPushTest {
     }
 
     @Test
-    fun elTipoDeCampanaConservaElIdentificador() {
+    fun elTipoDeCampanaAbreLaFichaDeSuCampana() {
         val aviso = AvisosPush.desde(
             mapOf(
                 "type" to TipoAviso.CAMPANA,
@@ -41,7 +41,15 @@ class AvisosPushTest {
 
         assertEquals(TipoAviso.CAMPANA, aviso?.tipo)
         assertEquals(12L, aviso?.campanaId)
-        assertNull(RutasAviso.destino(aviso!!))
+        assertEquals("campana/12", aviso?.let { RutasAviso.destino(it) })
+    }
+
+    @Test
+    fun unaCampanaSinIdentificadorNoTieneDestino() {
+        val aviso = AvisosPush.desde(mapOf("type" to TipoAviso.CAMPANA))
+
+        assertNull(aviso?.campanaId)
+        assertNull(aviso?.let { RutasAviso.destino(it) })
     }
 
     @Test
