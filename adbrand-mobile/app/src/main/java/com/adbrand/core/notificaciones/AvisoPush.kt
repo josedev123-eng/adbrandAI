@@ -101,6 +101,7 @@ object RutasAviso {
     fun destino(aviso: AvisoPush): String? = when (aviso.tipo) {
         TipoAviso.SISTEMA -> "panel"
         TipoAviso.CAMPANA -> aviso.campanaId?.let { "campana/$it" }
+        TipoAviso.SUSCRIPCION -> "plan"
         else -> null
     }
 }

@@ -55,6 +55,7 @@ import com.adbrand.ui.components.ItemNavegacion
 import com.adbrand.ui.panel.screens.PanelScreen
 import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
+import com.adbrand.ui.plan.screens.PantallaPlanScreen
 import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,6 +71,7 @@ private const val RUTA_CREAR = "crear"
 private const val RUTA_PERFIL = "perfil"
 private const val RUTA_PREVISUALIZACION = "previsualizacion"
 private const val RUTA_CAMPANA = "campana/{id}"
+private const val RUTA_PLAN = "plan"
 
 private val DESTINOS_PRINCIPALES = setOf(
     RUTA_PANEL,
@@ -258,6 +260,11 @@ fun AppAdbrand() {
                     id = id,
                     alVolver = { navegador.popBackStack() }
                 )
+            }
+
+            // HU 52: pantalla del plan que se abre desde el aviso de vencimiento.
+            composable(RUTA_PLAN) {
+                PantallaPlanScreen(alVolver = { navegador.popBackStack() })
             }
         }
 
