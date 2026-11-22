@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.CircularProgressIndicator
@@ -69,6 +70,7 @@ import com.adbrand.core.theme.TextoSecundario
 import com.adbrand.domain.model.Tono
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.BotonPrincipal
+import com.adbrand.ui.components.BotonSecundario
 import com.adbrand.ui.components.CampoAdbrand
 import com.adbrand.ui.components.ChipSuave
 import com.adbrand.ui.components.EncabezadoPantalla
@@ -80,9 +82,13 @@ import com.adbrand.ui.components.TipoAviso
 import com.adbrand.ui.perfil.viewmodel.PerfilNegocioViewModel
 import kotlinx.coroutines.delay
 
-// HU 44: perfil de marca que usa la IA para escribir con la voz del negocio.
+// HU 44 y 51: perfil de marca que usa la IA para escribir con la voz del negocio
+// y acceso a las preferencias de avisos del teléfono.
 @Composable
-fun PerfilNegocioScreen(viewModel: PerfilNegocioViewModel = viewModel()) {
+fun PerfilNegocioScreen(
+    alAbrirAvisos: () -> Unit = {},
+    viewModel: PerfilNegocioViewModel = viewModel()
+) {
     val estado by viewModel.estado.collectAsState()
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -226,6 +232,20 @@ fun PerfilNegocioScreen(viewModel: PerfilNegocioViewModel = viewModel()) {
                     onClick = viewModel::guardar,
                     cargando = estado.guardando,
                     icono = Icons.Filled.CheckCircle
+                )
+            }
+        }
+
+        EntradaAnimada(indice = 3) {
+            TarjetaSeccion(
+                titulo = "Avisos",
+                subtitulo = "Elige qué recordatorios quieres recibir en tu teléfono.",
+                icono = Icons.Filled.Notifications
+            ) {
+                BotonSecundario(
+                    texto = "Preferencias de avisos",
+                    onClick = alAbrirAvisos,
+                    icono = Icons.Filled.Notifications
                 )
             }
         }

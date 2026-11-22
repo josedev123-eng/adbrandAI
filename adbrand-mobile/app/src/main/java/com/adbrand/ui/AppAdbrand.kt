@@ -48,6 +48,7 @@ import com.adbrand.ui.auth.screens.BienvenidaScreen
 import com.adbrand.ui.auth.screens.LoginScreen
 import com.adbrand.ui.auth.screens.RecuperarContrasenaScreen
 import com.adbrand.ui.auth.screens.RegistroScreen
+import com.adbrand.ui.avisos.screens.PreferenciasAvisosScreen
 import com.adbrand.ui.campana.screens.DetalleCampanaScreen
 import com.adbrand.ui.components.AperturaMarca
 import com.adbrand.ui.components.BarraInferior
@@ -72,6 +73,7 @@ private const val RUTA_PERFIL = "perfil"
 private const val RUTA_PREVISUALIZACION = "previsualizacion"
 private const val RUTA_CAMPANA = "campana/{id}"
 private const val RUTA_PLAN = "plan"
+private const val RUTA_AVISOS = "avisos"
 
 private val DESTINOS_PRINCIPALES = setOf(
     RUTA_PANEL,
@@ -243,7 +245,7 @@ fun AppAdbrand() {
             }
 
             composable(RUTA_PERFIL) {
-                PerfilNegocioScreen()
+                PerfilNegocioScreen(alAbrirAvisos = { navegador.navigate(RUTA_AVISOS) })
             }
 
             composable(RUTA_PREVISUALIZACION) {
@@ -265,6 +267,11 @@ fun AppAdbrand() {
             // HU 52: pantalla del plan que se abre desde el aviso de vencimiento.
             composable(RUTA_PLAN) {
                 PantallaPlanScreen(alVolver = { navegador.popBackStack() })
+            }
+
+            // HU 51: preferencias de avisos desde el perfil de la empresa.
+            composable(RUTA_AVISOS) {
+                PreferenciasAvisosScreen(alVolver = { navegador.popBackStack() })
             }
         }
 
