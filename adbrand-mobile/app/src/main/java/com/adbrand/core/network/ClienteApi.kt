@@ -49,6 +49,7 @@ object ClienteApi {
             "GET" -> constructor.get()
             "POST" -> constructor.post((cuerpo ?: "{}").toRequestBody(JSON))
             "PUT" -> constructor.put((cuerpo ?: "{}").toRequestBody(JSON))
+            "PATCH" -> constructor.patch((cuerpo ?: "{}").toRequestBody(JSON))
             "DELETE" -> constructor.delete()
             else -> error("Método HTTP no soportado: $metodo")
         }
