@@ -99,6 +99,10 @@ fun CrearAnuncioScreen(
 ) {
     val estado by viewModel.estado.collectAsState()
     val contexto = LocalContext.current
+    // HU 63: si viene de "Próximas fechas", la idea llega ya escrita en la oferta.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        com.adbrand.ui.panel.OfertaSugerida.tomar()?.let { viewModel.actualizarOferta(it.take(300)) }
+    }
     val portapapeles = remember(contexto) {
         contexto.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     }

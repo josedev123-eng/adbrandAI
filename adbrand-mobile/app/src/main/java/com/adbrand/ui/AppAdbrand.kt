@@ -276,6 +276,10 @@ fun AppAdbrand() {
             composable(RUTA_PANEL) {
                 PanelScreen(
                     alCrearAnuncio = { irA(RUTA_CREAR) },
+                    alCrearConIdea = { idea ->
+                        com.adbrand.ui.panel.OfertaSugerida.guardar(idea)
+                        irA(RUTA_CREAR)
+                    },
                     // Tocar un anuncio del panel lo abre en la vista previa.
                     alAbrirAnuncio = { id ->
                         navegador.navigate("$RUTA_ANUNCIOS?ver=$id") {

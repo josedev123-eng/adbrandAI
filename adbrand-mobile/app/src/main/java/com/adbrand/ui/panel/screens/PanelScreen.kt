@@ -93,6 +93,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun PanelScreen(
     alCrearAnuncio: () -> Unit = {},
+    // HU 63: "Crear anuncio para esta fecha" con la idea ya escrita.
+    alCrearConIdea: (String) -> Unit = {},
     alAbrirAnuncio: (Long) -> Unit = {},
     viewModel: PanelViewModel = viewModel()
 ) {
@@ -200,6 +202,9 @@ fun PanelScreen(
             }
 
             item { EntradaAnimada(2) { FilaTotales(informe) } }
+
+            // HU 63: las próximas fechas peruanas que venden.
+            item { EntradaAnimada(2) { com.adbrand.ui.panel.ProximasFechas(alCrearAnuncio = alCrearConIdea) } }
 
             item {
                 EntradaAnimada(3) {
