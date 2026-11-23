@@ -1,5 +1,7 @@
 package com.adbrand.ui.plan.screens
 
+import com.adbrand.BuildConfig
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -64,6 +66,7 @@ fun PantallaPlanScreen(
     viewModel: PlanViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
+    val contexto = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -127,7 +130,8 @@ fun PantallaPlanScreen(
                 EntradaAnimada(indice = 3 + indice) {
                     TarjetaPlan(
                         plan = plan,
-                        esActual = plan.nombre.equals(estado.suscripcion.plan, ignoreCase = true)
+                        esActual = plan.nombre.equals(estado.suscripcion.plan, ignoreCase = true),
+                        alElegir = { abrirPagoEnLaWeb(contexto) }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -316,7 +320,7 @@ private fun TarjetaSinPlan() {
 }
 
 @Composable
-private fun TarjetaPlan(plan: PlanDisponible, esActual: Boolean) {
+private fun TarjetaPlan(plan: PlanDisponible, esActual: Boolean, alElegir: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -359,7 +363,22 @@ private fun TarjetaPlan(plan: PlanDisponible, esActual: Boolean) {
                     )
                 }
             }
+            if (!esActual) {
+                BotonPrincipal(texto = "Elegir ${plan.nombre}", onClick = alElegir)
+            }
         }
+    }
+}
+
+// El pago (tarjeta o Yape con Mercado Pago) se hace en la web, como en Spotify o Canva: se abre la página de planes
+// en el navegador. Ahí se inicia sesión con la misma cuenta y se paga; al volver a la app, el plan ya aparece.
+private fun abrirPagoEnLaWeb(contexto: android.content.Context) {
+    val url = BuildConfig.WEB_URL.trimEnd('/') + "/planes"
+    runCatching {
+        contexto.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 }
 

@@ -35,6 +35,13 @@ object ClienteApi {
             .build()
     }
 
+    // Para lo que genera la IA (kit de marca): puede tardar 1 a 3 minutos, más que el límite normal de 30 s.
+    val clienteIa: OkHttpClient by lazy {
+        cliente.newBuilder()
+            .readTimeout(180, TimeUnit.SECONDS)
+            .build()
+    }
+
     fun url(ruta: String): String = URL_BASE + ruta.trimStart('/')
 
     // Ejecuta una petición y devuelve el cuerpo como texto. Los errores de red se convierten en Error.

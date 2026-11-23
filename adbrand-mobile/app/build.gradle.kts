@@ -26,6 +26,9 @@ android {
         val apiBaseUrl = providers.gradleProperty("apiBaseUrl")
             .getOrElse("http://10.0.2.2:8080/api/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        val webUrl = providers.gradleProperty("webUrl")
+            .getOrElse("http://10.0.2.2:5173")
+        buildConfigField("String", "WEB_URL", "\"$webUrl\"")
     }
 
     buildTypes {

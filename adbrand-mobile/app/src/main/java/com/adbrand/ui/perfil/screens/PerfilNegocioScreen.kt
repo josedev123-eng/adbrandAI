@@ -29,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Phone
@@ -150,14 +149,8 @@ fun PerfilNegocioScreen(
                     error = estado.errorNombre
                 )
 
-                CampoAdbrand(
-                    valor = estado.rubro,
-                    alCambiar = viewModel::actualizarRubro,
-                    etiqueta = "Rubro",
-                    icono = Icons.Filled.Face,
-                    marcador = "Panadería y pastelería",
-                    error = estado.errorRubro
-                )
+                // Lista cerrada, igual que la web.
+                SelectorRubro(valor = estado.rubro, alCambiar = viewModel::actualizarRubro, error = estado.errorRubro)
 
                 CampoAdbrand(
                     valor = estado.publicoObjetivo,

@@ -18,7 +18,12 @@ data class KitMarca(
     val tipografiaSecundaria: String = "",
     val paletaColores: String = "",
     val vozMarca: String = "",
-    val logoDiseno: LogoMarca? = null
+    val logoDiseno: LogoMarca? = null,
+    // Identidad de marca (V70): eslogan elegido y propuestas, y el logo como imagen (data URL) y su origen.
+    val eslogan: String = "",
+    val esloganOpciones: List<String> = emptyList(),
+    val logoImagen: String? = null,
+    val logoOrigen: String? = null
 )
 
 // HU 46: textoAjustado es el texto que entra en el formato elegido; recortado = se acortó con "…".
