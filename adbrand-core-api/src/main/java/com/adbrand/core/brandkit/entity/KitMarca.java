@@ -56,6 +56,31 @@ public class KitMarca {
     @Column(name = "voz_marca", columnDefinition = "TEXT")
     private String vozMarca;
 
+    // Identidad de marca (V70).
+    @Column(length = 100)
+    private String sentimiento;
+
+    @Column(length = 300)
+    private String diferencial;
+
+    @Column(length = 150)
+    private String eslogan;
+
+    // Las 3 propuestas de la IA, una por línea.
+    @Column(name = "eslogan_opciones", columnDefinition = "TEXT")
+    private String esloganOpciones;
+
+    // Logo como imagen en base64 (sin el "data:...;base64,"), con su tipo (image/png o image/jpeg).
+    @Column(name = "logo_imagen", columnDefinition = "TEXT")
+    private String logoImagen;
+
+    @Column(name = "logo_imagen_tipo", length = 20)
+    private String logoImagenTipo;
+
+    // SUBIDO (la empresa ya tenía su logo) o IA (lo eligió entre los que propuso la IA).
+    @Column(name = "logo_origen", length = 10)
+    private String logoOrigen;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -110,6 +135,32 @@ public class KitMarca {
 
     public String getVozMarca() { return vozMarca; }
     public void setVozMarca(String vozMarca) { this.vozMarca = vozMarca; }
+
+    public String getSentimiento() { return sentimiento; }
+    public void setSentimiento(String sentimiento) { this.sentimiento = sentimiento; }
+
+    public String getDiferencial() { return diferencial; }
+    public void setDiferencial(String diferencial) { this.diferencial = diferencial; }
+
+    public String getEslogan() { return eslogan; }
+    public void setEslogan(String eslogan) { this.eslogan = eslogan; }
+
+    public String getEsloganOpciones() { return esloganOpciones; }
+    public void setEsloganOpciones(String esloganOpciones) { this.esloganOpciones = esloganOpciones; }
+
+    public String getLogoImagen() { return logoImagen; }
+    public void setLogoImagen(String logoImagen) { this.logoImagen = logoImagen; }
+
+    public String getLogoImagenTipo() { return logoImagenTipo; }
+    public void setLogoImagenTipo(String logoImagenTipo) { this.logoImagenTipo = logoImagenTipo; }
+
+    public String getLogoOrigen() { return logoOrigen; }
+    public void setLogoOrigen(String logoOrigen) { this.logoOrigen = logoOrigen; }
+
+    // Para mostrar el logo directo en la web o la app (<img src="...">). null si no tiene.
+    public String logoImagenDataUrl() {
+        return logoImagen == null ? null : "data:" + logoImagenTipo + ";base64," + logoImagen;
+    }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }

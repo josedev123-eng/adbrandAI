@@ -66,11 +66,48 @@ public class KitMarcaService {
             kit.setTipografiaSecundaria(comoTexto(node.get("tipografia_secundaria")));
             kit.setPaletaColores(comoTexto(node.get("paleta_colores")));
             kit.setVozMarca(comoTexto(node.get("voz_marca")));
+            guardarIdentidad(kit, datos, node.get("eslogan_opciones"));
 
             return kits.save(kit);
         } catch (Exception e) {
             throw new RuntimeException("Error parseando respuesta de IA para Kit de Marca: " + e.getMessage(), e);
         }
+    }
+
+    // Identidad de marca (V70): si la empresa ya tenía eslogan se respeta tal cual; si no, se guardan las
+    // propuestas de la IA y la primera queda elegida hasta que la empresa escoja otra.
+    public static void guardarIdentidad(KitMarca kit, GenerarKitMarcaRequest datos, tools.jackson.databind.JsonNode opciones) {
+        kit.setSentimiento(recortar(datos.sentimiento(), 100));
+        kit.setDiferencial(recortar(datos.diferencial(), 300));
+        if (datos.tieneEslogan()) {
+            String propio = recortar(datos.eslogan(), 150);
+            kit.setEslogan(propio);
+            kit.setEsloganOpciones(propio);
+            return;
+        }
+        java.util.List<String> propuestas = new java.util.ArrayList<>();
+        if (opciones != null && opciones.isArray()) {
+            for (tools.jackson.databind.JsonNode opcion : opciones) {
+                String texto = recortar(opcion.asText().replace("\"", "").replace("\n", " "), 150);
+                if (texto != null && !propuestas.contains(texto)) {
+                    propuestas.add(texto);
+                }
+            }
+        } else if (opciones != null && !opciones.isNull()) {
+            opciones.asText().lines().map(linea -> recortar(linea, 150)).filter(java.util.Objects::nonNull)
+                    .limit(3).forEach(propuestas::add);
+        }
+        java.util.List<String> tres = propuestas.stream().limit(3).toList();
+        kit.setEsloganOpciones(tres.isEmpty() ? null : String.join("\n", tres));
+        kit.setEslogan(tres.isEmpty() ? null : tres.get(0));
+    }
+
+    private static String recortar(String texto, int maximo) {
+        if (texto == null || texto.isBlank()) {
+            return null;
+        }
+        String limpio = texto.trim();
+        return limpio.length() > maximo ? limpio.substring(0, maximo).trim() : limpio;
     }
 
     // Algunas IA (por ejemplo Gemini) envuelven el JSON en un bloque ```json ... ```; se quita antes de leerlo.
