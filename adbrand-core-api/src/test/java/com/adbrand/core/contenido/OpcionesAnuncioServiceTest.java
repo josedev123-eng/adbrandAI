@@ -39,6 +39,7 @@ import com.adbrand.core.negocio.service.PerfilNegocioService;
 import com.adbrand.core.revision.dto.ResultadoRevision;
 import com.adbrand.core.revision.service.FiltroContenido;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
+import com.adbrand.core.shared.error.SolicitudInvalidaException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -207,6 +208,52 @@ class OpcionesAnuncioServiceTest {
         assertThatThrownBy(() -> servicio.elegir(2L, 102L))
                 .isInstanceOf(RecursoNoEncontradoException.class)
                 .hasMessageContaining("no existe");
+    }
+
+    // HU 55: la redacción nueva de una opción elegida se genera sobre el contenido
+    // que ya tenía, sin cambiar la imagen elegida.
+    @Test
+    void regenerarTextoDeUnaOpcionElegidaGuardaLaNuevaRedaccion() {
+        OpcionAnuncio opcion = new OpcionAnuncio();
+        ReflectionTestUtils.setField(opcion, "id", 102L);
+        opcion.setNumero(2);
+        opcion.setEstilo("Ilustración");
+        opcion.setTexto("Dos");
+        opcion.setContenidoId(50L);
+        ReflectionTestUtils.setField(opcion, "elegida", true);
+        when(opciones.findByIdAndGeneracionUsuarioId(102L, 1L)).thenReturn(Optional.of(opcion));
+
+        Contenido original = new Contenido();
+        original.setUsuarioId(1L);
+        original.setTipo(Contenido.TIPO_ANUNCIO);
+        original.setRedSocial(RedSocial.INSTAGRAM);
+        original.setTono(Tono.CERCANO);
+        original.setOferta("2x1 en pan de yema");
+        original.setTexto("Dos");
+        original.setEstado(EstadoContenido.APROBADO);
+        ReflectionTestUtils.setField(original, "id", 50L);
+        when(contenidos.findById(50L)).thenReturn(Optional.of(original));
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("Redacción nueva");
+
+        OpcionElegidaResponse respuesta = servicio.regenerarTexto(1L, 102L);
+
+        assertThat(respuesta.anuncio().texto()).isEqualTo("Redacción nueva");
+        assertThat(respuesta.opcion().id()).isEqualTo(102L);
+        assertThat(respuesta.opcion().elegida()).isTrue();
+        assertThat(opcion.getContenidoId()).isEqualTo(50L);
+    }
+
+    @Test
+    void regenerarTextoSinElegirLaOpcionResponde400() {
+        OpcionAnuncio opcion = new OpcionAnuncio();
+        ReflectionTestUtils.setField(opcion, "id", 101L);
+        opcion.setNumero(1);
+        opcion.setContenidoId(null);
+        when(opciones.findByIdAndGeneracionUsuarioId(101L, 1L)).thenReturn(Optional.of(opcion));
+
+        assertThatThrownBy(() -> servicio.regenerarTexto(1L, 101L))
+                .isInstanceOf(SolicitudInvalidaException.class)
+                .hasMessageContaining("Primero elige");
     }
 
     // Si la IA de imágenes ve cifras o precios intenta escribirlos (y salen letras deformes): se quitan.

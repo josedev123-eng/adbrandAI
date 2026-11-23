@@ -47,6 +47,13 @@ public class OpcionesAnuncioController {
         return retoques.retocar(usuarioId, id, datos.instruccion());
     }
 
+    // HU 55: "Nueva versión" sobre la opción elegida: una redacción nueva del texto
+    // y la versión del anuncio asociada a la opción se actualizan juntas.
+    @PostMapping("/{id}/regenerar")
+    public OpcionElegidaResponse regenerar(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
+        return servicio.regenerarTexto(usuarioId, id);
+    }
+
     @GetMapping("/{id}/versiones")
     public VersionesAnuncioResponse versiones(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
         return retoques.versiones(usuarioId, id);
