@@ -228,8 +228,9 @@ fun CrearAnuncioScreen(
                         viewModel.marcarCopiado()
                     }
                 },
-                alRegenerar = viewModel::regenerar,
-                alNuevaVersion = viewModel::generar,
+                alAceptarPropuesta = viewModel::aceptarPropuesta,
+                alDescartarPropuesta = viewModel::descartarPropuesta,
+                alNuevaVersion = viewModel::regenerar,
                 alCambiarInstruccion = viewModel::actualizarInstruccion,
                 alRetocar = viewModel::retocar,
                 alUsarVersion = viewModel::volverAVersion
@@ -481,8 +482,9 @@ private fun TarjetaOpcionesCargando() {
 private fun TarjetaResultado(
     estado: CrearAnuncioEstado,
     alCopiar: () -> Unit,
-    alRegenerar: () -> Unit,
     alNuevaVersion: () -> Unit,
+    alAceptarPropuesta: () -> Unit,
+    alDescartarPropuesta: () -> Unit,
     alCambiarInstruccion: (String) -> Unit,
     alRetocar: () -> Unit,
     alUsarVersion: (Int) -> Unit
@@ -570,12 +572,14 @@ private fun TarjetaResultado(
                                 )
                             }
                             ContenidoAnuncio(
+                                estado = estado,
                                 anuncio = anuncio,
                                 copiado = estado.copiado,
                                 regenerando = estado.regenerando,
                                 alCopiar = alCopiar,
-                                alRegenerar = alRegenerar,
-                                alNuevaVersion = alNuevaVersion
+                                alNuevaVersion = alNuevaVersion,
+                                alAceptarPropuesta = alAceptarPropuesta,
+                                alDescartarPropuesta = alDescartarPropuesta
                             )
                         }
                     }
@@ -680,12 +684,14 @@ private fun ListaVersiones(
 
 @Composable
 private fun ContenidoAnuncio(
+    estado: CrearAnuncioEstado,
     anuncio: AnuncioGenerado,
     copiado: Boolean,
     regenerando: Boolean,
     alCopiar: () -> Unit,
-    alRegenerar: () -> Unit,
-    alNuevaVersion: () -> Unit
+    alNuevaVersion: () -> Unit,
+    alAceptarPropuesta: () -> Unit,
+    alDescartarPropuesta: () -> Unit
 ) {
     if (anuncio.enRevision) {
         AvisoRevision(anuncio.motivoRevision)
@@ -734,23 +740,30 @@ private fun ContenidoAnuncio(
         )
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        BotonSecundario(
-            texto = "Regenerar",
-            onClick = alRegenerar,
-            modifier = Modifier.weight(1f),
-            icono = Icons.Filled.Refresh,
+    // HU 55: una sola acción para pedir la versión nueva; mientras carga se bloquea.
+    BotonPrincipal(
+        texto = if (regenerando) "Nueva versión en curso..." else "Nueva versión",
+        onClick = alNuevaVersion,
+        cargando = regenerando,
+        habilitado = !regenerando && !estado.cargando,
+        icono = Icons.Filled.Refresh
+    )
+
+    estado.errorRegeneracion?.let { error ->
+        AvisoEstado(texto = error, tipo = TipoAviso.ERROR)
+        BotonPrincipal(
+            texto = "Reintentar",
+            onClick = alNuevaVersion,
             habilitado = !regenerando
         )
-        BotonSecundario(
-            texto = "Nueva versión",
-            onClick = alNuevaVersion,
-            modifier = Modifier.weight(1f),
-            icono = Icons.Filled.Add,
-            habilitado = !regenerando
+    }
+
+    estado.propuesta?.let { nueva ->
+        ComparadorVersiones(
+            anterior = anuncio,
+            nueva = nueva,
+            alUsarNueva = alAceptarPropuesta,
+            alQuedarmeConAnterior = alDescartarPropuesta
         )
     }
 
@@ -861,6 +874,86 @@ private fun EstadoSinAnuncio(hayOpciones: Boolean) {
             color = TextoSecundario,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Comparación de versiones (HU 55)
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun ComparadorVersiones(
+    anterior: AnuncioGenerado,
+    nueva: AnuncioGenerado,
+    alUsarNueva: () -> Unit,
+    alQuedarmeConAnterior: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Comparación de versiones",
+            style = MaterialTheme.typography.titleMedium,
+            color = TextoPrincipal
+        )
+        FilaVersion(
+            etiqueta = "Versión anterior",
+            texto = anterior.texto,
+            destacado = false
+        )
+        FilaVersion(
+            etiqueta = "Versión nueva",
+            texto = nueva.texto,
+            destacado = true
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            BotonSecundario(
+                texto = "Quedarme con la anterior",
+                onClick = alQuedarmeConAnterior,
+                modifier = Modifier.weight(1f),
+                icono = Icons.Filled.Refresh,
+                habilitado = true
+            )
+            BotonPrincipal(
+                texto = "Usar la nueva",
+                onClick = alUsarNueva,
+                modifier = Modifier.weight(1f),
+                icono = Icons.Filled.Check,
+                habilitado = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilaVersion(
+    etiqueta: String,
+    texto: String,
+    destacado: Boolean
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = if (destacado) IndigoClaro else SuperficieBlanca,
+        border = BorderStroke(1.dp, if (destacado) IndigoAdbrand else BordeSuave)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = etiqueta,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (destacado) IndigoAdbrand else TextoSecundario,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = texto,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (destacado) TextoPrincipal else TextoSecundario
+            )
+        }
     }
 }
 

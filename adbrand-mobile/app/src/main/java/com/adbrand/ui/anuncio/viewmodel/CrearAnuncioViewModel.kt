@@ -39,7 +39,9 @@ data class CrearAnuncioEstado(
     val faltaPerfil: Boolean = false,
     val generando: Boolean = false,
     val regenerando: Boolean = false,
-    val copiado: Boolean = false
+    val copiado: Boolean = false,
+    val propuesta: AnuncioGenerado? = null,
+    val errorRegeneracion: String? = null
 ) {
     val cargando: Boolean
         get() = generando || regenerando || eligiendoId != null || retocando
@@ -205,7 +207,9 @@ class CrearAnuncioViewModel(
         }
     }
 
-    // HU 12: regenerar el texto del anuncio elegido; la imagen se mantiene.
+    // HU 55: "Nueva versión" sobre el anuncio elegido. La IA redacta una versión
+    // nueva y se queda esperando la comparación con la anterior; el usuario decide
+    // cuál conservar.
     fun regenerar() {
         val actual = _estado.value
         val anuncio = actual.anuncio ?: return
@@ -213,24 +217,43 @@ class CrearAnuncioViewModel(
         if (actual.cargando) return
 
         viewModelScope.launch {
-            _estado.update { it.copy(regenerando = true, aviso = null, mensajeExito = null, copiado = false) }
+            _estado.update {
+                it.copy(
+                    regenerando = true,
+                    aviso = null,
+                    mensajeExito = null,
+                    copiado = false,
+                    errorRegeneracion = null,
+                    propuesta = null
+                )
+            }
             when (val resultado = repositorio.regenerar(id)) {
                 is Resultado.Exito -> _estado.update {
-                    it.copy(regenerando = false, anuncio = resultado.dato)
+                    it.copy(
+                        regenerando = false,
+                        propuesta = resultado.dato,
+                        mensajeExito = "La IA redactó una versión nueva."
+                    )
                 }
 
                 is Resultado.Error -> _estado.update {
-                    it.copy(
-                        regenerando = false,
-                        aviso = if (resultado.codigo == 404) {
-                            "El contenido original ya no existe."
-                        } else {
-                            resultado.mensaje
-                        }
-                    )
+                    it.copy(regenerando = false, errorRegeneracion = resultado.mensaje)
                 }
             }
         }
+    }
+
+    // HU 55: la versión nueva pasa a ser la que se usa, sin perder la anterior.
+    fun aceptarPropuesta() {
+        val propuesta = _estado.value.propuesta ?: return
+        _estado.update {
+            it.copy(propuesta = null, anuncio = propuesta, mensajeExito = "Ahora usamos la versión que te gustó.")
+        }
+    }
+
+    // HU 55: descartar la versión nueva y volver a la anterior.
+    fun descartarPropuesta() {
+        _estado.update { it.copy(propuesta = null) }
     }
 
     fun actualizarInstruccion(valor: String) {
