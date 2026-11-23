@@ -255,13 +255,6 @@ fun EncabezadoPantalla(
     accion: (@Composable () -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Regla corta en terracota: firma editorial de los encabezados.
-        Box(
-            modifier = Modifier
-                .padding(bottom = 10.dp)
-                .size(width = 30.dp, height = 2.dp)
-                .background(VioletaAdbrand)
-        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -576,6 +569,21 @@ fun AvisoEstado(
     modifier: Modifier = Modifier,
     tipo: TipoAviso = TipoAviso.INFO
 ) {
+    // Los de éxito ("Datos guardados") se van solos a los 3 segundos; los errores se quedan hasta corregirlos.
+    var visible by remember(texto, tipo) { mutableStateOf(true) }
+    if (tipo == TipoAviso.EXITO) {
+        LaunchedEffect(texto) {
+            kotlinx.coroutines.delay(3000)
+            visible = false
+        }
+    }
+    AnimatedVisibility(visible = visible) {
+        ContenidoAviso(texto, modifier, tipo)
+    }
+}
+
+@Composable
+private fun ContenidoAviso(texto: String, modifier: Modifier, tipo: TipoAviso) {
     val fondo = when (tipo) {
         TipoAviso.EXITO -> ExitoSuave
         TipoAviso.ERROR -> ErrorSuave
@@ -709,7 +717,7 @@ fun BarraInferior(
                 .navigationBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 7.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             items.forEach { item ->
                 DestinoInferior(
@@ -731,71 +739,55 @@ private fun RowScope.DestinoInferior(
     alTocar: () -> Unit
 ) {
     val colorIcono by animateColorAsState(
-        targetValue = if (seleccionado) IndigoAdbrand else TintaSuave,
+        targetValue = when {
+            item.destacado -> Blanco
+            seleccionado -> IndigoAdbrand
+            else -> TintaSuave
+        },
         label = "nav-icono"
     )
-    val escala by animateFloatAsState(
-        targetValue = if (seleccionado) 1f else 0.96f,
-        animationSpec = tween(180),
-        label = "nav-escala"
-    )
-    val punto by animateDpAsState(
-        targetValue = if (seleccionado && !item.destacado) 14.dp else 0.dp,
-        animationSpec = tween(220),
-        label = "nav-punto"
+    val fondoIcono by animateColorAsState(
+        targetValue = when {
+            item.destacado -> VioletaAdbrand
+            seleccionado -> IndigoClaro
+            else -> Color.Transparent
+        },
+        label = "nav-fondo"
     )
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = alTocar)
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        if (item.destacado) {
-            // Acción principal: sello cuadrado en tinta, sin halo.
-            Box(
-                modifier = Modifier
-                    .size(if (seleccionado) 46.dp else 44.dp)
-                    .graphicsLayer {
-                        scaleX = escala
-                        scaleY = escala
-                    }
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (seleccionado) IndigoAdbrand else IndigoOscuro),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = item.icono,
-                    contentDescription = item.etiqueta,
-                    tint = PapelHueso,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-        } else {
+        // Mismo alto para todas: el ícono va en una "píldora" de 56 x 32 (como Material 3).
+        Box(
+            modifier = Modifier
+                .size(width = 56.dp, height = 32.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(fondoIcono),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
                 imageVector = item.icono,
-                contentDescription = item.etiqueta,
+                contentDescription = null,
                 tint = colorIcono,
-                modifier = Modifier
-                    .size(23.dp)
-                    .graphicsLayer {
-                        scaleX = escala
-                        scaleY = escala
-                    }
+                modifier = Modifier.size(if (item.destacado) 24.dp else 22.dp)
             )
         }
         Text(
             text = item.etiqueta,
             style = MaterialTheme.typography.labelSmall,
-            color = if (seleccionado) IndigoAdbrand else TintaSuave,
-            fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Medium
-        )
-        Box(
-            modifier = Modifier
-                .size(width = punto, height = 2.dp)
-                .background(VioletaAdbrand)
+            color = when {
+                item.destacado -> VioletaAdbrand
+                seleccionado -> IndigoAdbrand
+                else -> TextoSecundario
+            },
+            fontWeight = if (seleccionado || item.destacado) FontWeight.Bold else FontWeight.Medium,
+            maxLines = 1
         )
     }
 }

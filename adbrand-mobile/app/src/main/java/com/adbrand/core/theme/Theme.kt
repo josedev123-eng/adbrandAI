@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Esquema claro de papel: superficies hueso, tinta verde y acento terracota.
+// Esquema claro igual a la web: fondos claros, índigo de marca y magenta de la IA.
 private val EsquemaAdbrand = lightColorScheme(
     primary = IndigoAdbrand,
     onPrimary = Blanco,
@@ -17,7 +17,7 @@ private val EsquemaAdbrand = lightColorScheme(
     secondary = VioletaAdbrand,
     onSecondary = Blanco,
     secondaryContainer = VioletaClaro,
-    onSecondaryContainer = Color(0xFF3B1B10),
+    onSecondaryContainer = Color(0xFF5B0B4F),
     tertiary = CoralAdbrand,
     onTertiary = Blanco,
     background = FondoClaro,
@@ -34,7 +34,7 @@ private val EsquemaAdbrand = lightColorScheme(
     onErrorContainer = ErrorRojo
 )
 
-// Esquinas contenidas: menos "burbuja", más papel impreso.
+// Esquinas como la web: tarjetas de 12 a 16 dp.
 private val FormasAdbrand = Shapes(
     extraSmall = RoundedCornerShape(6.dp),
     small = RoundedCornerShape(8.dp),

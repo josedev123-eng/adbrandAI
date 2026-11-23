@@ -3,34 +3,39 @@ package com.adbrand.core.theme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-// Paleta de la app: papel cálido, tinta verde y terracota.
-// El kit de marca del negocio puede reemplazarla en la previsualización.
-val IndigoAdbrand = Color(0xFF1F3D33)
-val IndigoOscuro = Color(0xFF10251D)
-val IndigoClaro = Color(0xFFE5EBE1)
-val VioletaAdbrand = Color(0xFFB4512E)
-val VioletaClaro = Color(0xFFF7E7DD)
-val CoralAdbrand = Color(0xFFC77A33)
-val FondoClaro = Color(0xFFF4F0E6)
-val SuperficieBlanca = Color(0xFFFFFCF4)
-val TextoPrincipal = Color(0xFF191710)
-val TextoSecundario = Color(0xFF6B6456)
-val BordeSuave = Color(0xFFE0D8C7)
+// Paleta de la app = la misma de la web (adbrand-web/src/index.css), con la regla 60-30-10:
+// 60 % fondos claros (FondoClaro, SuperficieBlanca), 30 % índigo de marca (botones, pestaña activa, títulos
+// destacados) y 10 % acentos: magenta de la IA (Crear y lo generado por IA) y coral del logo.
+// Los nombres se conservan para no tocar cada pantalla; lo que cambia es el color.
+val IndigoAdbrand = Color(0xFF4F46E5)
+val IndigoOscuro = Color(0xFF3730A3)
+val IndigoClaro = Color(0xFFECEBFD)
+// Magenta de la IA (10 %): botón Crear y todo lo que genera la IA.
+val VioletaAdbrand = Color(0xFFB5179E)
+val VioletaClaro = Color(0xFFFBE8F8)
+// Coral del logo (10 %). Para texto se usa CoralTexto, que cumple el contraste AA.
+val CoralAdbrand = Color(0xFFF97316)
+val CoralTexto = Color(0xFFC2410C)
+val FondoClaro = Color(0xFFF4F4F9)
+val SuperficieBlanca = Color(0xFFFFFFFF)
+val TextoPrincipal = Color(0xFF1B1D2E)
+val TextoSecundario = Color(0xFF5D6178)
+val BordeSuave = Color(0xFFDFE1EC)
 val Blanco = Color(0xFFFFFFFF)
 
-// Segunda tinta para detalles editoriales (reglas, numeración, sellos).
-val TintaSuave = Color(0xFF8A8375)
-val PapelHueso = Color(0xFFFAF6EC)
+// Gris para íconos sin seleccionar y detalles; superficie secundaria (chips, campos deshabilitados).
+val TintaSuave = Color(0xFF7A7F98)
+val PapelHueso = Color(0xFFEEEFF7)
 
-// Estados: avisos de éxito, error y advertencia.
-val ErrorRojo = Color(0xFF9C3A2A)
-val ErrorSuave = Color(0xFFF9E7E1)
-val ExitoVerde = Color(0xFF2F6B4F)
-val ExitoSuave = Color(0xFFE7F0E7)
-val AmbarOscuro = Color(0xFF95661D)
-val AmbarSuave = Color(0xFFF9F0DC)
+// Estados: avisos de éxito, error y advertencia (los mismos de la web).
+val ErrorRojo = Color(0xFFC0392B)
+val ErrorSuave = Color(0xFFFBE6E3)
+val ExitoVerde = Color(0xFF15803D)
+val ExitoSuave = Color(0xFFE2F4E7)
+val AmbarOscuro = Color(0xFFA15C07)
+val AmbarSuave = Color(0xFFFDF0D9)
 
-// Firma visual: verde tinta profundo, casi plano. Sin brillos ni violetas.
+// Tarjeta principal ("hero"): índigo de marca, apenas más oscuro abajo.
 val DegradadoMarca = Brush.linearGradient(
-    listOf(Color(0xFF24493C), Color(0xFF17332A))
+    listOf(Color(0xFF5B52EC), Color(0xFF3F37C9))
 )

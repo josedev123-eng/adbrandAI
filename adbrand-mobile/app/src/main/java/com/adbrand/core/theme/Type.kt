@@ -8,35 +8,34 @@ import androidx.compose.ui.unit.sp
 
 private val Sans = FontFamily.SansSerif
 
-// Los titulares van en serif: le dan voz de revista y alejan la app del
-// "template" de SaaS. El cuerpo se queda en sans para máxima legibilidad.
-private val Serif = FontFamily.Serif
+// Titulares en sans y en negrita, como la web: el mismo estilo sobrio y formal en las dos.
+private val Titular = FontFamily.SansSerif
 
 val AdbrandTypography = Typography(
     displaySmall = TextStyle(
-        fontFamily = Serif,
-        fontWeight = FontWeight.Medium,
+        fontFamily = Titular,
+        fontWeight = FontWeight.Bold,
         fontSize = 38.sp,
         lineHeight = 42.sp,
         letterSpacing = (-0.6).sp
     ),
     headlineLarge = TextStyle(
-        fontFamily = Serif,
-        fontWeight = FontWeight.Medium,
+        fontFamily = Titular,
+        fontWeight = FontWeight.Bold,
         fontSize = 32.sp,
         lineHeight = 37.sp,
         letterSpacing = (-0.5).sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = Serif,
-        fontWeight = FontWeight.Medium,
+        fontFamily = Titular,
+        fontWeight = FontWeight.Bold,
         fontSize = 26.sp,
         lineHeight = 31.sp,
         letterSpacing = (-0.3).sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = Serif,
-        fontWeight = FontWeight.Medium,
+        fontFamily = Titular,
+        fontWeight = FontWeight.Bold,
         fontSize = 21.sp,
         lineHeight = 26.sp
     ),
