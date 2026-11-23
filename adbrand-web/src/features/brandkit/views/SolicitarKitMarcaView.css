@@ -33,3 +33,11 @@
 
 /* Título de la tarjeta con aire antes del primer campo. */
 .kit-datos-titulo { margin: 0 0 16px; }
+
+/* Identidad de marca: qué quiere que sienta su cliente (chips de elección múltiple). */
+.kit-sentimientos { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.kit-sentimientos legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+.kit-sentimientos-opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.kit-chip { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 600; }
+.kit-chip:hover { border-color: var(--primary); }
+.kit-chip-activo { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }

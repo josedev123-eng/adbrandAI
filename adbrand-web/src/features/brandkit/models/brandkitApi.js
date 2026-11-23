@@ -1,5 +1,5 @@
 // Model: llamadas a la API de Kit de Marca (HU-11).
-import { apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
+import { apiDescargar, apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
 import { conCache, olvidarDespues } from '../../../shared/services/cacheConsultas'
 
 export const ESTILOS_VISUALES = [
@@ -84,4 +84,23 @@ export function textoLegible(hex) {
   const canal = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
   const luminancia = 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b)
   return luminancia > 0.4 ? '#1A1A1A' : '#FFFFFF'
+}
+
+// Identidad de marca (V70): 3 logos propuestos por la IA (no se guardan hasta elegir uno).
+export function proponerLogos(id) {
+  return apiRequest(`/kit-marca/${id}/logo/opciones`, { method: 'POST', tiempoMaximo: TIEMPO_IA })
+}
+
+// Guarda el logo como imagen (data URL). origen: SUBIDO (ya lo tenía) o IA (lo eligió de las propuestas).
+export function guardarLogoImagen(id, imagen, origen) {
+  return apiRequest(`/kit-marca/${id}/logo-imagen`, { method: 'PUT', body: { imagen, origen } }).then(olvidarDespues('kits'))
+}
+
+export function elegirEslogan(id, eslogan) {
+  return apiRequest(`/kit-marca/${id}/eslogan`, { method: 'PUT', body: { eslogan } }).then(olvidarDespues('kits'))
+}
+
+// Manual de marca en PDF (logo, eslogan, colores, letras y voz), para la imprenta.
+export function descargarManualMarca(id) {
+  return apiDescargar(`/kit-marca/${id}/manual`)
 }

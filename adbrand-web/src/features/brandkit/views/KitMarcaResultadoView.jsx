@@ -2,6 +2,7 @@
 import Aviso from '../../../shared/components/Aviso'
 import { useState } from 'react'
 import LogoMarca from './LogoMarca'
+import IdentidadMarca from './IdentidadMarca'
 import './KitMarcaResultadoView.css'
 
 function Seccion({ titulo, children, icono }) {
@@ -66,6 +67,7 @@ export default function KitMarcaResultadoView({
   alDisenarLogo,
   alEditarColores,
   alEditarIdentidad,
+  alActualizarKit,
 }) {
   const [copiado, setCopiado] = useState(null)
 
@@ -109,6 +111,8 @@ export default function KitMarcaResultadoView({
       )}
 
       <Aviso mensaje={aviso} />
+
+      {alActualizarKit && <IdentidadMarca kit={kit} alActualizar={alActualizarKit} />}
 
       <div className="kit-grid">
         <Seccion titulo="Concepto de Logo" icono="🎨">

@@ -9,6 +9,9 @@ import EditarIdentidadView from './EditarIdentidadView'
 import './SolicitarKitMarcaView.css'
 import Cargando from '../../../shared/components/Cargando'
 
+// Lo que la empresa quiere transmitir (identidad de marca, V70).
+const SENTIMIENTOS = ['Confianza', 'Alegría', 'Cercanía', 'Elegancia', 'Calidez', 'Energía', 'Frescura', 'Tradición']
+
 function Campo({ etiqueta, error, children, ayuda }) {
   return (
     <label className={error ? 'campo campo-con-error' : 'campo'}>
@@ -57,6 +60,7 @@ export default function SolicitarKitMarcaView() {
     empezarEdicion,
     cancelarEdicion,
     terminarEdicion,
+    actualizarKit,
     editandoLogo,
     empezarEdicionLogo,
     cancelarEdicionLogo,
@@ -102,6 +106,7 @@ export default function SolicitarKitMarcaView() {
     return (
       <KitMarcaResultadoView
         kit={kit}
+        alActualizarKit={actualizarKit}
         aviso={aviso}
         generando={generando}
         alAceptar={aceptarKit}
@@ -176,13 +181,48 @@ export default function SolicitarKitMarcaView() {
             />
           </Campo>
 
-          <Campo etiqueta="Valores / Eslogan (opcional)" ayuda="Ej: Café de origen, sostenible, cálido">
-            <textarea
-              rows="3"
-              value={formulario.valoresEslogan}
-              maxLength={500}
-              placeholder="Valores que representa tu marca, eslogan..."
-              onChange={(e) => cambiarCampo('valoresEslogan', e.target.value)}
+          <fieldset className="kit-sentimientos">
+            <legend>¿Qué quieres que sienta tu cliente?</legend>
+            <div className="kit-sentimientos-opciones">
+              {SENTIMIENTOS.map((sentimiento) => {
+                const elegidos = formulario.sentimiento ? formulario.sentimiento.split(', ') : []
+                const activo = elegidos.includes(sentimiento)
+                return (
+                  <button
+                    key={sentimiento}
+                    type="button"
+                    className={activo ? 'kit-chip kit-chip-activo' : 'kit-chip'}
+                    aria-pressed={activo}
+                    onClick={() =>
+                      cambiarCampo(
+                        'sentimiento',
+                        (activo ? elegidos.filter((s) => s !== sentimiento) : [...elegidos, sentimiento].slice(-3)).join(', '),
+                      )
+                    }
+                  >
+                    {sentimiento}
+                  </button>
+                )
+              })}
+            </div>
+            <small className="campo-ayuda">Elige hasta 3.</small>
+          </fieldset>
+
+          <Campo etiqueta="¿Qué te hace diferente? (opcional)" ayuda="Ej.: Pan recién horneado a las 6 am, con receta de la abuela">
+            <input
+              value={formulario.diferencial}
+              maxLength={300}
+              placeholder="Lo que tus clientes no encuentran en otro lado"
+              onChange={(e) => cambiarCampo('diferencial', e.target.value)}
+            />
+          </Campo>
+
+          <Campo etiqueta="¿Ya tienes eslogan? (opcional)" error={errores.eslogan} ayuda="Si lo dejas vacío, la IA te propone 3.">
+            <input
+              value={formulario.eslogan}
+              maxLength={150}
+              placeholder="Ej.: La casa del buen pan"
+              onChange={(e) => cambiarCampo('eslogan', e.target.value)}
             />
           </Campo>
 

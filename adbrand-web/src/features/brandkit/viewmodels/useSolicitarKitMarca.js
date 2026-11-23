@@ -9,6 +9,10 @@ const FORMULARIO_VACIO = {
   paletaSugerida: '',
   valoresEslogan: '',
   estiloVisual: '',
+  // Identidad de marca (V70).
+  sentimiento: '',
+  diferencial: '',
+  eslogan: '',
 }
 
 function validar(formulario) {
@@ -142,6 +146,12 @@ export function useSolicitarKitMarca() {
     setAviso({ tipo: 'exito', texto: 'Cambios guardados' })
   }
 
+  // Identidad de marca: después de elegir eslogan o logo se refresca el kit sin salir del resultado.
+  function actualizarKit(actualizado) {
+    setKit(actualizado)
+    setKitsGuardados((actuales) => actuales.map((k) => (k.id === actualizado.id ? actualizado : k)))
+  }
+
   // HU-29: editor interactivo del logo.
   function empezarEdicionLogo() {
     setAviso(null)
@@ -221,6 +231,7 @@ export function useSolicitarKitMarca() {
     empezarEdicion,
     cancelarEdicion,
     terminarEdicion,
+    actualizarKit,
     editandoLogo,
     empezarEdicionLogo,
     cancelarEdicionLogo,

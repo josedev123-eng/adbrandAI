@@ -1,0 +1,29 @@
+/* "Tu identidad" del Kit de Marca: eslogan, logo y descargas. */
+.identidad { display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px; }
+.identidad-cabecera { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.identidad-cabecera h2 { margin: 0 0 4px; }
+.identidad-cabecera p { margin: 0; color: var(--muted); max-width: 44em; }
+.identidad-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.identidad-bloque { display: flex; flex-direction: column; gap: 10px; }
+.identidad-bloque h3 { margin: 0; font-size: 1rem; }
+.identidad-eslogan { margin: 0; font-family: var(--f-display); font-size: 1.25rem; color: var(--primary); }
+.identidad-opciones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.identidad-opcion {
+  width: 100%; text-align: left; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; font-weight: 600;
+}
+.identidad-opcion:hover:not(:disabled) { border-color: var(--primary); }
+.identidad-opcion-activa { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); cursor: default; }
+.identidad-propio { display: flex; gap: 8px; align-items: flex-end; }
+.identidad-propio .campo { flex: 1; margin: 0; }
+.identidad-logo-actual { display: flex; align-items: center; gap: 14px; }
+.identidad-logo-actual img { width: 110px; height: 110px; object-fit: contain; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
+.identidad-logo-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.identidad-subir { position: relative; overflow: hidden; display: inline-flex; align-items: center; cursor: pointer; }
+.identidad-subir input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.identidad-propuestas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.identidad-propuestas li { display: flex; flex-direction: column; gap: 6px; }
+.identidad-propuestas img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
+@media (max-width: 760px) {
+  .identidad-columnas { grid-template-columns: 1fr; }
+}
