@@ -15,6 +15,8 @@ vi.mock('../models/anunciosApi', async (importOriginal) => ({
   usarVersion: vi.fn(),
 }))
 
+vi.mock('../../../app/context/useSesion', () => ({ useSesion: () => ({ usuario: { nombreEmpresa: 'Panadería Rosa' } }) }))
+
 vi.mock('../../negocio/models/perfilNegocioApi', async (importOriginal) => ({
   ...(await importOriginal()),
   obtenerPerfil: vi.fn(() => Promise.resolve({ nombreComercial: 'Panadería Rosa' })),

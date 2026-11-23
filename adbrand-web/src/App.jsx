@@ -312,7 +312,7 @@ function App() {
           >
             {pantalla === 'inicio' && <InicioView empresa={usuario.nombreEmpresa} alAbrir={setPantalla} />}
             {pantalla === 'perfil' && <PerfilNegocioView />}
-            {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} irAPlanes={() => setPantalla('planes')} />}
+            {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} irAPlanes={() => setPantalla('planes')} irAMiCuenta={() => setPantalla('cuenta')} />}
             {pantalla === 'misAnuncios' && (
               <MisAnunciosView alVerAvisos={limpiarAvisos} irACrear={() => setPantalla('anuncio')} />
             )}

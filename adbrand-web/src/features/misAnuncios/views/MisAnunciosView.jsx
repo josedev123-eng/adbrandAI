@@ -3,6 +3,7 @@ import Cargando from '../../../shared/components/Cargando'
 import SinResultados from '../../../shared/components/SinResultados'
 import { ESTADOS } from '../models/misAnunciosApi'
 import { FILTROS, useMisAnuncios } from '../viewmodels/useMisAnuncios'
+import ListoParaPublicar from '../../contenido/views/ListoParaPublicar'
 import './MisAnunciosView.css'
 
 const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook', TIKTOK: 'TikTok' }
@@ -40,6 +41,7 @@ function TarjetaAnuncio({ anuncio }) {
       {anuncio.estado === 'APROBADO' && anuncio.moderado && (
         <p className="mi-anuncio-motivo mi-anuncio-motivo-aprobado">Un moderador lo revisó y lo aprobó: ya puedes publicarlo.</p>
       )}
+      {anuncio.estado === 'APROBADO' && <ListoParaPublicar anuncioId={anuncio.id} />}
     </article>
   )
 }

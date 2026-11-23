@@ -44,3 +44,8 @@ export function retocarImagen(opcionId, instruccion) {
 export function usarVersion(opcionId, numero) {
   return apiRequest(`/contenido/anuncios/opciones/${opcionId}/versiones/${numero}/usar`, { method: 'POST' })
 }
+
+// Listo para publicar: texto con hashtags (marca + rubro + Perú) y enlace "Pedir por WhatsApp" si hay celular.
+export function prepararPublicacion(id) {
+  return apiRequest(`/contenido/anuncios/${id}/publicar`)
+}
