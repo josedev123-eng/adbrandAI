@@ -2,6 +2,7 @@ package com.adbrand.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -21,6 +22,7 @@ import com.adbrand.ui.auth.screens.RecuperarContrasenaScreen
 import com.adbrand.ui.auth.screens.RegistroScreen
 import com.adbrand.ui.components.BarraInferior
 import com.adbrand.ui.components.ItemNavegacion
+import com.adbrand.ui.metricas.screens.MetricasScreen
 import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
 import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
@@ -32,7 +34,8 @@ private const val RUTA_BIENVENIDA = "bienvenida"
 private const val RUTA_EMPRESA = "empresa"
 private const val RUTA_PERFIL = "perfil"
 private const val RUTA_PREVISUALIZACION = "previsualizacion"
-private val DESTINOS_PRINCIPALES = setOf(RUTA_EMPRESA, RUTA_PERFIL, RUTA_PREVISUALIZACION)
+private const val RUTA_METRICAS = "metricas"
+private val DESTINOS_PRINCIPALES = setOf(RUTA_EMPRESA, RUTA_PERFIL, RUTA_PREVISUALIZACION, RUTA_METRICAS)
 
 @Composable
 fun AppAdbrand() {
@@ -44,7 +47,8 @@ fun AppAdbrand() {
         listOf(
             ItemNavegacion(RUTA_EMPRESA, "Empresa", Icons.Filled.Home),
             ItemNavegacion(RUTA_PERFIL, "Perfil", Icons.Filled.Person),
-            ItemNavegacion(RUTA_PREVISUALIZACION, "Vista", Icons.Filled.Visibility)
+            ItemNavegacion(RUTA_PREVISUALIZACION, "Vista", Icons.Filled.Visibility),
+            ItemNavegacion(RUTA_METRICAS, "Métricas", Icons.Filled.BarChart)
         )
     }
 
@@ -77,6 +81,7 @@ fun AppAdbrand() {
             }
             composable(RUTA_PERFIL) { PerfilNegocioScreen() }
             composable(RUTA_PREVISUALIZACION) { PrevisualizacionScreen() }
+            composable(RUTA_METRICAS) { MetricasScreen() }
         }
     }
 }
