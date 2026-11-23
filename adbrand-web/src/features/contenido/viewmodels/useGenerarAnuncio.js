@@ -2,6 +2,7 @@
 // y la guarda como anuncio. Después se puede copiar o regenerar (HU-10, HU-12).
 import { useEffect, useState } from 'react'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
+import { leerOfertaSugerida, olvidarOfertaSugerida } from '../models/ofertaSugerida'
 import { elegirOpcion, generarOpciones, regenerarAnuncio, retocarImagen, usarVersion } from '../models/anunciosApi'
 
 export const MAXIMO_OFERTA = 300
@@ -16,7 +17,9 @@ function validar(solicitud) {
 }
 
 export function useGenerarAnuncio() {
-  const [solicitud, setSolicitud] = useState({ oferta: '', redSocial: 'INSTAGRAM' })
+  // HU 63: si viene de "Tu mes de contenido", la idea de la fecha llega ya escrita.
+  const [solicitud, setSolicitud] = useState(() => ({ oferta: leerOfertaSugerida().slice(0, MAXIMO_OFERTA), redSocial: 'INSTAGRAM' }))
+  useEffect(() => olvidarOfertaSugerida(), [])
   const [errores, setErrores] = useState({})
   const [opciones, setOpciones] = useState([])
   const [anuncio, setAnuncio] = useState(null)

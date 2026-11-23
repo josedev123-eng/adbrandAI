@@ -1,3 +1,4 @@
+import { guardarOfertaSugerida } from './features/contenido/models/ofertaSugerida'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import LandingView from './features/landing/views/LandingView'
 import PiePagina from './shared/components/PiePagina'
@@ -318,7 +319,14 @@ function App() {
             )}
             {pantalla === 'kit' && <SolicitarKitMarcaView />}
             {pantalla === 'planes' && <PlanesView />}
-            {pantalla === 'calendario' && <CalendarioView />}
+            {pantalla === 'calendario' && (
+              <CalendarioView
+                alCrearAnuncio={(idea) => {
+                  guardarOfertaSugerida(idea)
+                  setPantalla('anuncio')
+                }}
+              />
+            )}
             {pantalla === 'informes' && <InformeCampanasView />}
             {pantalla === 'cuenta' && (
               <MiCuentaView

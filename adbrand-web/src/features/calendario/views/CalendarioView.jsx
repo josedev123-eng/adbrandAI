@@ -3,6 +3,7 @@
 // HU 34: al programar se elige uno de los anuncios aprobados.
 // HU 36: las publicaciones programadas se arrastran a otro día.
 // HU 35: los días que dura cada campaña se pintan con su color y el primero lleva su nombre.
+import MesContenido from './MesContenido'
 import Aviso from '../../../shared/components/Aviso'
 import { useState } from 'react'
 import Cargando from '../../../shared/components/Cargando'
@@ -38,7 +39,7 @@ function campanaVacia() {
   return { nombre: '', color: '#4F46E5', tipo: 'CAMPANA', fechaInicio: hoyIso(), fechaFin: hoyIso() }
 }
 
-export default function CalendarioView() {
+export default function CalendarioView({ alCrearAnuncio }) {
   const {
     mes,
     publicaciones,
@@ -150,6 +151,8 @@ export default function CalendarioView() {
         <h1>Calendario de publicaciones</h1>
         <p>Programa tus anuncios y míralos en el mes que corresponde.</p>
       </header>
+
+      <MesContenido alCrearAnuncio={alCrearAnuncio} />
 
       <section className="tarjeta calendario">
         <div className="calendario-barra">
