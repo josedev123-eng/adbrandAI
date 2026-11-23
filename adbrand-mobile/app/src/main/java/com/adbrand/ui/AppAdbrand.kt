@@ -15,11 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,9 +57,13 @@ import com.adbrand.ui.panel.screens.PanelScreen
 import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
 import com.adbrand.ui.plan.screens.PantallaPlanScreen
-import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
 import com.adbrand.ui.metricas.screens.MetricasScreen
-import com.adbrand.ui.revision.screens.RevisionScreen
+import com.adbrand.ui.anuncios.screens.AnunciosScreen
+import com.adbrand.ui.components.ConVolver
+import com.adbrand.ui.cuenta.screens.CuentaScreen
+import com.adbrand.ui.kit.screens.KitMarcaScreen
+import com.adbrand.ui.guia.GuiaApp
+import com.adbrand.ui.guia.MemoriaGuia
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -74,23 +76,27 @@ private const val RUTA_PANEL = "panel"
 private const val RUTA_EMPRESA = "empresa"
 private const val RUTA_CREAR = "crear"
 private const val RUTA_PERFIL = "perfil"
-private const val RUTA_PREVISUALIZACION = "previsualizacion"
 private const val RUTA_CAMPANA = "campana/{id}"
 private const val RUTA_PLAN = "plan"
 private const val RUTA_AVISOS = "avisos"
-// HU 53 y 54: contenido por revisar (aprobar o rechazar).
-private const val RUTA_REVISION = "revision"
+// Pestaña "Anuncios": por aprobar (HU 53 a 56) y vista previa en formatos (HU 46 a 48).
+// "?ver=id" abre directo un anuncio (al tocarlo en el panel).
+private const val RUTA_ANUNCIOS = "anuncios"
+private const val RUTA_ANUNCIOS_VER = "anuncios?ver={ver}"
 // HU 57 a 60 (Karim): métricas y reportes del negocio.
 private const val RUTA_METRICAS = "metricas"
+// Pestaña "Cuenta": perfil de marca, datos de la empresa, plan, avisos y cerrar sesión.
+private const val RUTA_CUENTA = "cuenta"
+// Kit de marca desde el celular (antes solo se podía en la web).
+private const val RUTA_KIT = "kit"
 
+// Menú de abajo con 5 pestañas (antes eran 7). Perfil, Empresa, Plan y Avisos se abren desde "Cuenta".
 private val DESTINOS_PRINCIPALES = setOf(
     RUTA_PANEL,
-    RUTA_EMPRESA,
+    RUTA_ANUNCIOS_VER,
     RUTA_CREAR,
-    RUTA_PERFIL,
-    RUTA_PREVISUALIZACION,
-    RUTA_REVISION,
-    RUTA_METRICAS
+    RUTA_METRICAS,
+    RUTA_CUENTA
 )
 
 // HU 50: mientras el usuario está en apertura o cuenta no se salta a un aviso;
@@ -124,8 +130,15 @@ fun AppAdbrand() {
         if (concedido) alcance.launch { GestorPush.sincronizar(contexto) }
     }
 
+    // Guía con el robot: sale sola la primera vez que se entra a la app; después, desde Cuenta.
+    var verGuia by remember { mutableStateOf(false) }
+
     LaunchedEffect(rutaActual) {
         if (rutaActual in DESTINOS_PRINCIPALES) {
+            if (!MemoriaGuia.yaVista(contexto)) {
+                verGuia = true
+                return@LaunchedEffect
+            }
             GestorPush.sincronizar(contexto)
             if (!GestorPush.tienePermiso(contexto) && !MemoriaAvisos.yaPreguntado(contexto)) {
                 pedirPermiso = true
@@ -159,17 +172,24 @@ fun AppAdbrand() {
 
     val destinos = remember {
         listOf(
-            ItemNavegacion(RUTA_PANEL, "Panel", Icons.Filled.Home),
-            ItemNavegacion(RUTA_EMPRESA, "Empresa", Icons.Filled.Business),
+            ItemNavegacion(RUTA_PANEL, "Inicio", Icons.Filled.Home),
+            ItemNavegacion(RUTA_ANUNCIOS_VER, "Anuncios", Icons.Filled.Collections),
             ItemNavegacion(RUTA_CREAR, "Crear", Icons.Filled.Add, destacado = true),
-            ItemNavegacion(RUTA_PERFIL, "Perfil", Icons.Filled.Person),
-            ItemNavegacion(RUTA_PREVISUALIZACION, "Vista", Icons.Filled.Visibility),
-            ItemNavegacion(RUTA_REVISION, "Revisar", Icons.Filled.FactCheck),
-            ItemNavegacion(RUTA_METRICAS, "Métricas", Icons.Filled.BarChart)
+            ItemNavegacion(RUTA_METRICAS, "Métricas", Icons.Filled.BarChart),
+            ItemNavegacion(RUTA_CUENTA, "Cuenta", Icons.Filled.Person)
         )
     }
 
-    fun irA(ruta: String) {
+    fun irA(rutaPedida: String) {
+        // Inicio es la base de la pila: se vuelve a ella sin "restaurar" nada (si no, regresaba a la pestaña anterior).
+        if (rutaPedida == RUTA_PANEL) {
+            if (!navegador.popBackStack(RUTA_PANEL, inclusive = false)) {
+                navegador.navigate(RUTA_PANEL) { launchSingleTop = true }
+            }
+            return
+        }
+        // La pestaña Anuncios se registra con su parámetro opcional; desde el menú se abre sin él.
+        val ruta = if (rutaPedida == RUTA_ANUNCIOS_VER) RUTA_ANUNCIOS else rutaPedida
         navegador.navigate(ruta) {
             popUpTo(RUTA_PANEL) { saveState = true }
             launchSingleTop = true
@@ -254,27 +274,68 @@ fun AppAdbrand() {
             }
 
             composable(RUTA_PANEL) {
-                PanelScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
-            }
-
-            composable(RUTA_EMPRESA) {
-                DatosEmpresaScreen(alCerrarSesion = ::cerrarSesion)
+                PanelScreen(
+                    alCrearAnuncio = { irA(RUTA_CREAR) },
+                    // Tocar un anuncio del panel lo abre en la vista previa.
+                    alAbrirAnuncio = { id ->
+                        navegador.navigate("$RUTA_ANUNCIOS?ver=$id") {
+                            popUpTo(RUTA_PANEL) { saveState = false }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
             composable(RUTA_CREAR) {
-                CrearAnuncioScreen(alIrAPerfil = { irA(RUTA_PERFIL) })
+                CrearAnuncioScreen(alIrAPerfil = { navegador.navigate(RUTA_PERFIL) })
             }
 
+            // HU 53 a 56 y 46 a 48: "Por aprobar" y "Vista previa" en una sola pestaña.
+            composable(
+                route = RUTA_ANUNCIOS_VER,
+                arguments = listOf(navArgument("ver") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                })
+            ) { entrada ->
+                val ver = entrada.arguments?.getLong("ver")?.takeIf { it > 0 }
+                AnunciosScreen(
+                    abrirId = ver,
+                    alCrearAnuncio = { irA(RUTA_CREAR) },
+                    alCrearKit = { navegador.navigate(RUTA_KIT) }
+                )
+            }
+
+            composable(RUTA_CUENTA) {
+                CuentaScreen(
+                    alAbrirPerfilMarca = { navegador.navigate(RUTA_PERFIL) },
+                    alAbrirKit = { navegador.navigate(RUTA_KIT) },
+                    alAbrirDatosEmpresa = { navegador.navigate(RUTA_EMPRESA) },
+                    alAbrirPlan = { navegador.navigate(RUTA_PLAN) },
+                    alAbrirAvisos = { navegador.navigate(RUTA_AVISOS) },
+                    alCerrarSesion = ::cerrarSesion,
+                    alVerGuia = { verGuia = true }
+                )
+            }
+
+            // Se abren desde "Cuenta", con "← Cuenta" arriba para volver.
             composable(RUTA_PERFIL) {
-                PerfilNegocioScreen(alAbrirAvisos = { navegador.navigate(RUTA_AVISOS) })
+                ConVolver(alVolver = { navegador.popBackStack() }) {
+                    PerfilNegocioScreen(alAbrirAvisos = { navegador.navigate(RUTA_AVISOS) })
+                }
             }
 
-            composable(RUTA_PREVISUALIZACION) {
-                PrevisualizacionScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
+            composable(RUTA_KIT) {
+                ConVolver(textoVolver = "Volver", alVolver = { navegador.popBackStack() }) {
+                    KitMarcaScreen()
+                }
             }
 
-            // HU 53 y 54: aprobar o rechazar el contenido generado.
-            composable(RUTA_REVISION) { RevisionScreen() }
+            composable(RUTA_EMPRESA) {
+                ConVolver(alVolver = { navegador.popBackStack() }) {
+                    DatosEmpresaScreen(alCerrarSesion = ::cerrarSesion)
+                }
+            }
 
             // HU 57 a 60: métricas y reportes.
             composable(RUTA_METRICAS) { MetricasScreen() }
@@ -300,6 +361,15 @@ fun AppAdbrand() {
             composable(RUTA_AVISOS) {
                 PreferenciasAvisosScreen(alVolver = { navegador.popBackStack() })
             }
+        }
+
+        if (verGuia) {
+            GuiaApp(alTerminar = {
+                verGuia = false
+                MemoriaGuia.marcarVista(contexto)
+                // Después de la guía recién se pregunta por los avisos (una cosa a la vez).
+                if (!GestorPush.tienePermiso(contexto) && !MemoriaAvisos.yaPreguntado(contexto)) pedirPermiso = true
+            })
         }
 
         DialogoPermisoAvisos(

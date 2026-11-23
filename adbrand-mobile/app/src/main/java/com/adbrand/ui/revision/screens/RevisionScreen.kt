@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,6 +56,8 @@ import com.adbrand.ui.revision.viewmodel.RevisionViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RevisionScreen(
+    // Dentro de la pestaña "Anuncios" el título ya lo pone esa pantalla.
+    conBarraSuperior: Boolean = true,
     viewModel: RevisionViewModel = viewModel(),
     estadosViewModel: EstadosContenidoViewModel = viewModel()
 ) {
@@ -75,7 +78,10 @@ fun RevisionScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Por revisar") }) }
+        topBar = { if (conBarraSuperior) TopAppBar(
+            title = { Text("Por aprobar", style = MaterialTheme.typography.headlineMedium) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+        ) }
     ) { relleno ->
         // HU 56, criterio 2: al deslizar la lista hacia abajo se actualizan las dos listas.
         PullToRefreshBox(
@@ -94,11 +100,10 @@ fun RevisionScreen(
                 .padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // En dos líneas: qué hace cada botón.
             item {
-                Text(
-                    "Aprueba lo que quieras publicar o rechaza lo que no te convenza.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                AvisoEstado(
+                    "\"Me gusta, usar\" lo deja listo para publicar. \"Descartar\" lo quita y no se publica."
                 )
             }
 
@@ -130,7 +135,7 @@ fun RevisionScreen(
 
             if (!estado.cargando && estado.cargado && estado.contenidos.isEmpty() && estado.error == null) {
                 item {
-                    AvisoEstado("No tienes contenido por revisar. Cuando generes anuncios aparecerán aquí.")
+                    AvisoEstado("No tienes anuncios por revisar. Cuando crees uno con \"+ Crear\", aparecerá aquí.")
                 }
             }
 
@@ -153,17 +158,17 @@ fun RevisionScreen(
     estado.porRechazar?.let { contenido ->
         AlertDialog(
             onDismissRequest = viewModel::cancelarRechazo,
-            title = { Text("¿Rechazar este contenido?") },
+            title = { Text("¿Descartar este anuncio?") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        "\"${contenido.oferta}\" no se publicará ni se podrá programar en el calendario.",
+                        "No se publicará ni se podrá programar en el calendario.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedTextField(
                         value = estado.motivoRechazo,
                         onValueChange = viewModel::cambiarMotivo,
-                        label = { Text("Motivo (opcional)") },
+                        label = { Text("¿Por qué? (opcional)") },
                         placeholder = { Text("Ej.: el precio está mal") },
                         supportingText = { Text("${estado.motivoRechazo.length}/$MAXIMO_MOTIVO_RECHAZO") },
                         minLines = 2,
@@ -173,7 +178,7 @@ fun RevisionScreen(
             },
             confirmButton = {
                 TextButton(onClick = viewModel::confirmarRechazo) {
-                    Text("Rechazar", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    Text("Descartar", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = { TextButton(onClick = viewModel::cancelarRechazo) { Text("Cancelar") } }
@@ -213,7 +218,7 @@ private fun TarjetaRevision(
 
             when {
                 contenido.puedeAprobar -> BotonPrincipal(
-                    texto = "Aprobar",
+                    texto = "Me gusta, usar",
                     onClick = alAprobar,
                     cargando = aprobando,
                     habilitado = !ocupado,
@@ -221,11 +226,11 @@ private fun TarjetaRevision(
                 )
                 // Criterio 2: lo rechazado por el moderador no muestra el botón.
                 contenido.estado == "RECHAZADO" -> AvisoEstado(
-                    "Rechazado por el moderador" +
+                    "No se puede usar: lo rechazó el equipo de AdBrand.AI" +
                         if (contenido.motivoRevision.isNotBlank()) ": ${contenido.motivoRevision}" else ".",
                     tipo = TipoAviso.ERROR
                 )
-                else -> AvisoEstado("Un moderador lo está revisando. Podrás aprobarlo cuando termine.")
+                else -> AvisoEstado("El equipo de AdBrand.AI lo está revisando. Podrás usarlo cuando termine.")
             }
 
             // HU 54: cualquier contenido de la lista se puede rechazar (también lo que aún revisa el moderador).
@@ -236,7 +241,7 @@ private fun TarjetaRevision(
             ) {
                 Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(if (contenido.estado == "RECHAZADO") "Descartar" else "Rechazar")
+                Text("Descartar")
             }
         }
     }

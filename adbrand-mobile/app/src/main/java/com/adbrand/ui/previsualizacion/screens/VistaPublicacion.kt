@@ -63,14 +63,14 @@ import com.adbrand.ui.previsualizacion.recorte.Recorte
 internal val FORMATOS = listOf(
     Triple("CUADRADO", "Cuadrado", "Publicación"),
     Triple("VERTICAL", "Vertical", "Historia"),
-    Triple("HORIZONTAL", "Horizontal", "Horizontal")
+    Triple("HORIZONTAL", "Horizontal", "Portada")
 )
 
 // HU 46, criterio 1: selector de formato (cuadrado, vertical u horizontal).
 @Composable
 fun SelectorFormato(actual: String, habilitado: Boolean, alElegir: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Formato", style = MaterialTheme.typography.labelLarge)
+        Text("¿Dónde lo vas a usar?", style = MaterialTheme.typography.labelLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FORMATOS.forEach { (codigo, nombre, uso) ->
                 FilterChip(
@@ -79,8 +79,8 @@ fun SelectorFormato(actual: String, habilitado: Boolean, alElegir: (String) -> U
                     onClick = { alElegir(codigo) },
                     label = {
                         Column {
-                            Text(nombre, style = MaterialTheme.typography.labelLarge)
-                            if (uso != nombre) Text(uso, style = MaterialTheme.typography.labelSmall)
+                            Text(uso, style = MaterialTheme.typography.labelLarge)
+                            Text(nombre.lowercase(), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 )
@@ -91,16 +91,13 @@ fun SelectorFormato(actual: String, habilitado: Boolean, alElegir: (String) -> U
 
 // HU 46, criterio 2: aviso cuando el texto se acortó con "…" para entrar en el formato.
 @Composable
+// Es una nota discreta (gris), no una alerta: el anuncio no tiene ningún problema, solo se acortó para el tamaño.
 fun AvisoRecorte(formato: FormatoVista) {
-    Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFFDF0D9)) {
-        Text(
-            text = "El texto no entra completo en el formato ${formato.nombre.lowercase()} " +
-                "(máximo ${formato.maxCaracteres} caracteres): se acortó con \"…\".",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF8A4B00),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-        )
-    }
+    Text(
+        text = "Texto acortado para el formato ${formato.nombre.lowercase()} (hasta ${formato.maxCaracteres} caracteres).",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 // HU 46: el anuncio dibujado en el formato elegido (cuadrado, vertical u horizontal) con la imagen, el logo,
@@ -122,7 +119,10 @@ fun VistaPublicacion(
     alRestablecer: () -> Unit = {},
     // HU 48: guardar en la galería. HU 47: generar la imagen y abrir el menú de compartir.
     alGuardar: (guardar: () -> Boolean) -> Unit = {},
-    alCompartir: (generar: () -> Uri?, abrirMenu: (Uri) -> Unit) -> Unit = { _, _ -> }
+    alCompartir: (generar: () -> Uri?, abrirMenu: (Uri) -> Unit) -> Unit = { _, _ -> },
+    // Listo para publicar: texto con hashtags y "Pide por WhatsApp". Si no llegó, se comparte el texto del anuncio.
+    textoPublicar: String? = null,
+    alAvisar: (String) -> Unit = {}
 ) {
     val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
     val contexto = LocalContext.current
@@ -156,7 +156,7 @@ fun VistaPublicacion(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Vista previa", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Tu anuncio", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(
                             "${formato.nombre} · ${formato.ancho} × ${formato.alto} px",
                             style = MaterialTheme.typography.bodySmall,
@@ -198,15 +198,33 @@ fun VistaPublicacion(
                         alCompartir(
                             { ExportadorAnuncio.prepararParaCompartir(contexto, imagenFinal(), nombreArchivo) },
                             { uri ->
+                                // Instagram no recibe el texto al compartir: se copia solo para pegarlo en la descripción.
+                                textoPublicar?.let { copiarAlPortapapeles(contexto, it) }
                                 ExportadorAnuncio.abrirMenuCompartir(
-                                    contexto, uri, MensajeCompartir.para(nombreDe(kit), anuncio.textoAjustado)
+                                    contexto, uri,
+                                    textoPublicar?.let { MensajeCompartir("Anuncio de ${nombreDe(kit)}", it) }
+                                        ?: MensajeCompartir.para(nombreDe(kit), anuncio.textoAjustado)
                                 )
                             }
                         )
                     },
                     enabled = !cargandoImagen,
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Compartir") }
+                ) { Text("Compartir (WhatsApp, Instagram…)") }
+                if (textoPublicar != null) {
+                    OutlinedButton(
+                        onClick = {
+                            copiarAlPortapapeles(contexto, textoPublicar)
+                            alAvisar("Texto con hashtags copiado. Pégalo en la descripción de tu publicación.")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Copiar texto con hashtags") }
+                    Text(
+                        "Al compartir, el texto con tus hashtags y tu WhatsApp se copia solo: pégalo en Instagram o Facebook.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 mensajeCompartir?.let { Aviso(it) }
 
                 if (anuncio.recortado) AvisoRecorte(formato)
@@ -366,3 +384,9 @@ private fun decodificarBitmap(dataUrl: String): Bitmap? = runCatching {
     val bytes = Base64.decode(dataUrl.substringAfter("base64,"), Base64.DEFAULT)
     BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 }.getOrNull()
+
+// Copia el texto listo para publicar (Instagram no lo recibe al compartir una imagen).
+private fun copiarAlPortapapeles(contexto: android.content.Context, texto: String) {
+    val portapapeles = contexto.getSystemService(android.content.ClipboardManager::class.java) ?: return
+    portapapeles.setPrimaryClip(android.content.ClipData.newPlainText("Anuncio", texto))
+}

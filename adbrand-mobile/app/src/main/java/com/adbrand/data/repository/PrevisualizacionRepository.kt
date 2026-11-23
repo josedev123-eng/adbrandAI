@@ -14,4 +14,8 @@ interface PrevisualizacionRepository {
 
     // HU 47: registrar en el backend que se compartió el anuncio.
     suspend fun registrarCompartido(contenidoId: Long, formato: String): Resultado<Unit>
+
+    // Listo para publicar: el texto con hashtags (marca + rubro + Perú) y el enlace "Pide por WhatsApp".
+    // Por defecto falla, así las pruebas con datos falsos no tienen que implementarlo.
+    suspend fun textoParaPublicar(contenidoId: Long): Resultado<String> = Resultado.Error("No disponible")
 }

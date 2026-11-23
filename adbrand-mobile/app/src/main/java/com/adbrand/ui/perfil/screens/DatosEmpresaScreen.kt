@@ -187,20 +187,6 @@ fun DatosEmpresaScreen(
             }
         }
 
-        EntradaAnimada(indice = 3) {
-            TarjetaSeccion(
-                titulo = "Sesión",
-                subtitulo = "Cierra sesión en este dispositivo cuando termines.",
-                icono = Icons.AutoMirrored.Filled.Logout
-            ) {
-                BotonSecundario(
-                    texto = "Cerrar sesión",
-                    onClick = viewModel::cerrarSesion,
-                    icono = Icons.AutoMirrored.Filled.Logout
-                )
-            }
-        }
-
         Spacer(modifier = Modifier.height(26.dp))
     }
 }

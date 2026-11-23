@@ -111,4 +111,12 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
             else -> "No se pudo cargar la previsualización. Intenta de nuevo."
         }
     }
+
+    override suspend fun textoParaPublicar(contenidoId: Long): Resultado<String> {
+        val respuesta = com.adbrand.core.network.ClienteApi.ejecutarAsync("GET", "contenido/anuncios/$contenidoId/publicar")
+            .getOrElse { return errorDeRed(it) }
+        if (!respuesta.esExitosa) return Resultado.Error("No se pudo preparar el texto para publicar.", respuesta.codigo)
+        return runCatching { Resultado.Exito(JSONObject(respuesta.cuerpo).getString("textoParaPublicar")) }
+            .getOrElse { Resultado.Error("La respuesta del servidor no tiene el formato esperado.") }
+    }
 }

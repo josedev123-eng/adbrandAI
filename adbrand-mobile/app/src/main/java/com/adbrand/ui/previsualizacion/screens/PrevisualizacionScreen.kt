@@ -30,6 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,11 +87,25 @@ import com.adbrand.ui.previsualizacion.viewmodel.PrevisualizacionViewModel
 @Composable
 fun PrevisualizacionScreen(
     alCrearAnuncio: () -> Unit = {},
+    // Dentro de la pestaña "Anuncios" el título y la tarjeta grande ya los pone esa pantalla.
+    conEncabezado: Boolean = true,
+    // Anuncio que se abre directo (por ejemplo, al tocarlo en el panel de inicio).
+    abrirId: Long? = null,
+    alCrearKit: () -> Unit = {},
     viewModel: PrevisualizacionViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.cargar() }
+
+    var abiertoDesdeFuera by remember { mutableStateOf(false) }
+    LaunchedEffect(abrirId, estado.anuncios) {
+        if (abrirId == null || abiertoDesdeFuera) return@LaunchedEffect
+        estado.anuncios.find { it.id == abrirId }?.let {
+            abiertoDesdeFuera = true
+            viewModel.abrirPublicacion(it)
+        }
+    }
 
     val kit = estado.kit
 
@@ -100,7 +117,7 @@ fun PrevisualizacionScreen(
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item {
+        if (conEncabezado) item {
             Column {
                 Spacer(modifier = Modifier.height(14.dp))
                 EntradaAnimada(0) {
@@ -119,7 +136,7 @@ fun PrevisualizacionScreen(
             }
         }
 
-        item {
+        if (conEncabezado) item {
             EntradaAnimada(1) {
                 TarjetaHero(
                     etiqueta = "VISTA DE MARCA",
@@ -187,8 +204,10 @@ fun PrevisualizacionScreen(
                         EstadoVacio(
                             icono = Icons.Filled.Palette,
                             titulo = "Aún no tienes kit de marca",
-                            descripcion = "Genera tu kit para que las publicaciones usen tu logo, tus colores y tu tipografía."
-                        )
+                            descripcion = "Créalo en 1 minuto y tus anuncios usarán tu logo, tus colores y tus letras."
+                        ) {
+                            BotonPrincipal(texto = "Crear mi kit", onClick = alCrearKit, icono = Icons.Filled.Palette)
+                        }
                     }
                 }
             } else {
@@ -263,7 +282,9 @@ fun PrevisualizacionScreen(
             alAjustar = viewModel::ajustar,
             alRestablecer = viewModel::restablecer,
             alGuardar = { guardar -> viewModel.guardar(guardar) },
-            alCompartir = { generar, abrirMenu -> viewModel.compartir(generar, abrirMenu) }
+            alCompartir = { generar, abrirMenu -> viewModel.compartir(generar, abrirMenu) },
+            textoPublicar = estado.textoPublicar,
+            alAvisar = viewModel::avisar
         )
     }
 }

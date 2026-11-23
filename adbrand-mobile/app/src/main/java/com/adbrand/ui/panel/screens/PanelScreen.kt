@@ -93,6 +93,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PanelScreen(
     alCrearAnuncio: () -> Unit = {},
+    alAbrirAnuncio: (Long) -> Unit = {},
     viewModel: PanelViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -262,7 +263,7 @@ fun PanelScreen(
                         key = { _, campana -> campana.id ?: campana.hashCode().toLong() }
                     ) { indice, campana ->
                         EntradaAnimada(indice = 5 + indice) {
-                            TarjetaCampana(campana)
+                            TarjetaCampana(campana, alTocar = { campana.id?.let(alAbrirAnuncio) })
                         }
                     }
                 }
@@ -433,8 +434,10 @@ private fun FilaFiltros(estado: PanelEstado, alFiltrar: (String?) -> Unit) {
 }
 
 @Composable
-private fun TarjetaCampana(campana: CampanaInforme) {
+private fun TarjetaCampana(campana: CampanaInforme, alTocar: () -> Unit) {
     Surface(
+        onClick = alTocar,
+        enabled = campana.id != null,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = SuperficieBlanca,

@@ -31,7 +31,9 @@ data class PrevisualizacionEstado(
     val errorImagen: String? = null,
     // HU 48: zoom y posición del recorte dentro del marco, y el aviso después de guardar/compartir.
     val ajuste: AjusteRecorte = AjusteRecorte(),
-    val mensajeCompartir: String? = null
+    val mensajeCompartir: String? = null,
+    // Listo para publicar: el texto con hashtags y el enlace de WhatsApp (null mientras llega o si falla).
+    val textoPublicar: String? = null
 )
 
 class PrevisualizacionViewModel(
@@ -85,10 +87,17 @@ class PrevisualizacionViewModel(
                 ajuste = AjusteRecorte(),
                 mensajeCompartir = null,
                 errorImagen = null,
-                cargandoImagen = anuncio.id != null
+                cargandoImagen = anuncio.id != null,
+                textoPublicar = null
             )
         }
         val id = anuncio.id ?: return
+        viewModelScope.launch {
+            val texto = repositorio.textoParaPublicar(id)
+            if (texto is Resultado.Exito && _estado.value.publicacion?.id == id) {
+                _estado.update { it.copy(textoPublicar = texto.dato) }
+            }
+        }
         viewModelScope.launch {
             val resultado = repositorio.imagen(id)
             // Si mientras tanto se cerró o se abrió otro anuncio, no se pisa.
@@ -124,6 +133,8 @@ class PrevisualizacionViewModel(
     fun restablecer() {
         _estado.update { it.copy(ajuste = AjusteRecorte(), mensajeCompartir = null) }
     }
+
+    fun avisar(mensaje: String) = _estado.update { it.copy(mensajeCompartir = mensaje) }
 
     // HU 48: guarda la imagen recortada en la galería (la pantalla hace el guardado y avisa si funcionó).
     fun guardar(guardarEnGaleria: () -> Boolean) {
