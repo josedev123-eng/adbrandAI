@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.adbrand.core.network.Resultado
 import com.adbrand.data.repository.MetricasRepository
 import com.adbrand.data.repository.MetricasRepositoryRemoto
+import com.adbrand.data.repository.ReportesRepository
+import com.adbrand.data.repository.ReportesRepositoryRemoto
+import com.adbrand.domain.model.ReporteDescargado
+import java.io.File
 import com.adbrand.domain.model.MetricasContenido
 import com.adbrand.domain.model.MetricasPublicaciones
 import com.adbrand.domain.model.OpcionPeriodo
@@ -30,13 +34,31 @@ data class MetricasEstado(
     val desdeTexto: String = "",
     val hastaTexto: String = "",
     val rangoAplicado: RangoFechas = RangoFechas(null, null),
-    val avisoPeriodo: String? = null
+    val avisoPeriodo: String? = null,
+    // HU 59: la descarga del PDF del periodo aplicado.
+    val descargando: Boolean = false,
+    val reporte: ReporteDescargado? = null,
+    val errorDescarga: String? = null
 )
 
 class MetricasViewModel(
     private val repositorio: MetricasRepository = MetricasRepositoryRemoto(),
+    private val reportes: ReportesRepository = ReportesRepositoryRemoto(),
     private val hoy: () -> LocalDate = { LocalDate.now() }
 ) : ViewModel() {
+
+    // HU 59: descarga el PDF del periodo que se está viendo y lo guarda en la carpeta que da la pantalla.
+    fun descargarPdf(carpeta: File) {
+        if (_estado.value.descargando) return
+        val rango = _estado.value.rangoAplicado
+        viewModelScope.launch {
+            _estado.update { it.copy(descargando = true, errorDescarga = null, reporte = null) }
+            when (val resultado = reportes.descargarPdf(rango, carpeta)) {
+                is Resultado.Exito -> _estado.update { it.copy(descargando = false, reporte = resultado.dato) }
+                is Resultado.Error -> _estado.update { it.copy(descargando = false, errorDescarga = resultado.mensaje) }
+            }
+        }
+    }
 
     private val _estado = MutableStateFlow(MetricasEstado())
     val estado: StateFlow<MetricasEstado> = _estado.asStateFlow()

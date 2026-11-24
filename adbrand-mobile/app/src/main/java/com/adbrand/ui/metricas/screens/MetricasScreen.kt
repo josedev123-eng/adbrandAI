@@ -1,5 +1,9 @@
 package com.adbrand.ui.metricas.screens
 
+import android.os.Environment
+import androidx.compose.ui.platform.LocalContext
+import com.adbrand.domain.model.ReporteDescargado
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,6 +72,7 @@ fun MetricasScreen(
     viewModel: MetricasViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
+    val contexto = LocalContext.current
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -91,6 +96,18 @@ fun MetricasScreen(
                     alCambiarHasta = viewModel::cambiarHasta,
                     aviso = estado.avisoPeriodo,
                     alAplicar = viewModel::aplicarRango
+                )
+            }
+
+            item {
+                DescargaReporte(
+                    descargando = estado.descargando,
+                    reporte = estado.reporte,
+                    error = estado.errorDescarga,
+                    // La carpeta de documentos de la app: no pide permisos y se borra si se desinstala la app.
+                    alDescargar = {
+                        viewModel.descargarPdf(contexto.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: contexto.filesDir)
+                    }
                 )
             }
 
@@ -181,6 +198,24 @@ private fun SelectorPeriodo(
             BotonPrincipal(texto = "Aplicar", onClick = alAplicar)
             aviso?.let { AvisoEstado(it, tipo = TipoAviso.ERROR) }
         }
+    }
+}
+
+// HU 59: descargar el PDF del informe del periodo elegido arriba.
+@Composable
+private fun DescargaReporte(
+    descargando: Boolean,
+    reporte: ReporteDescargado?,
+    error: String?,
+    alDescargar: () -> Unit
+) {
+    TarjetaSeccion(
+        titulo = "Reporte en PDF",
+        subtitulo = "El mismo informe de la web, con el periodo que elegiste."
+    ) {
+        BotonPrincipal(texto = "Descargar PDF", onClick = alDescargar, cargando = descargando)
+        reporte?.let { AvisoEstado("PDF guardado: ${it.nombre}", tipo = TipoAviso.EXITO) }
+        error?.let { AvisoEstado(it, tipo = TipoAviso.ERROR) }
     }
 }
 
