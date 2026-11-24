@@ -90,7 +90,8 @@ public class AnuncioService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("CONTENIDO_NO_ENCONTRADO", "Contenido no encontrado: " + contenidoId));
 
         if (!original.getUsuarioId().equals(usuarioId)) {
-            throw new IllegalArgumentException("El contenido no pertenece al usuario");
+            throw new RecursoNoEncontradoException(
+                    "CONTENIDO_NO_ENCONTRADO", "El contenido no existe o no es de tu empresa.");
         }
 
         // Obtener el perfil actual del usuario
