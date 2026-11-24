@@ -1,0 +1,8 @@
+/* Términos y condiciones / Política de privacidad: lectura cómoda, ancho de texto limitado. */
+.pagina.pagina-legal { max-width: 780px; margin: 0 auto; padding: 40px 24px 56px; box-sizing: border-box; }
+.pagina-legal .pagina-cabecera small { color: var(--muted); font-size: 0.82rem; }
+.legal-volver { align-self: flex-start; }
+.legal-documento { display: flex; flex-direction: column; gap: 22px; line-height: 1.65; }
+.legal-documento h2 { margin: 0 0 6px; font-size: 1.08rem; }
+.legal-documento p { margin: 0 0 8px; color: var(--fg); }
+.legal-documento ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }

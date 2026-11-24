@@ -52,7 +52,7 @@ public class KitMarcaService {
         // Usamos Jackson manualmente para evitar dependencia extra en el DTO.
         try {
             tools.jackson.databind.JsonNode node =
-                    new tools.jackson.databind.ObjectMapper().readTree(json);
+                    new tools.jackson.databind.ObjectMapper().readTree(sinBloqueMarkdown(json));
 
             KitMarca kit = new KitMarca();
             kit.setUsuarioId(usuarioId);
@@ -61,16 +61,45 @@ public class KitMarcaService {
             kit.setPaletaSugerida(datos.paletaSugerida());
             kit.setValoresEslogan(datos.valoresEslogan());
             kit.setEstiloVisual(datos.estiloVisual());
-            kit.setLogoConcepto(node.get("logo_concepto").asText());
-            kit.setTipografiaPrimaria(node.get("tipografia_primaria").asText());
-            kit.setTipografiaSecundaria(node.get("tipografia_secundaria").asText());
-            kit.setPaletaColores(node.get("paleta_colores").asText());
-            kit.setVozMarca(node.get("voz_marca").asText());
+            kit.setLogoConcepto(comoTexto(node.get("logo_concepto")));
+            kit.setTipografiaPrimaria(comoTexto(node.get("tipografia_primaria")));
+            kit.setTipografiaSecundaria(comoTexto(node.get("tipografia_secundaria")));
+            kit.setPaletaColores(comoTexto(node.get("paleta_colores")));
+            kit.setVozMarca(comoTexto(node.get("voz_marca")));
 
             return kits.save(kit);
         } catch (Exception e) {
             throw new RuntimeException("Error parseando respuesta de IA para Kit de Marca: " + e.getMessage(), e);
         }
+    }
+
+    // Algunas IA (por ejemplo Gemini) envuelven el JSON en un bloque ```json ... ```; se quita antes de leerlo.
+    static String sinBloqueMarkdown(String respuesta) {
+        return com.adbrand.core.ia.service.JsonDeIa.sinBloqueMarkdown(respuesta);
+    }
+
+    // Cada campo se guarda como texto. Si la IA manda una lista (por ejemplo, los colores de la paleta),
+    // se guarda un elemento por línea, que es el formato que leen la web y la edición del kit.
+    // Si un elemento es un objeto ({"hex": ..., "nombre": ...}), sus valores se unen con " - ".
+    static String comoTexto(tools.jackson.databind.JsonNode valor) {
+        if (valor == null || valor.isNull()) {
+            return null;
+        }
+        if (valor.isArray()) {
+            java.util.List<String> lineas = new java.util.ArrayList<>();
+            for (tools.jackson.databind.JsonNode elemento : valor) {
+                lineas.add(comoTexto(elemento));
+            }
+            return String.join("\n", lineas);
+        }
+        if (valor.isObject()) {
+            java.util.List<String> partes = new java.util.ArrayList<>();
+            for (tools.jackson.databind.JsonNode parte : valor.values()) {
+                partes.add(comoTexto(parte));
+            }
+            return String.join(" - ", partes);
+        }
+        return valor.asText();
     }
 
     @Transactional(readOnly = true)

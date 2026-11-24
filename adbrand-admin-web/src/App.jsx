@@ -1,20 +1,36 @@
-import { useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useSesion } from './app/context/useSesion'
 import { NOMBRES_ROL, pantallasDelRol } from './app/routes/pantallasPorRol'
-import AdministradoresView from './features/admin/views/AdministradoresView'
-import CrearAdministradorView from './features/admin/views/CrearAdministradorView'
-import AuditoriaView from './features/auditoria/views/AuditoriaView'
 import LoginView from './features/auth/views/LoginView'
-import BandejaRevisionView from './features/moderacion/views/BandejaRevisionView'
-import HistorialContenidosView from './features/moderacion/views/HistorialContenidosView'
 import InicioView from './features/inicio/views/InicioView'
 import { tarjetasDelRol } from './features/inicio/viewmodels/useInicio'
-import EstadoServidorView from './features/servidor/views/EstadoServidorView'
-import PanelFinancieroView from './features/suscripciones/views/PanelFinancieroView'
-import ConsumoTokensView from './features/tokens/views/ConsumoTokensView'
-import HistorialTokensView from './features/tokens/views/HistorialTokensView'
 import MenuAdmin from './shared/components/MenuAdmin'
+import AvisoConexion from './shared/components/AvisoConexion'
+import LimiteDeErrores from './shared/components/LimiteDeErrores'
+import PantallaArranque from './shared/components/PantallaArranque'
+import Cargando from './shared/components/Cargando'
+import PaginaNoEncontrada from './shared/components/PaginaNoEncontrada'
+import { navegar, useRuta } from './shared/navegacion/navegacion'
 import { usePendientesRevision } from './shared/hooks/usePendientesRevision'
+import { useTituloPagina } from './shared/hooks/useTituloPagina'
+
+// Optimización: cada pantalla se descarga recién cuando se abre (code splitting).
+const AdministradoresView = lazy(() => import('./features/admin/views/AdministradoresView'))
+const CrearAdministradorView = lazy(() => import('./features/admin/views/CrearAdministradorView'))
+const AuditoriaView = lazy(() => import('./features/auditoria/views/AuditoriaView'))
+const BandejaRevisionView = lazy(() => import('./features/moderacion/views/BandejaRevisionView'))
+const HistorialContenidosView = lazy(() => import('./features/moderacion/views/HistorialContenidosView'))
+const EstadoServidorView = lazy(() => import('./features/servidor/views/EstadoServidorView'))
+const PanelFinancieroView = lazy(() => import('./features/suscripciones/views/PanelFinancieroView'))
+const ConsumoTokensView = lazy(() => import('./features/tokens/views/ConsumoTokensView'))
+const HistorialTokensView = lazy(() => import('./features/tokens/views/HistorialTokensView'))
+const EmpresasView = lazy(() => import('./features/empresas/views/EmpresasView'))
+const MiCuentaAdminView = lazy(() => import('./features/cuenta/views/MiCuentaAdminView'))
+const RecuperarContrasenaView = lazy(() => import('./features/auth/views/RecuperarContrasenaView'))
+
+// Cada pantalla tiene su dirección: /inicio, /revision, /empresas, /mi-cuenta… (el id de la pantalla).
+const RUTA_RECUPERAR = '/recuperar-contrasena'
+const rutaDe = (id) => `/${id}`
 
 // Fecha de hoy para la barra superior, por ejemplo "martes, 10 de noviembre de 2026".
 function fechaDeHoy() {
@@ -23,22 +39,69 @@ function fechaDeHoy() {
 
 function App() {
   const { admin, cargando, salir } = useSesion()
-  const [pantalla, setPantalla] = useState(null)
+  // La pantalla sale de la dirección del navegador; así funcionan F5, Atrás/Adelante y los enlaces.
+  const ruta = useRuta()
+  const pantalla = ruta === '/' ? null : ruta.slice(1)
+  const setPantalla = (id) => navegar(rutaDe(id))
+  // "Tu contraseña se cambió": aviso para el login después de recuperarla.
+  const [avisoLogin, setAvisoLogin] = useState(null)
   // El contador de "Revisión de contenido" solo se pide si el rol ve esa pantalla.
   const veRevision = pantallasDelRol(admin?.rol?.nombre).some((opcion) => opcion.id === 'revision')
   const pendientes = usePendientesRevision(veRevision, pantalla)
+  // Nombre de la pantalla en la pestaña del navegador.
+  const opcionesDelRol = pantallasDelRol(admin?.rol?.nombre)
+  const idActual = opcionesDelRol.some((opcion) => opcion.id === pantalla) ? pantalla : opcionesDelRol[0]?.id
+  const nombreDePantalla =
+    pantalla === 'mi-cuenta' ? 'Mi cuenta' : opcionesDelRol.find((opcion) => opcion.id === idActual)?.nombre
+  const esDesconocida = admin && pantalla && pantalla !== 'mi-cuenta' && !opcionesDelRol.some((opcion) => opcion.id === pantalla)
+  useTituloPagina(
+    admin ? (esDesconocida ? 'Página no encontrada' : nombreDePantalla) : ruta === RUTA_RECUPERAR ? 'Recuperar contraseña' : 'Iniciar sesión',
+  )
 
-  if (cargando) return <p className="cargando-sesion">Cargando tu sesión…</p>
-  if (!admin) return <LoginView />
+  // Con sesión, la raíz y la pantalla de recuperar llevan a la primera pantalla del rol.
+  useEffect(() => {
+    if (admin && (ruta === '/' || ruta === RUTA_RECUPERAR) && opcionesDelRol[0]) {
+      navegar(rutaDe(opcionesDelRol[0].id), { reemplazar: true })
+    }
+  }, [admin, ruta, opcionesDelRol])
+
+  if (cargando) return <PantallaArranque texto="Revisando tu sesión…" />
+  // Sin sesión se muestra el login en cualquier dirección; al entrar, se abre esa misma pantalla.
+  if (!admin) {
+    return (
+      <>
+        <AvisoConexion />
+        {ruta === RUTA_RECUPERAR ? (
+          <Suspense fallback={<PantallaArranque texto="Abriendo…" />}>
+            <RecuperarContrasenaView
+              irALogin={() => navegar('/')}
+              alTerminar={(texto) => {
+                setAvisoLogin(texto)
+                navegar('/', { reemplazar: true })
+              }}
+            />
+          </Suspense>
+        ) : (
+          <LoginView
+            aviso={avisoLogin}
+            irARecuperar={() => {
+              setAvisoLogin(null)
+              navegar(RUTA_RECUPERAR)
+            }}
+          />
+        )}
+      </>
+    )
+  }
 
   const rol = admin.rol?.nombre
   const opciones = pantallasDelRol(rol)
-  // Si la pantalla elegida no es de este rol (o aún no eligió), se abre la primera que sí le toca.
-  const actual = opciones.some((opcion) => opcion.id === pantalla) ? pantalla : opciones[0]?.id
+  // Pantalla a mostrar: la de la dirección si es de este rol; "mi-cuenta" la ven todos; otra dirección es un 404.
+  const actual = pantalla === null ? opciones[0]?.id : esDesconocida ? 'noEncontrada' : pantalla
   const seccionActual = opciones.find((opcion) => opcion.id === actual)?.seccion
 
   function cerrarSesion() {
-    setPantalla(null)
+    navegar('/')
     salir()
   }
 
@@ -66,22 +129,42 @@ function App() {
           </span>
           <span className="barra-fecha">{fechaDeHoy()}</span>
         </div>
-      {actual === 'inicio' && <InicioView admin={admin} claves={tarjetasDelRol(opciones)} alAbrir={setPantalla} />}
-      {actual === 'revision' && <BandejaRevisionView />}
-      {actual === 'historial-contenidos' && <HistorialContenidosView />}
-      {actual === 'administradores' && <CrearAdministradorView />}
-      {actual === 'lista-administradores' && <AdministradoresView />}
-      {actual === 'auditoria' && <AuditoriaView />}
-      {actual === 'panel-financiero' && <PanelFinancieroView />}
-      {actual === 'consumo-tokens' && <ConsumoTokensView />}
-      {actual === 'historial-tokens' && <HistorialTokensView />}
-      {actual === 'estado-servidor' && <EstadoServidorView />}
-      {!actual && (
-        <main className="sin-pantallas">
-          <h1>Hola, {admin.nombres}</h1>
-          <p>Tu rol todavía no tiene pantallas. Llegan con las historias del Sprint 2.</p>
-        </main>
-      )}
+        <AvisoConexion />
+        {/* key: al cambiar de pantalla, el aviso de error se reinicia */}
+        <LimiteDeErrores key={actual ?? 'ninguna'} alVolverAlInicio={() => setPantalla('inicio')}>
+          <Suspense
+            fallback={
+              <main className="pagina">
+                <Cargando texto="Abriendo…" />
+              </main>
+            }
+          >
+            {actual === 'inicio' && <InicioView admin={admin} claves={tarjetasDelRol(opciones)} alAbrir={setPantalla} />}
+            {actual === 'revision' && <BandejaRevisionView />}
+            {actual === 'historial-contenidos' && <HistorialContenidosView />}
+            {actual === 'empresas' && <EmpresasView />}
+            {actual === 'administradores' && <CrearAdministradorView />}
+            {actual === 'lista-administradores' && <AdministradoresView />}
+            {actual === 'auditoria' && <AuditoriaView />}
+            {actual === 'panel-financiero' && <PanelFinancieroView />}
+            {actual === 'consumo-tokens' && <ConsumoTokensView />}
+            {actual === 'historial-tokens' && <HistorialTokensView />}
+            {actual === 'estado-servidor' && <EstadoServidorView />}
+            {actual === 'mi-cuenta' && <MiCuentaAdminView />}
+            {actual === 'noEncontrada' && (
+              <PaginaNoEncontrada
+                alVolver={() => setPantalla(opciones[0]?.id ?? 'inicio')}
+                textoVolver="Ir al inicio del panel"
+              />
+            )}
+            {!actual && (
+              <main className="sin-pantallas">
+                <h1>Hola, {admin.nombres}</h1>
+                <p>Tu rol todavía no tiene pantallas. Llegan con las historias del Sprint 2.</p>
+              </main>
+            )}
+          </Suspense>
+        </LimiteDeErrores>
       </div>
     </div>
   )

@@ -119,6 +119,32 @@ class LoginTest {
     }
 
     @Test
+    void unaEmpresaSuspendidaVeElMotivoAlIniciarSesion() throws Exception {
+        usuario.setEstado(EstadoUsuario.INACTIVO);
+        usuario.setMotivoSuspension("Contenido prohibido repetido.");
+        usuario.setFechaSuspension(java.time.OffsetDateTime.now());
+        usuarios.saveAndFlush(usuario);
+
+        iniciarSesion(CORREO, CONTRASENA)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("Motivo: Contenido prohibido repetido.")));
+    }
+
+    @Test
+    void siLaSuspendenConLaSesionAbiertaSuSesionSeCorta() throws Exception {
+        String token = tokenDe(iniciarSesion(CORREO, CONTRASENA).andReturn());
+        usuario.setEstado(EstadoUsuario.INACTIVO);
+        usuario.setMotivoSuspension("Publicidad engañosa.");
+        usuario.setFechaSuspension(java.time.OffsetDateTime.now());
+        usuarios.saveAndFlush(usuario);
+
+        mvc.perform(get("/api/auth/sesion").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("CUENTA_SUSPENDIDA"))
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("Publicidad engañosa.")));
+    }
+
+    @Test
     void cuentaInactivaConContrasenaMalaNoRevelaQueExiste() throws Exception {
         usuario.setEstado(EstadoUsuario.INACTIVO);
         usuarios.saveAndFlush(usuario);

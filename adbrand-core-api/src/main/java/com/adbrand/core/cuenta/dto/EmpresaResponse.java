@@ -9,10 +9,11 @@ public record EmpresaResponse(
         String ruc,
         String razonSocial,
         String telefono,
-        String direccion) {
+        String direccion,
+        String colorAvatar) {
 
     public static EmpresaResponse desde(Usuario usuario) {
         return new EmpresaResponse(usuario.getNombreEmpresa(), usuario.getCorreo(), usuario.getRuc(),
-                usuario.getRazonSocial(), usuario.getTelefono(), usuario.getDireccion());
+                usuario.getRazonSocial(), usuario.getTelefono(), usuario.getDireccion(), usuario.getColorAvatar());
     }
 }

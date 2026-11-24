@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -38,14 +37,22 @@ import androidx.compose.ui.unit.dp
 import com.adbrand.core.theme.CoralAdbrand
 import com.adbrand.core.theme.IndigoAdbrand
 
+// Marca AdBrand.AI: cuadrado índigo plano (el color de los botones) con "AB" en blanco y el punto coral del ".AI".
+// Es el mismo logo del favicon y del menú de las webs (sin degradados).
 @Composable
 fun LogoApp(modifier: Modifier = Modifier, tamano: Dp = 54.dp, sombra: Boolean = true) {
     Box(
-        modifier = modifier.size(tamano).clip(RoundedCornerShape(tamano * .3f))
-            .background(Brush.linearGradient(listOf(IndigoAdbrand, Color(0xFF8B5CF6), CoralAdbrand))),
+        modifier = modifier.size(tamano).clip(RoundedCornerShape(tamano * .25f)).background(IndigoAdbrand),
         contentAlignment = Alignment.Center
     ) {
         Text("AB", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+        Box(
+            modifier = Modifier.align(Alignment.BottomEnd)
+                .padding(end = tamano * .14f, bottom = tamano * .26f)
+                .size(tamano * .15f)
+                .clip(CircleShape)
+                .background(CoralAdbrand)
+        )
     }
 }
 

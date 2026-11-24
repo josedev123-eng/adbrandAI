@@ -121,6 +121,7 @@ export default function DetalleContenidoView({ id, alVolver, onActualizado }) {
                   <textarea
                     id="motivoRechazo"
                     value={motivoRechazo}
+                    maxLength={500}
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder="Explica por qué se rechaza el contenido..."
                     rows={3}

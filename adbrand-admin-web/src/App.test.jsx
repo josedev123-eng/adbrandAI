@@ -1,5 +1,5 @@
 // Login de administradores: sesión guardada, menú según el rol y cerrar sesión.
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -39,12 +39,16 @@ function mostrar() {
 }
 
 function opcionesDelMenu() {
-  return screen.queryAllByRole('button').map((b) => b.textContent).filter((t) => t !== 'Cerrar sesión')
+  // Solo las opciones del menú de pantallas (sin el botón ☰, "Mi cuenta" ni "Cerrar sesión").
+  const menu = screen.queryByRole('navigation', { name: 'Menú de administración' })
+  return menu ? within(menu).queryAllByRole('button').map((b) => b.textContent) : []
 }
 
 describe('App (login y menú por rol)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Cada prueba empieza en la raíz: la pantalla sale de la URL.
+    window.history.replaceState({}, '', '/')
     listarDudosos.mockResolvedValue([])
     localStorage.clear()
   })
@@ -60,13 +64,14 @@ describe('App (login y menú por rol)', () => {
     obtenerSesion.mockResolvedValue(adminCon('SUPERADMIN'))
     mostrar()
 
-    expect(screen.getByText('Cargando tu sesión…')).toBeInTheDocument()
+    expect(screen.getByText('Revisando tu sesión…')).toBeInTheDocument()
     expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
     expect(screen.getByText('Superadministrador')).toBeInTheDocument()
     expect(opcionesDelMenu()).toEqual([
       'Inicio',
       'Revisión de contenido',
       'Historial de contenidos',
+      'Empresas',
       'Crear administrador',
       'Lista de administradores',
       'Auditoría',
@@ -83,7 +88,7 @@ describe('App (login y menú por rol)', () => {
     mostrar()
 
     expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Inicio', 'Revisión de contenido', 'Historial de contenidos'])
+    expect(opcionesDelMenu()).toEqual(['Inicio', 'Revisión de contenido', 'Historial de contenidos', 'Empresas'])
   })
 
   it('FINANZAS entra al Inicio y solo ve el panel financiero', async () => {
@@ -154,5 +159,43 @@ describe('App (login y menú por rol)', () => {
 
     await screen.findByText('Pantalla de inicio')
     expect(listarDudosos).not.toHaveBeenCalled()
+  })
+
+  it('cada pantalla tiene su dirección y una dirección desconocida muestra la página 404', async () => {
+    guardarToken('token-valido')
+    obtenerSesion.mockResolvedValue(adminCon('SUPERADMIN'))
+    listarDudosos.mockResolvedValue([])
+    render(
+      <SesionProvider>
+        <App />
+      </SesionProvider>,
+    )
+    await screen.findByText('Pantalla de inicio')
+    expect(window.location.pathname).toBe('/inicio')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Auditoría' }))
+    expect(window.location.pathname).toBe('/auditoria')
+    expect(await screen.findByText('Pantalla de auditoría')).toBeInTheDocument()
+
+    act(() => {
+      window.history.pushState({}, '', '/no-existe')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    expect(await screen.findByText('No encontramos esta página')).toBeInTheDocument()
+  })
+
+  it('el moderador no entra por URL a una pantalla de otro rol', async () => {
+    window.history.replaceState({}, '', '/panel-financiero')
+    guardarToken('token-valido')
+    obtenerSesion.mockResolvedValue(adminCon('MODERADOR'))
+    listarDudosos.mockResolvedValue([])
+    render(
+      <SesionProvider>
+        <App />
+      </SesionProvider>,
+    )
+
+    expect(await screen.findByText('No encontramos esta página')).toBeInTheDocument()
+    expect(screen.queryByText('Pantalla financiera')).toBeNull()
   })
 })

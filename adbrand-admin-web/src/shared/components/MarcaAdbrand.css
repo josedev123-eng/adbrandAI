@@ -1,0 +1,4 @@
+/* Logo + nombre en el menú lateral. */
+.marca-adbrand { display: inline-flex; align-items: center; gap: 10px; }
+.marca-icono { flex-shrink: 0; border-radius: 8px; }
+.marca-icono text { font-family: var(--f-display); }

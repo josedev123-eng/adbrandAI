@@ -1,4 +1,6 @@
 // View: recuperar la contraseña en dos pasos (HU-24). La lógica está en useRecuperarContrasena.
+import InputContrasena from '../../../shared/components/InputContrasena'
+import Aviso from '../../../shared/components/Aviso'
 import { useRecuperarContrasena } from '../viewmodels/useRecuperarContrasena'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
@@ -38,7 +40,7 @@ export default function RecuperarContrasenaView({ irALogin, alTerminar }) {
         </p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
         {paso === 1 && (
@@ -46,7 +48,8 @@ export default function RecuperarContrasenaView({ irALogin, alTerminar }) {
             <input
               type="email"
               value={correo}
-              placeholder="rosa@panaderia.pe"
+              maxLength={150}
+              placeholder="Ej.: rosa@panaderia.pe"
               autoComplete="email"
               onChange={(e) => cambiarCorreo(e.target.value)}
             />
@@ -61,7 +64,7 @@ export default function RecuperarContrasenaView({ irALogin, alTerminar }) {
                 value={formulario.codigo}
                 inputMode="numeric"
                 maxLength={6}
-                placeholder="123456"
+                placeholder="Ej.: 123456"
                 autoComplete="one-time-code"
                 onChange={(e) => cambiarCampo('codigo', e.target.value)}
               />
@@ -72,18 +75,18 @@ export default function RecuperarContrasenaView({ irALogin, alTerminar }) {
               error={errores.contrasenaNueva}
               ayuda="Mínimo 8 caracteres, con una mayúscula, una minúscula y un número."
             >
-              <input
-                type="password"
+              <InputContrasena
                 value={formulario.contrasenaNueva}
+                maxLength={72}
                 autoComplete="new-password"
                 onChange={(e) => cambiarCampo('contrasenaNueva', e.target.value)}
               />
             </CampoAuth>
 
             <CampoAuth etiqueta="Confirmar contraseña nueva" error={errores.confirmarContrasena}>
-              <input
-                type="password"
+              <InputContrasena
                 value={formulario.confirmarContrasena}
+                maxLength={72}
                 autoComplete="new-password"
                 onChange={(e) => cambiarCampo('confirmarContrasena', e.target.value)}
               />

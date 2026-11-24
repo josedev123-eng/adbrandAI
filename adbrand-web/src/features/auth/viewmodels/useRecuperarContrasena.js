@@ -38,7 +38,7 @@ export function useRecuperarContrasena(alTerminar) {
       setMensaje({ tipo: 'exito', texto: respuesta.mensaje })
     } catch (error) {
       if (error.status === 400) setErrores(error.campos)
-      else setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+      else setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
     } finally {
       setEnviando(false)
     }
@@ -76,7 +76,7 @@ export function useRecuperarContrasena(alTerminar) {
       } else if (error.status === 400) {
         setErrores(error.campos)
       } else {
-        setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+        setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
       }
     } finally {
       setEnviando(false)

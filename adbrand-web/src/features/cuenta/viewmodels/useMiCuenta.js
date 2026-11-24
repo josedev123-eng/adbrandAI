@@ -1,8 +1,9 @@
 // ViewModel: carga los datos de la empresa, los valida y los guarda (HU-23).
+// Primero se muestran solo para leer; con "Editar" se abre el formulario y al guardar vuelve a la vista.
 import { useEffect, useState } from 'react'
 import { guardarEmpresa, obtenerEmpresa } from '../models/cuentaApi'
 
-const EMPRESA_VACIA = { ruc: '', razonSocial: '', telefono: '', direccion: '' }
+const EMPRESA_VACIA = { ruc: '', razonSocial: '', telefono: '', direccion: '', colorAvatar: '' }
 const RUC_VALIDO = /^(10|20)\d{9}$/
 const TELEFONO_VALIDO = /^(9\d{8}|\d{7})$/
 
@@ -28,26 +29,44 @@ function aFormulario(empresa) {
     razonSocial: empresa.razonSocial ?? '',
     telefono: empresa.telefono ?? '',
     direccion: empresa.direccion ?? '',
+    // '' = color automático según el nombre de la empresa.
+    colorAvatar: empresa.colorAvatar ?? '',
   }
 }
 
-export function useMiCuenta() {
+export function useMiCuenta(alGuardar) {
   const [datos, setDatos] = useState(EMPRESA_VACIA)
   const [cuenta, setCuenta] = useState(null)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
+  const [editando, setEditando] = useState(false)
 
   useEffect(() => {
     obtenerEmpresa()
       .then((empresa) => {
         setCuenta(empresa)
         setDatos(aFormulario(empresa))
+        // Si la empresa todavía no tiene datos, se abre directo el formulario para llenarlos.
+        if (!empresa?.ruc) setEditando(true)
       })
-      .catch(() => setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' }))
+      .catch((error) => setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' }))
       .finally(() => setCargando(false))
   }, [])
+
+  function empezarEdicion() {
+    setMensaje(null)
+    setEditando(true)
+  }
+
+  // Cancelar descarta lo escrito y vuelve a los datos guardados.
+  function cancelarEdicion() {
+    if (cuenta) setDatos(aFormulario(cuenta))
+    setErrores({})
+    setMensaje(null)
+    setEditando(false)
+  }
 
   function cambiarCampo(campo, valor) {
     setDatos((actual) => ({ ...actual, [campo]: valor }))
@@ -66,6 +85,8 @@ export function useMiCuenta() {
       setCuenta(empresa)
       setDatos(aFormulario(empresa))
       setMensaje({ tipo: 'exito', texto: 'Datos guardados' })
+      alGuardar?.(empresa)
+      setEditando(false)
     } catch (error) {
       if (error.codigo === 'RUC_REPETIDO') {
         setErrores({ ruc: error.message })
@@ -73,12 +94,24 @@ export function useMiCuenta() {
         setErrores(error.campos)
         setMensaje({ tipo: 'error', texto: error.message })
       } else {
-        setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+        setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
       }
     } finally {
       setGuardando(false)
     }
   }
 
-  return { datos, cuenta, errores, mensaje, cargando, guardando, cambiarCampo, guardar }
+  return {
+    datos,
+    cuenta,
+    errores,
+    mensaje,
+    cargando,
+    guardando,
+    editando,
+    empezarEdicion,
+    cancelarEdicion,
+    cambiarCampo,
+    guardar,
+  }
 }

@@ -168,4 +168,32 @@ class CuentaEmpresaTest {
 
         assertThat(usuarios.findById(empresaA.getId()).orElseThrow().getRuc()).isNull();
     }
+
+    @Test
+    void elColorDelAvatarSeGuardaYSiNoSeMandaNoCambia() throws Exception {
+        guardar(empresaA, """
+                {"ruc": "20611112222", "razonSocial": "Bodega Prueba A S.A.C.",
+                 "direccion": "Av. Lima 100, Surco", "colorAvatar": "VERDE"}""")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.colorAvatar").value("VERDE"));
+
+        // La app móvil guarda sin mandar el color: el elegido se mantiene.
+        guardar(empresaA, DATOS_A).andExpect(jsonPath("$.colorAvatar").value("VERDE"));
+        assertThat(usuarios.findById(empresaA.getId()).orElseThrow().getColorAvatar()).isEqualTo("VERDE");
+
+        // Vacío = volver al color automático.
+        guardar(empresaA, """
+                {"ruc": "20611112222", "razonSocial": "Bodega Prueba A S.A.C.",
+                 "direccion": "Av. Lima 100, Surco", "colorAvatar": ""}""")
+                .andExpect(jsonPath("$.colorAvatar").doesNotExist());
+    }
+
+    @Test
+    void unColorQueNoEstaEnLaListaSeRechaza() throws Exception {
+        guardar(empresaA, """
+                {"ruc": "20611112222", "razonSocial": "Bodega Prueba A S.A.C.",
+                 "direccion": "Av. Lima 100, Surco", "colorAvatar": "#FF0000"}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.colorAvatar").value("Elige uno de los colores de la lista."));
+    }
 }

@@ -33,6 +33,14 @@ public class ServicioIa {
         this.registroConsumo = registroConsumo;
     }
 
+    // Límite mensual del plan. Se inyecta aparte para no cambiar el constructor que usan las pruebas.
+    private LimiteConsumoIa limiteConsumo;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setLimiteConsumo(LimiteConsumoIa limiteConsumo) {
+        this.limiteConsumo = limiteConsumo;
+    }
+
     public boolean esSimulado() {
         return ia.mock();
     }
@@ -46,6 +54,10 @@ public class ServicioIa {
 
     // HU 17: genera igual que generarTexto y además suma los tokens usados a la empresa que lo pidió.
     public String generarTexto(String sistema, String usuario, Long usuarioId, OrigenConsumo origen) {
+        // Antes de gastar tokens se revisa el límite del mes (también en modo simulado, para que la demo lo muestre).
+        if (limiteConsumo != null) {
+            limiteConsumo.verificarDisponible(usuarioId);
+        }
         if (ia.mock()) {
             String texto = respuestaSimulada(usuario);
             registrarConsumo(usuarioId, origen, sistema + usuario, texto, null);
@@ -57,12 +69,45 @@ public class ServicioIa {
         return texto;
     }
 
+    // Gemini (plan gratis) a veces responde 503 "high demand" o 429 "too many requests" por unos segundos.
+    // En esos casos se reintenta hasta 2 veces más, esperando 2 s y luego 4 s, antes de rendirse.
+    public static final int REINTENTOS = 2;
+    private long esperaBaseMs = 2000;
+
+    // Solo para pruebas: así no hay que esperar segundos de verdad entre reintentos.
+    public void cambiarEsperaEntreReintentos(long milisegundos) {
+        this.esperaBaseMs = milisegundos;
+    }
+
     private <T> T llamar(Supplier<T> llamada) {
+        for (int intento = 0; ; intento++) {
+            try {
+                return llamada.get();
+            } catch (RestClientException ex) {
+                if (intento < REINTENTOS && esPasajero(ex)) {
+                    log.info("La IA está saturada ({}); reintento {} de {}", ex.getMessage(), intento + 1, REINTENTOS);
+                    esperar(esperaBaseMs * (1L << intento));
+                    continue;
+                }
+                log.warn("Falló la llamada al servidor de IA: {}", ex.getMessage());
+                throw new IaNoDisponibleException("No se pudo conectar con la IA", ex);
+            }
+        }
+    }
+
+    private static boolean esPasajero(RestClientException ex) {
+        if (ex instanceof org.springframework.web.client.RestClientResponseException respuesta) {
+            int codigo = respuesta.getStatusCode().value();
+            return codigo == 503 || codigo == 429;
+        }
+        return false;
+    }
+
+    private static void esperar(long milisegundos) {
         try {
-            return llamada.get();
-        } catch (RestClientException ex) {
-            log.warn("Falló la llamada al servidor de IA: {}", ex.getMessage());
-            throw new IaNoDisponibleException("No se pudo conectar con la IA", ex);
+            Thread.sleep(milisegundos);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
     }
 

@@ -2,7 +2,7 @@ from django.apps import apps
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 
-APPS_DEL_PROYECTO = ["core", "usuarios", "auditoria", "suscripciones", "moderacion", "tokens", "servidor"]
+APPS_DEL_PROYECTO = ["core", "usuarios", "auditoria", "suscripciones", "moderacion", "tokens", "servidor", "empresas"]
 
 
 class PruebasConTablasFlyway(DiscoverRunner):

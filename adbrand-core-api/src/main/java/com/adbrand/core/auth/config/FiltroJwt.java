@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.function.Function;
 import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,9 +23,16 @@ public class FiltroJwt extends OncePerRequestFilter {
             "{\"codigo\":\"NO_AUTENTICADO\",\"mensaje\":\"Inicia sesión para continuar.\",\"campos\":{}}";
 
     private final ServicioJwt jwt;
+    // Dado el id del usuario, devuelve el motivo si la cuenta está suspendida ("" si no tiene motivo).
+    private final Function<Long, Optional<String>> suspension;
 
     public FiltroJwt(ServicioJwt jwt) {
+        this(jwt, usuarioId -> Optional.empty());
+    }
+
+    public FiltroJwt(ServicioJwt jwt, Function<Long, Optional<String>> suspension) {
         this.jwt = jwt;
+        this.suspension = suspension;
     }
 
     // Rutas que no piden token: registro, inicio de sesión y recuperar contraseña (/api/auth/**, salvo la sesión),
@@ -54,6 +63,12 @@ public class FiltroJwt extends OncePerRequestFilter {
 
         try {
             Long usuarioId = jwt.leerUsuarioId(cabecera.substring(PREFIJO.length()).trim());
+            Optional<String> motivo = suspension.apply(usuarioId);
+            if (motivo.isPresent()) {
+                // Empresa suspendida por el administrador: su sesión se corta en la siguiente petición.
+                rechazarSuspendida(response, motivo.get());
+                return;
+            }
             request.setAttribute(ATRIBUTO_USUARIO, usuarioId);
         } catch (ServicioJwt.TokenInvalidoException ex) {
             // Token alterado, vencido o mal escrito.
@@ -62,6 +77,14 @@ public class FiltroJwt extends OncePerRequestFilter {
         }
 
         cadena.doFilter(request, response);
+    }
+
+    private void rechazarSuspendida(HttpServletResponse response, String motivo) throws IOException {
+        String mensaje = MensajesCuenta.suspendida(motivo).replace("\\", "\\\\").replace("\"", "\\\"");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write("{\"codigo\":\"CUENTA_SUSPENDIDA\",\"mensaje\":\"" + mensaje + "\",\"campos\":{}}");
     }
 
     private void rechazar(HttpServletResponse response) throws IOException {

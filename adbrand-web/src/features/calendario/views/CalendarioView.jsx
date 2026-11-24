@@ -3,7 +3,9 @@
 // HU 34: al programar se elige uno de los anuncios aprobados.
 // HU 36: las publicaciones programadas se arrastran a otro día.
 // HU 35: los días que dura cada campaña se pintan con su color y el primero lleva su nombre.
+import Aviso from '../../../shared/components/Aviso'
 import { useState } from 'react'
+import Cargando from '../../../shared/components/Cargando'
 import {
   campanasDelDia,
   diasDelMes,
@@ -127,7 +129,7 @@ export default function CalendarioView() {
       contenidoId: formulario.contenidoId ? Number(formulario.contenidoId) : null,
     })
     if (guardado) {
-      setAviso('Publicación programada.')
+      setAviso({ tipo: 'exito', texto: 'Publicación programada.' })
       setFormulario((actual) => ({ ...actual, titulo: '', contenidoId: '' }))
     }
   }
@@ -137,7 +139,7 @@ export default function CalendarioView() {
     setAvisoCampana(null)
     const guardada = await agregarCampana(nuevaCampana)
     if (guardada) {
-      setAvisoCampana('Campaña creada.')
+      setAvisoCampana({ tipo: 'exito', texto: 'Campaña creada.' })
       setNuevaCampana(campanaVacia())
     }
   }
@@ -192,7 +194,7 @@ export default function CalendarioView() {
           </p>
         )}
         {cargando ? (
-          <p className="cargando">Cargando calendario…</p>
+          <Cargando texto="Cargando calendario…" filas={4} />
         ) : (
           <div className="calendario-grid" role="grid" aria-label={`Publicaciones de ${etiquetaMes(mes)}`}>
             {DIAS.map((dia) => (
@@ -283,7 +285,7 @@ export default function CalendarioView() {
           <input
             type="text"
             maxLength={150}
-            placeholder="Promoción de fin de semana"
+            placeholder="Ej.: Promoción de fin de semana"
             value={formulario.titulo}
             onChange={(evento) => cambiarCampo('titulo', evento.target.value)}
             required
@@ -344,7 +346,7 @@ export default function CalendarioView() {
         </div>
 
         {errorProgramar && <p className="aviso aviso-error">{errorProgramar}</p>}
-        {aviso && <p className="aviso aviso-ok">{aviso}</p>}
+        <Aviso mensaje={aviso} como="p" />
 
         <div className="pago-acciones">
           <button type="submit" className="boton-primario" disabled={guardando}>
@@ -362,7 +364,7 @@ export default function CalendarioView() {
             <input
               type="text"
               maxLength={100}
-              placeholder="Navidad 2026"
+              placeholder="Ej.: Navidad 2026"
               value={nuevaCampana.nombre}
               onChange={(evento) => cambiarCampoCampana('nombre', evento.target.value)}
               aria-invalid={Boolean(erroresCampana.nombre)}
@@ -421,7 +423,7 @@ export default function CalendarioView() {
         </label>
 
         {erroresCampana.general && <p className="aviso aviso-error">{erroresCampana.general}</p>}
-        {avisoCampana && <p className="aviso aviso-ok">{avisoCampana}</p>}
+        <Aviso mensaje={avisoCampana} como="p" />
 
         <div className="pago-acciones">
           <button type="submit" className="boton-primario" disabled={guardandoCampana}>

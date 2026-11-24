@@ -28,6 +28,26 @@ class AlertaConsumoSerializer(serializers.Serializer):
     porcentaje = serializers.FloatField()
 
 
+class ImagenesEmpresaSerializer(serializers.Serializer):
+    """Imágenes con IA de una empresa en el mes: borradores (gratis) y retoques (de pago)."""
+
+    usuario_id = serializers.IntegerField()
+    empresa = serializers.CharField()
+    borradores = serializers.IntegerField()
+    retoques = serializers.IntegerField()
+    ultima = serializers.DateTimeField()
+    en_limite = serializers.BooleanField()
+
+
+class ImagenesMesSerializer(serializers.Serializer):
+    """Control de gasto de las IA de imágenes en el mes actual."""
+
+    borradores = serializers.IntegerField()
+    retoques = serializers.IntegerField()
+    limite_retoques = serializers.IntegerField()
+    empresas = ImagenesEmpresaSerializer(many=True)
+
+
 class ConsumoMesSerializer(serializers.Serializer):
     """El panel completo: el mes, el total, el detalle por empresa (HU 17) y las alertas (HU 19)."""
 
@@ -35,6 +55,7 @@ class ConsumoMesSerializer(serializers.Serializer):
     total = serializers.IntegerField()
     empresas = ConsumoEmpresaSerializer(many=True)
     alertas = AlertaConsumoSerializer(many=True)
+    imagenes = ImagenesMesSerializer()
 
 
 FORMATO_MES = "Usa el formato AAAA-MM."

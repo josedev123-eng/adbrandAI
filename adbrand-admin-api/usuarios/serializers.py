@@ -5,6 +5,19 @@ from rest_framework import serializers
 from .models import Rol, UsuarioAdmin
 
 # Solo letras (con tildes y ñ) separadas por un espacio, guion o apóstrofo: "María José", "De la Cruz".
+def validar_contrasena_segura(valor):
+    """La contraseña debe tener mayúscula, minúscula y número, sin espacios (igual al crear y al cambiarla)."""
+    if " " in valor:
+        raise serializers.ValidationError("La contraseña no puede tener espacios.")
+    if not re.search(r"[A-Z]", valor):
+        raise serializers.ValidationError("La contraseña debe tener al menos una letra mayúscula.")
+    if not re.search(r"[a-z]", valor):
+        raise serializers.ValidationError("La contraseña debe tener al menos una letra minúscula.")
+    if not re.search(r"[0-9]", valor):
+        raise serializers.ValidationError("La contraseña debe tener al menos un número.")
+    return valor
+
+
 NOMBRE_VALIDO = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+([ '-][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$")
 
 
@@ -39,16 +52,7 @@ class CrearAdministradorSerializer(serializers.Serializer):
         return self._validar_nombre(valor)
 
     def validate_contrasena(self, valor):
-        """La contraseña debe tener mayúscula, minúscula y número, sin espacios."""
-        if " " in valor:
-            raise serializers.ValidationError("La contraseña no puede tener espacios.")
-        if not re.search(r"[A-Z]", valor):
-            raise serializers.ValidationError("La contraseña debe tener al menos una letra mayúscula.")
-        if not re.search(r"[a-z]", valor):
-            raise serializers.ValidationError("La contraseña debe tener al menos una letra minúscula.")
-        if not re.search(r"[0-9]", valor):
-            raise serializers.ValidationError("La contraseña debe tener al menos un número.")
-        return valor
+        return validar_contrasena_segura(valor)
 
     def validate_correo(self, valor):
         correo = valor.strip().lower()
@@ -90,3 +94,41 @@ class LoginSerializer(serializers.Serializer):
 
     def validate_correo(self, valor):
         return valor.strip().lower()
+
+
+class CambiarMiContrasenaSerializer(serializers.Serializer):
+    """Mi cuenta: el administrador cambia su propia contraseña escribiendo la actual."""
+
+    actual = serializers.CharField(max_length=128, write_only=True, trim_whitespace=False)
+    nueva = serializers.CharField(min_length=8, max_length=128, write_only=True, trim_whitespace=False)
+
+    def validate_nueva(self, valor):
+        return validar_contrasena_segura(valor)
+
+    def validate(self, datos):
+        if datos["actual"] == datos["nueva"]:
+            raise serializers.ValidationError({"nueva": "La nueva contraseña debe ser distinta de la actual."})
+        return datos
+
+
+class SolicitarCodigoSerializer(serializers.Serializer):
+    """Olvidé mi contraseña: correo al que se manda el código."""
+
+    correo = serializers.EmailField(max_length=150)
+
+    def validate_correo(self, valor):
+        return valor.strip().lower()
+
+
+class CambiarConCodigoSerializer(serializers.Serializer):
+    """Olvidé mi contraseña: código de 6 dígitos que llegó al correo y la contraseña nueva."""
+
+    correo = serializers.EmailField(max_length=150)
+    codigo = serializers.RegexField(r"^\d{6}$", error_messages={"invalid": "El código tiene 6 números."})
+    nueva = serializers.CharField(min_length=8, max_length=128, write_only=True, trim_whitespace=False)
+
+    def validate_correo(self, valor):
+        return valor.strip().lower()
+
+    def validate_nueva(self, valor):
+        return validar_contrasena_segura(valor)

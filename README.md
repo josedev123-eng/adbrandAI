@@ -1,5 +1,7 @@
 # AdBrand.AI
 
+[![Pruebas](https://github.com/josedev123-eng/adbrandAI/actions/workflows/pruebas.yml/badge.svg)](https://github.com/josedev123-eng/adbrandAI/actions/workflows/pruebas.yml)
+
 Plataforma que ayuda a las PYMEs a crear su identidad de marca y su contenido publicitario con inteligencia artificial: kit de marca (logo, colores, tipografías y voz), anuncios para Instagram y Facebook, calendario de publicaciones e informes. Un equipo de administración modera el contenido generado y gestiona suscripciones, consumo de IA y el estado del servidor.
 
 Proyecto Integrador de Tecsup, 4.° ciclo. Grupo 9: Jose Rojas, Karim Sovero y Edu Galindo.
@@ -112,3 +114,11 @@ El detalle de cada historia, los endpoints y las migraciones está en la [guía 
 - Cada integrante trabaja en su rama (`rama-jose`, `rama-karim`, `rama-edu`) y la une a `main` con un pull request.
 - Cada commit lleva el formato `HU-<número>: descripción`.
 - Las reglas completas están en [`adbrand-docs/guia-desarrollo.md`](adbrand-docs/guia-desarrollo.md).
+
+## Integración continua (GitHub Actions)
+
+En cada push y en cada pull request a `main`, GitHub corre solo las pruebas de las 5 partes
+(`.github/workflows/pruebas.yml`): Spring Boot (con PostgreSQL de prueba), Django, la web del usuario,
+el panel del administrador (lint, pruebas y compilación) y la app móvil. Todo en modo simulado, sin claves secretas.
+El resultado se ve en la pestaña **Actions** del repositorio y en el distintivo de arriba.
+

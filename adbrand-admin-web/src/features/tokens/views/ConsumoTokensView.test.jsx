@@ -1,5 +1,5 @@
 // HU-17: panel de consumo de tokens por empresa, sin necesitar Django encendido.
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { formatearTokens, obtenerConsumoActual } from '../models/tokensApi'
@@ -160,4 +160,27 @@ describe('ConsumoTokensView (HU-17)', () => {
     expect(barras.map((barra) => barra.dataset.empresa)).toEqual(['Panadería Doña Rosa', 'Empresa #2'])
     expect(barras.map((barra) => barra.dataset.tokens)).toEqual([formatearTokens(1500), formatearTokens(300)])
   })
+
+  it('muestra el control de gasto de imágenes con IA por empresa', async () => {
+    obtenerConsumoActual.mockResolvedValue({
+      ...consumoCon(1800, [ROSA, CAFE]),
+      imagenes: {
+        borradores: 12,
+        retoques: 21,
+        limite_retoques: 20,
+        empresas: [
+          { usuario_id: 1, empresa: 'Panadería Doña Rosa', borradores: 8, retoques: 20, ultima: '2026-11-20T10:00:00-05:00', en_limite: true },
+          { usuario_id: 2, empresa: 'Empresa #2', borradores: 4, retoques: 1, ultima: '2026-11-20T11:00:00-05:00', en_limite: false },
+        ],
+      },
+    })
+    render(<ConsumoTokensView />)
+
+    const seccion = await screen.findByRole('region', { name: 'Imágenes con IA' })
+    expect(within(seccion).getByText('12')).toBeInTheDocument()
+    expect(within(seccion).getByText('21')).toBeInTheDocument()
+    expect(within(seccion).getByRole('row', { name: /Panadería Doña Rosa/ })).toHaveTextContent('Llegó al límite')
+    expect(within(seccion).getByRole('row', { name: /Empresa #2/ })).toHaveTextContent('Dentro del límite')
+  })
 })
+

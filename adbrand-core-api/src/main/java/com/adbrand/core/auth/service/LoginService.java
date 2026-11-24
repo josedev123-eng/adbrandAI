@@ -52,7 +52,11 @@ public class LoginService {
 
         Usuario usuario = encontrado.get();
         if (usuario.getEstado() == EstadoUsuario.INACTIVO) {
-            throw new AccesoDenegadoException("CUENTA_INACTIVA", MENSAJE_CUENTA_INACTIVA);
+            // Si la suspendió el administrador, se explica el motivo (V45).
+            String mensaje = usuario.getFechaSuspension() == null
+                    ? MENSAJE_CUENTA_INACTIVA
+                    : com.adbrand.core.auth.config.MensajesCuenta.suspendida(usuario.getMotivoSuspension());
+            throw new AccesoDenegadoException("CUENTA_INACTIVA", mensaje);
         }
 
         usuario.setUltimoAcceso(LocalDateTime.now());

@@ -1,5 +1,6 @@
 // Model: llamadas a la API del perfil del negocio (HU-09).
 import { apiRequest } from '../../../shared/services/apiClient'
+import { conCache, olvidarDespues } from '../../../shared/services/cacheConsultas'
 
 export const RUBROS = [
   'Panadería y pastelería',
@@ -22,10 +23,11 @@ export const TONOS = [
   { valor: 'ELEGANTE', nombre: 'Elegante', ejemplo: 'Sobrio, cuidado y exclusivo.' },
 ]
 
+// El perfil lo leen Inicio y otras pantallas; se guarda unos minutos y se olvida al guardar cambios.
 export function obtenerPerfil() {
-  return apiRequest('/negocio/perfil')
+  return conCache('perfil', () => apiRequest('/negocio/perfil'))
 }
 
 export function guardarPerfil(datos) {
-  return apiRequest('/negocio/perfil', { method: 'PUT', body: datos })
+  return apiRequest('/negocio/perfil', { method: 'PUT', body: datos }).then(olvidarDespues('perfil'))
 }

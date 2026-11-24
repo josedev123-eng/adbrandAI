@@ -1,6 +1,6 @@
 // Login de administradores: el cliente HTTP manda el token y avisa cuando vence.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiRequest, EVENTO_SESION_VENCIDA } from './apiClient'
+import { apiRequest, EVENTO_SESION_VENCIDA, MENSAJES, mensajePorEstado } from './apiClient'
 import { guardarToken, leerToken } from './sesionToken'
 
 function respuesta(status, datos) {
@@ -49,5 +49,44 @@ describe('apiClient con token de sesión', () => {
     await expect(apiRequest('/usuarios/login/', { method: 'POST', body: {} })).rejects.toMatchObject({ status: 401 })
     expect(alVencer).not.toHaveBeenCalled()
     window.removeEventListener(EVENTO_SESION_VENCIDA, alVencer)
+  })
+})
+
+describe('apiClient con errores claros', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.stubGlobal('fetch', vi.fn())
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('con Django apagado avisa que no se pudo conectar', async () => {
+    fetch.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    await expect(apiRequest('/tokens/consumo/')).rejects.toMatchObject({
+      codigo: 'SIN_CONEXION',
+      status: 0,
+      message: MENSAJES.SIN_CONEXION,
+    })
+  })
+
+  it('usa el "detail" de Django como mensaje y conserva los detalles', async () => {
+    fetch.mockReturnValue(respuesta(400, { detail: 'No puedes desactivar tu propia cuenta.' }))
+
+    await expect(apiRequest('/usuarios/1/desactivar/')).rejects.toMatchObject({
+      status: 400,
+      message: 'No puedes desactivar tu propia cuenta.',
+      detalles: { detail: 'No puedes desactivar tu propia cuenta.' },
+    })
+  })
+
+  it('sin "detail" usa un mensaje según el estado', async () => {
+    fetch.mockReturnValue(respuesta(403, {}))
+    await expect(apiRequest('/auditoria/')).rejects.toMatchObject({ message: MENSAJES.SIN_PERMISO })
+
+    fetch.mockReturnValue(respuesta(500, null))
+    await expect(apiRequest('/auditoria/')).rejects.toMatchObject({ message: mensajePorEstado(500) })
   })
 })

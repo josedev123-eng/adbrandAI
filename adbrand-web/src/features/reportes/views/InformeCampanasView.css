@@ -1,6 +1,6 @@
 /* InformeCampanasView.css: informe consolidado de campañas (HU-37).
    Usa las clases comunes .pagina, .tarjeta y .aviso. */
-.pagina.pagina-informe { max-width: 960px; }
+.pagina.pagina-informe { max-width: 1200px; }
 
 .pagina-informe .tarjeta { overflow-x: auto; }
 

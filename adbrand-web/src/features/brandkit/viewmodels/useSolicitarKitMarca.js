@@ -61,7 +61,8 @@ export function useSolicitarKitMarca() {
     } catch (error) {
       if (error.status === 404 && error.codigo === 'PERFIL_NO_ENCONTRADO') {
         setAviso({ tipo: 'error', texto: 'Primero completa tu perfil de negocio.' })
-      } else if (error.codigo === 'IA_NO_DISPONIBLE') {
+      } else if (error.codigo === 'IA_NO_DISPONIBLE' || error.codigo === 'LIMITE_TOKENS') {
+        // LIMITE_TOKENS: ya usó los tokens de IA de su plan este mes (el mensaje lo explica).
         setAviso({ tipo: 'error', texto: error.message })
       } else if (error.status === 400 && error.detalles) {
         const delServidor = {}

@@ -1,5 +1,6 @@
 // View: confirmación del pago con su comprobante (HU 28). La descarga y el envío por
 // correo los resuelve el backend; aquí solo se muestra el resultado.
+import Cargando from '../../../shared/components/Cargando'
 import { useConfirmacionPago } from '../viewmodels/useConfirmacionPago'
 import './pagoComun.css'
 import './ConfirmacionPagoView.css'
@@ -26,7 +27,7 @@ export default function ConfirmacionPagoView({ pago, alVolver }) {
         </div>
       </header>
 
-      {cargando && <p className="cargando">Generando tu comprobante…</p>}
+      {cargando && <Cargando texto="Generando tu comprobante…" filas={4} />}
       {error && <p className="aviso aviso-error">{error}</p>}
 
       {comprobante && (

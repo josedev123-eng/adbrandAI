@@ -59,3 +59,27 @@ class ConsumoMensual(models.Model):
 
     def __str__(self):
         return f"{self.mes:%Y-%m} empresa {self.usuario_id}: {self.tokens} tokens"
+
+
+class ConsumoImagen(models.Model):
+    """Una imagen generada con IA (control de gasto). La tabla la crea Flyway (V40) y la llena Spring.
+
+    BORRADOR: las 4 opciones del anuncio (IA gratis, Cloudflare). RETOQUE: editar la opción elegida (IA de pago, OpenRouter).
+    """
+
+    BORRADOR = "BORRADOR"
+    RETOQUE = "RETOQUE"
+
+    usuario_id = models.BigIntegerField()  # la empresa que pidió la imagen
+    tipo = models.CharField(max_length=20)
+    proveedor = models.CharField(max_length=20)  # simulado, cloudflare u openrouter
+    simulado = models.BooleanField(default=False)
+    fecha = models.DateTimeField()
+
+    class Meta:
+        managed = False  # la tabla la crea Flyway (V40)
+        db_table = "consumo_imagen"
+
+    def __str__(self):
+        return f"Empresa {self.usuario_id}: {self.tipo} con {self.proveedor}"
+

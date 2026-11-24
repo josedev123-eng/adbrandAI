@@ -1,9 +1,17 @@
 from math import ceil
 
+import logging
+
+from django.conf import settings
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from empresas.models import Empresa
+
 from .models import Contenido, HistorialContenido, PerfilNegocio
+
+log = logging.getLogger(__name__)
 
 
 def contenidos_dudosos():
@@ -30,17 +38,51 @@ def moderar_contenido(contenido_id, accion, moderador_id, motivo_rechazo=None):
     else:
         raise ValueError("Acción inválida. Use APROBAR o RECHAZAR")
 
-    campos = ["estado", "moderador_id", "fecha_actualizacion"]
+    # El dueño se entera: queda el aviso para "Mis anuncios" (V44) y se le envía un correo.
+    campos = ["estado", "moderador_id", "fecha_actualizacion", "aviso_pendiente"]
     contenido.moderador_id = moderador_id
     contenido.fecha_actualizacion = timezone.now()
+    contenido.aviso_pendiente = True
 
     if accion == "RECHAZAR" and motivo_rechazo:
         contenido.motivo_revision = motivo_rechazo
         campos.append("motivo_revision")
 
     contenido.save(update_fields=campos)
+    avisar_al_dueno(contenido)
 
     return contenido
+
+
+def avisar_al_dueno(contenido):
+    """Correo al dueño con lo que decidió el moderador. Si el correo falla, la moderación igual queda hecha."""
+    empresa = Empresa.objects.filter(pk=contenido.usuario_id).first()
+    if not empresa or not empresa.correo:
+        return
+    if contenido.estado == Contenido.APROBADO:
+        asunto = "Tu anuncio fue aprobado"
+        lineas = [
+            f"Hola, {empresa.nombre_empresa}:",
+            "",
+            f'Revisamos tu anuncio "{contenido.oferta}" y ya está aprobado.',
+            "Puedes copiarlo y programarlo en tu calendario desde AdBrand.AI.",
+        ]
+    else:
+        asunto = "Tu anuncio no fue aprobado"
+        motivo = contenido.motivo_revision or "No cumple las normas de publicidad."
+        lineas = [
+            f"Hola, {empresa.nombre_empresa}:",
+            "",
+            f'Revisamos tu anuncio "{contenido.oferta}" y no pudimos aprobarlo.',
+            f"Motivo: {motivo}",
+            "",
+            'Puedes generar una versión nueva desde "Crear anuncio" en AdBrand.AI.',
+        ]
+    cuerpo = "\n".join(lineas + ["", "El equipo de AdBrand.AI"])
+    try:
+        send_mail(asunto, cuerpo, settings.DEFAULT_FROM_EMAIL, [empresa.correo])
+    except Exception as error:  # un correo caído no debe deshacer la moderación
+        log.warning("No se pudo enviar el aviso de moderación a %s: %s", empresa.correo, error)
 
 POR_PAGINA = 20
 

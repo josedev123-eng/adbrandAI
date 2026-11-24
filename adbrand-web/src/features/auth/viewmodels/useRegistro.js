@@ -1,14 +1,16 @@
 // ViewModel: formulario de registro de la empresa, sus validaciones y el envío (HU-21).
 import { useState } from 'react'
 import { registrar } from '../models/authApi'
-import { esCorreoValido, problemaDeContrasena } from './validaciones'
+import { esCorreoValido, normalizarCorreo, problemaDeContrasena, problemaDeEmpresa, problemaDeNombre } from './validaciones'
 
-const FORMULARIO_VACIO = { nombre: '', nombreEmpresa: '', correo: '', contrasena: '', confirmarContrasena: '' }
+const FORMULARIO_VACIO = { nombre: '', nombreEmpresa: '', correo: '', contrasena: '', confirmarContrasena: '', aceptaTerminos: false }
 
 function validar(formulario) {
   const errores = {}
-  if (!formulario.nombre.trim()) errores.nombre = 'Ingresa tu nombre.'
-  if (!formulario.nombreEmpresa.trim()) errores.nombreEmpresa = 'Ingresa el nombre de tu empresa.'
+  const problemaNombre = problemaDeNombre(formulario.nombre)
+  if (problemaNombre) errores.nombre = problemaNombre
+  const problemaEmpresa = problemaDeEmpresa(formulario.nombreEmpresa)
+  if (problemaEmpresa) errores.nombreEmpresa = problemaEmpresa
   if (!formulario.correo.trim()) errores.correo = 'Ingresa tu correo.'
   else if (!esCorreoValido(formulario.correo)) errores.correo = 'Ingresa un correo válido.'
 
@@ -18,6 +20,8 @@ function validar(formulario) {
   else if (formulario.confirmarContrasena !== formulario.contrasena) {
     errores.confirmarContrasena = 'Las contraseñas no coinciden.'
   }
+  // Ley 29733: el consentimiento para tratar los datos debe ser expreso, por eso la casilla es obligatoria.
+  if (!formulario.aceptaTerminos) errores.aceptaTerminos = 'Para crear la cuenta debes aceptar los Términos y la Política de privacidad.'
   return errores
 }
 
@@ -44,7 +48,7 @@ export function useRegistro() {
       await registrar({
         nombre: formulario.nombre.trim(),
         nombreEmpresa: formulario.nombreEmpresa.trim(),
-        correo: formulario.correo.trim(),
+        correo: normalizarCorreo(formulario.correo),
         contrasena: formulario.contrasena,
       })
       setFormulario(FORMULARIO_VACIO)
@@ -58,7 +62,7 @@ export function useRegistro() {
         setErrores(error.campos)
         setMensaje({ tipo: 'error', texto: error.message })
       } else {
-        setMensaje({ tipo: 'error', texto: 'No se pudo conectar con el servidor.' })
+        setMensaje({ tipo: 'error', texto: error?.message || 'No se pudo conectar con el servidor.' })
       }
     } finally {
       setEnviando(false)

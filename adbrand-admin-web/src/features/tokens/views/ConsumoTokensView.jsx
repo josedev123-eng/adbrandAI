@@ -47,6 +47,60 @@ function GraficoEmpresas({ empresas }) {
   )
 }
 
+// Control de gasto de las IA de imágenes en el mes: borradores (gratis) y retoques (de pago) por empresa.
+function ImagenesDelMes({ imagenes }) {
+  return (
+    <section className="tarjeta consumo-imagenes" aria-label="Imágenes con IA">
+      <h2>Imágenes con IA</h2>
+      <div className="consumo-imagenes-cifras">
+        <div>
+          <strong>{imagenes.borradores}</strong>
+          <span>borradores (gratis)</span>
+        </div>
+        <div>
+          <strong className="consumo-imagenes-pago">{imagenes.retoques}</strong>
+          <span>retoques (de pago)</span>
+        </div>
+        <div>
+          <strong className="consumo-imagenes-limite">{imagenes.limite_retoques}</strong>
+          <span>retoques por empresa al mes</span>
+        </div>
+      </div>
+
+      {imagenes.empresas.length === 0 ? (
+        <SinResultados>Ninguna empresa ha generado imágenes con IA este mes.</SinResultados>
+      ) : (
+        <table className="tabla-consumo">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th className="consumo-numero">Borradores</th>
+              <th className="consumo-numero">Retoques</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {imagenes.empresas.map((fila) => (
+              <tr key={fila.usuario_id} className={fila.en_limite ? 'consumo-fila-alerta' : undefined}>
+                <td className="consumo-empresa">{fila.empresa}</td>
+                <td className="consumo-numero">{fila.borradores}</td>
+                <td className="consumo-numero">
+                  {fila.retoques} / {imagenes.limite_retoques}
+                </td>
+                <td>
+                  <span className={fila.en_limite ? 'consumo-estado consumo-estado-limite' : 'consumo-estado'}>
+                    {fila.en_limite ? 'Llegó al límite' : 'Dentro del límite'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  )
+}
+
 export default function ConsumoTokensView() {
   const { consumo, cargando, error, actualizando, actualizar } = useConsumoTokens()
 
@@ -111,6 +165,8 @@ export default function ConsumoTokensView() {
               </>
             )}
           </section>
+
+          {consumo.imagenes && <ImagenesDelMes imagenes={consumo.imagenes} />}
         </>
       )}
     </main>

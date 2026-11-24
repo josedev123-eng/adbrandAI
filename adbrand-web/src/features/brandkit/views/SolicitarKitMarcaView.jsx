@@ -1,4 +1,5 @@
 // View: formulario para solicitar el Kit de Marca. La lógica está en useSolicitarKitMarca.
+import Aviso from '../../../shared/components/Aviso'
 import { useSolicitarKitMarca } from '../viewmodels/useSolicitarKitMarca'
 import KitMarcaResultadoView from './KitMarcaResultadoView'
 import EditarKitMarcaView from './EditarKitMarcaView'
@@ -6,6 +7,7 @@ import EditarLogoView from './EditarLogoView'
 import EditarColoresView from './EditarColoresView'
 import EditarIdentidadView from './EditarIdentidadView'
 import './SolicitarKitMarcaView.css'
+import Cargando from '../../../shared/components/Cargando'
 
 function Campo({ etiqueta, error, children, ayuda }) {
   return (
@@ -120,7 +122,7 @@ export default function SolicitarKitMarcaView() {
         <p>Completa la información y la IA generará tu Kit de Marca básico: logo, tipografías, paleta y voz.</p>
       </header>
 
-      {aviso && <div className={`aviso aviso-${aviso.tipo}`}>{aviso.texto}</div>}
+      <Aviso mensaje={aviso} />
 
       {kitsGuardados.length > 0 && (
         <section className="tarjeta kits-guardados" aria-label="Tus kits guardados">
@@ -150,7 +152,8 @@ export default function SolicitarKitMarcaView() {
           <Campo etiqueta="Nombre del negocio" error={errores.nombreNegocio}>
             <input
               value={formulario.nombreNegocio}
-              placeholder="Cafetería El Aroma"
+              maxLength={120}
+              placeholder="Ej.: Cafetería El Aroma"
               onChange={(e) => cambiarCampo('nombreNegocio', e.target.value)}
             />
           </Campo>
@@ -158,6 +161,7 @@ export default function SolicitarKitMarcaView() {
           <Campo etiqueta="Sector / Rubro" error={errores.sector}>
             <input
               value={formulario.sector}
+              maxLength={80}
               placeholder="Cafetería, panadería, ropa, tecnología..."
               onChange={(e) => cambiarCampo('sector', e.target.value)}
             />
@@ -166,6 +170,7 @@ export default function SolicitarKitMarcaView() {
           <Campo etiqueta="Paleta de colores sugerida (opcional)" ayuda="Ej: Verdes y tierra, o #2E7D32, #8FBC8F">
             <input
               value={formulario.paletaSugerida}
+              maxLength={300}
               placeholder="Verdes y tierra, o códigos hex..."
               onChange={(e) => cambiarCampo('paletaSugerida', e.target.value)}
             />
@@ -175,6 +180,7 @@ export default function SolicitarKitMarcaView() {
             <textarea
               rows="3"
               value={formulario.valoresEslogan}
+              maxLength={500}
               placeholder="Valores que representa tu marca, eslogan..."
               onChange={(e) => cambiarCampo('valoresEslogan', e.target.value)}
             />
@@ -196,6 +202,7 @@ export default function SolicitarKitMarcaView() {
             </button>
           </div>
         </form>
+        {generando && <Cargando texto="La IA está creando tu logo, tus colores y tus tipografías…" filas={3} />}
       </section>
     </main>
   )
