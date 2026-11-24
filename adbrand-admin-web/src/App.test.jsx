@@ -1,5 +1,5 @@
 // Login de administradores: sesión guardada, menú según el rol y cerrar sesión.
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -171,7 +171,8 @@ describe('App (login y menú por rol)', () => {
       </SesionProvider>,
     )
     await screen.findByText('Pantalla de inicio')
-    expect(window.location.pathname).toBe('/inicio')
+    // La dirección cambia en un efecto después de pintar: se espera a que llegue (en el CI a veces tarda un instante).
+    await waitFor(() => expect(window.location.pathname).toBe('/inicio'))
 
     await userEvent.click(screen.getByRole('button', { name: 'Auditoría' }))
     expect(window.location.pathname).toBe('/auditoria')
