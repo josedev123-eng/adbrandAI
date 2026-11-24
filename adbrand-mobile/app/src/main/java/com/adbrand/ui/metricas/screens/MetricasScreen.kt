@@ -1,8 +1,11 @@
 package com.adbrand.ui.metricas.screens
 
 import android.os.Environment
+import android.widget.Toast
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.platform.LocalContext
 import com.adbrand.domain.model.ReporteDescargado
+import java.io.File
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -105,6 +108,12 @@ fun MetricasScreen(
                     reporte = estado.reporte,
                     error = estado.errorDescarga,
                     // La carpeta de documentos de la app: no pide permisos y se borra si se desinstala la app.
+                    alAbrir = { archivo ->
+                        if (!abrirPdf(contexto, archivo)) {
+                            Toast.makeText(contexto, "No tienes una app para abrir PDF. Usa Compartir.", Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    alCompartir = { archivo -> compartirPdf(contexto, archivo) },
                     alDescargar = {
                         viewModel.descargarPdf(contexto.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: contexto.filesDir)
                     }
@@ -207,6 +216,8 @@ private fun DescargaReporte(
     descargando: Boolean,
     reporte: ReporteDescargado?,
     error: String?,
+    alAbrir: (File) -> Unit,
+    alCompartir: (File) -> Unit,
     alDescargar: () -> Unit
 ) {
     TarjetaSeccion(
@@ -214,7 +225,18 @@ private fun DescargaReporte(
         subtitulo = "El mismo informe de la web, con el periodo que elegiste."
     ) {
         BotonPrincipal(texto = "Descargar PDF", onClick = alDescargar, cargando = descargando)
-        reporte?.let { AvisoEstado("PDF guardado: ${it.nombre}", tipo = TipoAviso.EXITO) }
+        reporte?.let { descargado ->
+            AvisoEstado("PDF guardado: ${descargado.nombre}", tipo = TipoAviso.EXITO)
+            // HU 59: con el PDF ya guardado, se puede abrir o enviar a otra app.
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = { alAbrir(descargado.archivo) }, modifier = Modifier.weight(1f)) {
+                    Text("Abrir")
+                }
+                OutlinedButton(onClick = { alCompartir(descargado.archivo) }, modifier = Modifier.weight(1f)) {
+                    Text("Compartir")
+                }
+            }
+        }
         error?.let { AvisoEstado(it, tipo = TipoAviso.ERROR) }
     }
 }
