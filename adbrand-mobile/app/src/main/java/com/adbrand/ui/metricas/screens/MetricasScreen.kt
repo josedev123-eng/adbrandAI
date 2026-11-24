@@ -41,6 +41,7 @@ import com.adbrand.core.theme.TextoSecundario
 import com.adbrand.domain.model.ContenidoPorMes
 import com.adbrand.domain.model.MetricasContenido
 import com.adbrand.domain.model.MetricasPublicaciones
+import com.adbrand.domain.model.ProximaPublicacion
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.TarjetaSeccion
 import com.adbrand.ui.metricas.viewmodel.MetricasViewModel
@@ -109,6 +110,7 @@ fun MetricasScreen(
                     item { AnunciosPorMes(metricas.porMes) }
                 }
                 item { PublicacionesPorRedSocial(estado.publicaciones) }
+                item { ProximasPublicaciones(estado.publicaciones.proximas) }
             }
         }
     }
@@ -207,6 +209,65 @@ private fun BarraConValor(etiqueta: String, valor: Long, maximo: Long, color: Co
         }
         Text(valor.toString(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
     }
+}
+
+// HU 58: las siguientes publicaciones programadas, con su fecha, hora, red y campaña.
+@Composable
+private fun ProximasPublicaciones(proximas: List<ProximaPublicacion>) {
+    TarjetaSeccion(titulo = "Próximas publicaciones") {
+        if (proximas.isEmpty()) {
+            Text(
+                "No tienes publicaciones programadas.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        proximas.forEach { publicacion ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(modifier = Modifier.width(64.dp)) {
+                    Text(fechaCorta(publicacion.fecha), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    Text(publicacion.hora.take(5), style = MaterialTheme.typography.bodySmall, color = TextoSecundario)
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(publicacion.titulo, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+                    Text(nombreRed(publicacion.redSocial), style = MaterialTheme.typography.bodySmall, color = TextoSecundario)
+                }
+                publicacion.campanaNombre?.let { nombre ->
+                    val color = colorDesdeHex(publicacion.campanaColor) ?: IndigoAdbrand
+                    Text(
+                        nombre,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = color,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(color.copy(alpha = .12f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// "2026-11-25" → "25 Nov".
+internal fun fechaCorta(fecha: String): String {
+    val partes = fecha.split("-")
+    val mes = partes.getOrNull(1)?.toIntOrNull() ?: return fecha
+    val dia = partes.getOrNull(2)?.toIntOrNull() ?: return fecha
+    return "$dia ${MESES.getOrElse(mes - 1) { "" }}".trim()
+}
+
+// "#C62828" → el color de la campaña. Si viene mal escrito, null.
+internal fun colorDesdeHex(hex: String?): Color? {
+    val limpio = hex?.removePrefix("#") ?: return null
+    if (limpio.length != 6) return null
+    val valor = limpio.toLongOrNull(16) ?: return null
+    return Color(0xFF000000 or valor)
 }
 
 // "INSTAGRAM" → "Instagram".
