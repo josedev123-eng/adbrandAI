@@ -205,7 +205,7 @@ class CrearAnuncioViewModelTest {
     }
 
     @Test
-    fun regenerarUsaElIdDelAnuncioElegido() = runTest {
+    fun regenerarPideUnaNuevaVersionYComparaConLaAnterior() = runTest {
         val anuncios = AnuncioFalso()
         val viewModel = CrearAnuncioViewModel(anuncios, OpcionesFalso())
         viewModel.actualizarOferta("Oferta válida")
@@ -218,8 +218,66 @@ class CrearAnuncioViewModelTest {
         advanceUntilIdle()
 
         assertEquals(7L, anuncios.idRegenerado)
-        assertEquals("Texto regenerado", viewModel.estado.value.anuncio?.texto)
+        // La anterior se conserva para comparar; la nueva queda pendiente de elección.
+        assertEquals("Texto de prueba", viewModel.estado.value.anuncio?.texto)
+        assertEquals("Texto regenerado", viewModel.estado.value.propuesta?.texto)
         assertFalse(viewModel.estado.value.regenerando)
+        assertNull(viewModel.estado.value.errorRegeneracion)
+    }
+
+    @Test
+    fun aceptarPropuestaActualizaElAnuncio() = runTest {
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), OpcionesFalso())
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+        viewModel.regenerar()
+        advanceUntilIdle()
+
+        viewModel.aceptarPropuesta()
+        advanceUntilIdle()
+
+        assertEquals("Texto regenerado", viewModel.estado.value.anuncio?.texto)
+        assertNull(viewModel.estado.value.propuesta)
+    }
+
+    @Test
+    fun descartarPropuestaVuelveALaAnterior() = runTest {
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), OpcionesFalso())
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+        viewModel.regenerar()
+        advanceUntilIdle()
+
+        viewModel.descartarPropuesta()
+        advanceUntilIdle()
+
+        assertNull(viewModel.estado.value.propuesta)
+        assertEquals("Texto de prueba", viewModel.estado.value.anuncio?.texto)
+    }
+
+    @Test
+    fun laRegeneracionConErrorMuestraElReintento() = runTest {
+        val viewModel = CrearAnuncioViewModel(
+            AnuncioFalso(regenerado = Resultado.Error("La IA no respondió.")),
+            OpcionesFalso()
+        )
+        viewModel.actualizarOferta("Oferta válida")
+        viewModel.generar()
+        advanceUntilIdle()
+        viewModel.elegir(1L)
+        advanceUntilIdle()
+        viewModel.regenerar()
+        advanceUntilIdle()
+
+        assertEquals("La IA no respondió.", viewModel.estado.value.errorRegeneracion)
+        assertFalse(viewModel.estado.value.regenerando)
+        assertNull(viewModel.estado.value.propuesta)
     }
 
     @Test
