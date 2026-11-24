@@ -1,7 +1,7 @@
 /* Pantalla de Inicio de la PYME: bienvenida y tarjetas resumen */
 .pagina.pagina-inicio { max-width: 1100px; }
 
-.inicio-bienvenida { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; border: 1px solid #e8ddf5; border-radius: 18px; background: linear-gradient(112deg, #f1ebff 0%, #fff4f7 100%); box-shadow: 0 12px 32px rgba(62, 39, 91, .06); }
+.inicio-bienvenida { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 18px; background: var(--primary-soft); }
 .inicio-bienvenida h1 { margin: 4px 0; color: #25143c; font-size: clamp(1.6rem, 3.5vw, 2.1rem); letter-spacing: -.03em; }
 .inicio-bienvenida p { margin: 0; color: #766d81; }
 .inicio-kicker { color: #7940a8; font-size: .72rem; font-weight: 800; letter-spacing: .15em; }
@@ -47,3 +47,11 @@
   .inicio-publicacion-dia { grid-column: 2; }
   .inicio-publicacion-titulo { grid-column: 2; grid-row: 2; }
 }
+
+/* Consumo de tokens de IA del mes (tarjeta "Tu plan y consumo de IA"). */
+.inicio-consumo { display: flex; flex-direction: column; gap: 8px; }
+.inicio-consumo-plan { font-weight: 700; color: var(--primary); }
+.inicio-consumo-barra { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.inicio-consumo-barra span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.inicio-consumo-alerta span { background: var(--warn); }
+.inicio-consumo-agotado span { background: var(--bad); }

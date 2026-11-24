@@ -9,7 +9,7 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
   return (
     <article className={opcion.elegida ? 'opcion opcion-elegida' : 'opcion'} aria-label={`Opción ${opcion.numero}`}>
       <div className="opcion-imagen">
-        <img src={opcion.imagen} alt={`Imagen de la opción ${opcion.numero} (${opcion.estilo})`} />
+        <img src={opcion.imagen} loading="lazy" decoding="async" alt={`Imagen de la opción ${opcion.numero} (${opcion.estilo})`} />
         <span className="opcion-estilo">{opcion.estilo}</span>
         {opcion.elegida && <span className="opcion-marca">✓ Elegida</span>}
       </div>
@@ -29,7 +29,7 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
   )
 }
 
-export default function GenerarAnuncioView({ irAPerfil }) {
+export default function GenerarAnuncioView({ irAPerfil, irAPlanes }) {
   const {
     solicitud,
     errores,
@@ -38,6 +38,7 @@ export default function GenerarAnuncioView({ irAPerfil }) {
     opcionElegida,
     aviso,
     faltaPerfil,
+    sinCupo,
     generando,
     eligiendoId,
     regenerando,
@@ -90,6 +91,14 @@ export default function GenerarAnuncioView({ irAPerfil }) {
           </button>
         </div>
       )}
+      {sinCupo && (
+        <div className="aviso aviso-error aviso-con-accion" role="alert">
+          <span>{sinCupo}</span>
+          <button type="button" className="boton-primario" onClick={irAPlanes}>
+            Ver planes
+          </button>
+        </div>
+      )}
       {aviso && <div className="aviso aviso-error">{aviso}</div>}
 
       <div className="anuncio-columnas">
@@ -99,7 +108,8 @@ export default function GenerarAnuncioView({ irAPerfil }) {
             <textarea
               rows="4"
               value={solicitud.oferta}
-              placeholder="2 panetones por S/ 35 hasta el 24 de diciembre"
+              maxLength={300}
+              placeholder="Ej.: 2 panetones por S/ 35 hasta el 24 de diciembre"
               onChange={(e) => cambiarCampo('oferta', e.target.value)}
             />
             {errores.oferta ? (
@@ -174,6 +184,7 @@ export default function GenerarAnuncioView({ irAPerfil }) {
                       <input
                         type="text"
                         value={instruccion}
+                        maxLength={300}
                         placeholder="Ej.: pon el fondo más claro"
                         onChange={(e) => cambiarInstruccion(e.target.value)}
                         disabled={retocando}
@@ -206,7 +217,7 @@ export default function GenerarAnuncioView({ irAPerfil }) {
                         title={version.instruccion ?? 'Imagen original'}
                         aria-label={`Usar la versión ${version.numero}${version.instruccion ? `: ${version.instruccion}` : ' (original)'}`}
                       >
-                        <img src={version.imagen} alt="" />
+                        <img src={version.imagen} alt="" loading="lazy" decoding="async" />
                         <span>v{version.numero}</span>
                       </button>
                     ))}

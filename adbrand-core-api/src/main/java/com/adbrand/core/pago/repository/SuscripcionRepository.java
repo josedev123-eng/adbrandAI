@@ -19,4 +19,8 @@ public interface SuscripcionRepository extends JpaRepository<Suscripcion, Long> 
 
     // HU 52: el plan vigente de la empresa (el que vence más tarde).
     Optional<Suscripcion> findFirstByUsuarioIdOrderByFechaVencimientoDesc(Long usuarioId);
+
+    // Límite de tokens: la suscripción activa de la empresa que vence más tarde.
+    Optional<Suscripcion> findFirstByUsuarioIdAndEstadoAndFechaVencimientoGreaterThanEqualOrderByFechaVencimientoDescIdDesc(
+            Long usuarioId, EstadoSuscripcion estado, LocalDate fecha);
 }

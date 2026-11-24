@@ -1,9 +1,11 @@
 // View: formulario de inicio de sesión (HU-22). La lógica está en useLogin.
+import InputContrasena from '../../../shared/components/InputContrasena'
+import Aviso from '../../../shared/components/Aviso'
 import { useLogin } from '../viewmodels/useLogin'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
 
-export default function LoginView({ aviso, irARegistro, irARecuperar }) {
+export default function LoginView({ aviso, irARegistro, irARecuperar, irAInicio }) {
   const { formulario, errores, mensaje, enviando, cambiarCampo, enviar } = useLogin(aviso)
 
   function alEnviar(evento) {
@@ -13,6 +15,11 @@ export default function LoginView({ aviso, irARegistro, irARecuperar }) {
 
   return (
     <main className="pagina pagina-auth">
+      {irAInicio && (
+        <button type="button" className="boton-enlace auth-volver" onClick={irAInicio}>
+          ← Volver al inicio
+        </button>
+      )}
       <p className="auth-marca">
         AdBrand<b>.AI</b>
       </p>
@@ -21,23 +28,24 @@ export default function LoginView({ aviso, irARegistro, irARecuperar }) {
         <p>Entra con el correo y la contraseña de tu empresa.</p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
         <CampoAuth etiqueta="Correo" error={errores.correo}>
           <input
             type="email"
             value={formulario.correo}
-            placeholder="rosa@panaderia.pe"
+            maxLength={150}
+            placeholder="Ej.: rosa@panaderia.pe"
             autoComplete="email"
             onChange={(e) => cambiarCampo('correo', e.target.value)}
           />
         </CampoAuth>
 
         <CampoAuth etiqueta="Contraseña" error={errores.contrasena}>
-          <input
-            type="password"
+          <InputContrasena
             value={formulario.contrasena}
+            maxLength={72}
             autoComplete="current-password"
             onChange={(e) => cambiarCampo('contrasena', e.target.value)}
           />

@@ -11,6 +11,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByCorreo(String correo);
 
+    Optional<Usuario> findByFirebaseUid(String firebaseUid);
+
     // HU 23: el RUC ya lo tiene otra cuenta.
     boolean existsByRucAndIdNot(String ruc, Long id);
 }

@@ -6,6 +6,35 @@ import './InicioView.css'
 const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook' }
 const FORMATO_DIA = new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
 
+const TOKENS = new Intl.NumberFormat('es-PE')
+
+// Consumo de tokens de IA del mes frente al límite: barra que se pone ámbar al acercarse y roja al agotarse.
+function ConsumoDelMes({ consumo }) {
+  const nombrePlan =
+    consumo.origen === 'PLAN' ? `Plan ${consumo.plan}` : consumo.origen === 'GRATUITO' ? 'Plan gratuito' : 'Límite especial'
+  const estado = consumo.agotado ? 'agotado' : consumo.enAlerta ? 'alerta' : 'normal'
+  return (
+    <div className="inicio-consumo">
+      <span className="inicio-consumo-plan">{nombrePlan}</span>
+      <div
+        className={`inicio-consumo-barra inicio-consumo-${estado}`}
+        role="progressbar"
+        aria-label="Tokens de IA usados este mes"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={consumo.porcentaje}
+      >
+        <span style={{ width: `${Math.max(consumo.porcentaje, 2)}%` }} />
+      </div>
+      <p className="inicio-nota">
+        {TOKENS.format(consumo.tokensUsados)} de {TOKENS.format(consumo.limite)} tokens de IA este mes ({consumo.porcentaje} %).
+        {consumo.agotado && ' Llegaste al límite: mejora tu plan para seguir creando.'}
+        {!consumo.agotado && consumo.enAlerta && ' Te estás acercando al límite.'}
+      </p>
+    </div>
+  )
+}
+
 function formatearDia(fecha) {
   const [anio, mes, dia] = fecha.split('-').map(Number)
   return FORMATO_DIA.format(new Date(anio, mes - 1, dia))
@@ -36,7 +65,7 @@ function Tarjeta({ titulo, estado, accion, alAbrir, children }) {
 
 export default function InicioView({ empresa, alAbrir }) {
   const { tarjetas, recargar } = useInicio()
-  const { perfil, anuncios, kit, calendario } = tarjetas
+  const { perfil, anuncios, kit, calendario, consumo } = tarjetas
   const faltaPerfil = !perfil.cargando && !perfil.error && !perfil.datos
 
   return (
@@ -131,8 +160,13 @@ export default function InicioView({ empresa, alAbrir }) {
           )}
         </Tarjeta>
 
-        <Tarjeta titulo="Tu plan" estado={{ cargando: false, error: false }} accion="Ver planes" alAbrir={() => alAbrir('planes')}>
-          <p className="inicio-nota">Revisa tu plan, paga con tarjeta o Yape y descarga tus comprobantes.</p>
+        <Tarjeta
+          titulo="Tu plan y consumo de IA"
+          estado={consumo}
+          accion={consumo.datos?.origen === 'PLAN' ? 'Ver planes' : 'Mejorar plan'}
+          alAbrir={() => alAbrir('planes')}
+        >
+          {consumo.datos && <ConsumoDelMes consumo={consumo.datos} />}
         </Tarjeta>
       </div>
     </main>

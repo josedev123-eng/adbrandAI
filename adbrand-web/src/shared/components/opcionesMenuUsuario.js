@@ -7,6 +7,7 @@ export const SECCIONES = [
     titulo: 'Crear',
     opciones: [
       { id: 'anuncio', nombre: 'Crear anuncio' },
+      { id: 'misAnuncios', nombre: 'Mis anuncios' },
       { id: 'kit', nombre: 'Kit de Marca' },
     ],
   },
@@ -23,6 +24,7 @@ export const SECCIONES = [
       { id: 'perfil', nombre: 'Mi negocio' },
       { id: 'planes', nombre: 'Planes' },
       { id: 'cuenta', nombre: 'Mi cuenta' },
+      { id: 'ayuda', nombre: 'Ayuda' },
     ],
   },
 ]

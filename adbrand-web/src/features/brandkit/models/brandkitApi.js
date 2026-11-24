@@ -1,5 +1,6 @@
 // Model: llamadas a la API de Kit de Marca (HU-11).
-import { apiRequest } from '../../../shared/services/apiClient'
+import { apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
+import { conCache, olvidarDespues } from '../../../shared/services/cacheConsultas'
 
 export const ESTILOS_VISUALES = [
   { valor: 'MINIMALISTA', nombre: 'Minimalista' },
@@ -13,20 +14,21 @@ export const ESTILOS_VISUALES = [
 ]
 
 export function generarKitMarca(datos) {
-  return apiRequest('/kit-marca/generar', { method: 'POST', body: datos })
+  return apiRequest('/kit-marca/generar', { method: 'POST', body: datos, tiempoMaximo: TIEMPO_IA }).then(olvidarDespues('kits'))
 }
 
 export function obtenerKitMarca(id) {
   return apiRequest(`/kit-marca/${id}`)
 }
 
+// La lista de kits la leen Inicio y la pantalla del kit; se guarda unos minutos y se olvida al crear o editar uno.
 export function listarKitsMarca() {
-  return apiRequest('/kit-marca')
+  return conCache('kits', () => apiRequest('/kit-marca'))
 }
 
 // HU-32: guarda los cambios hechos a mano. 404 si el kit no es de la empresa; 400 si un color está mal escrito.
 export function editarKitMarca(id, datos) {
-  return apiRequest(`/kit-marca/${id}`, { method: 'PUT', body: datos })
+  return apiRequest(`/kit-marca/${id}`, { method: 'PUT', body: datos }).then(olvidarDespues('kits'))
 }
 
 // HU-32: historial de ediciones, la más reciente primero.
@@ -49,7 +51,7 @@ export function leerPaleta(texto) {
 // HU-29: guarda el logo diseñado en el editor; queda como una versión nueva del kit.
 // 400 con "campos" si un color o el texto están mal; 404 si el kit no es de la empresa.
 export function guardarLogoKitMarca(id, logo) {
-  return apiRequest(`/kit-marca/${id}/logo`, { method: 'PUT', body: logo })
+  return apiRequest(`/kit-marca/${id}/logo`, { method: 'PUT', body: logo }).then(olvidarDespues('kits'))
 }
 
 export const FORMAS_LOGO = [
@@ -64,13 +66,13 @@ export const TIPOGRAFIAS_LOGO = ['Bricolage Grotesque', 'Plus Jakarta Sans', 'Je
 // HU-30: guarda solo la paleta como una versión nueva del kit.
 // 400 con "campos" (colores[i].hex) si un color está mal escrito, o con codigo COLOR_REPETIDO si se repite uno.
 export function guardarColoresKitMarca(id, colores) {
-  return apiRequest(`/kit-marca/${id}/colores`, { method: 'PUT', body: { colores } })
+  return apiRequest(`/kit-marca/${id}/colores`, { method: 'PUT', body: { colores } }).then(olvidarDespues('kits'))
 }
 
 // HU-31: guarda tipografías y voz de marca como una versión nueva del kit.
 // Los anuncios que se generen después escriben con esa voz. 400 con "campos" si falta algo.
 export function guardarIdentidadKitMarca(id, identidad) {
-  return apiRequest(`/kit-marca/${id}/identidad`, { method: 'PUT', body: identidad })
+  return apiRequest(`/kit-marca/${id}/identidad`, { method: 'PUT', body: identidad }).then(olvidarDespues('kits'))
 }
 
 // HU-31: tipografías sugeridas en el editor de identidad (se puede escribir otra).

@@ -1,10 +1,22 @@
 /* Menú lateral fijo a la izquierda; en pantallas angostas pasa arriba. */
 .menu-admin { position: sticky; top: 0; height: 100vh; width: 248px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; padding: 20px 14px; background: var(--surface); border-right: 1px solid var(--line); overflow-y: auto; }
 .menu-marca { font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; padding: 0 8px; }
-.menu-marca b { color: var(--ia); }
+.menu-marca b { color: var(--acento-texto); }
 .menu-marca small { font-family: var(--f-body); font-size: 0.75rem; font-weight: 700; color: var(--primary); background: var(--primary-soft); padding: 2px 8px; border-radius: 999px; vertical-align: middle; }
 
+.menu-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.menu-contenido { display: flex; flex-direction: column; gap: 20px; flex: 1; }
 .menu-secciones { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+
+/* Botón ☰: solo en pantallas angostas. El punto avisa que hay contenido pendiente de revisar. */
+.menu-hamburguesa { display: none; position: relative; width: 42px; height: 42px; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font-size: 1.25rem; cursor: pointer; }
+.menu-hamburguesa:hover { background: var(--surface-2); }
+.menu-hamburguesa-aviso { position: absolute; top: 7px; right: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--ia); box-shadow: 0 0 0 2px var(--surface); }
+
+/* "Mi cuenta" junto a "Cerrar sesión". */
+.menu-mi-cuenta { grid-column: 1 / -1; border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: 8px; font-weight: 600; color: var(--fg); cursor: pointer; }
+.menu-mi-cuenta:hover { border-color: var(--primary); color: var(--primary); }
+.menu-mi-cuenta-activa { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
 .menu-seccion { display: flex; flex-direction: column; gap: 2px; }
 .menu-seccion-titulo { padding: 0 10px 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .menu-opcion { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; text-align: left; font-weight: 600; font-size: 0.9rem; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; }
@@ -21,7 +33,12 @@
 .menu-salir:hover { border-color: var(--bad); color: var(--bad); }
 
 @media (max-width: 860px) {
-  .menu-admin { position: static; height: auto; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); gap: 12px; padding: 12px 16px; }
+  /* En celular el menú queda arriba, fijo, y sus opciones se abren con el botón ☰. */
+  .menu-admin { position: sticky; top: 0; z-index: 40; height: auto; max-height: 100vh; width: 100%; box-sizing: border-box; border-right: 0; border-bottom: 1px solid var(--line); gap: 12px; padding: 10px 16px; }
+  .menu-hamburguesa { display: grid; }
+  .menu-contenido { display: none; }
+  .menu-abierto .menu-contenido { display: flex; padding-bottom: 6px; }
+  .menu-mi-cuenta { grid-column: auto; }
   .menu-secciones { flex-direction: row; flex-wrap: wrap; gap: 8px 16px; }
   .menu-seccion { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; }
   .menu-seccion-titulo { width: 100%; padding: 0 0 2px; }

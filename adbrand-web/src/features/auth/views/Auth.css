@@ -13,8 +13,8 @@
   position: fixed;
   z-index: -1;
   inset: 0;
-  background: radial-gradient(ellipse at 18% 14%, rgba(226, 204, 255, .72), transparent 38%),
-    radial-gradient(ellipse at 88% 84%, rgba(255, 218, 224, .72), transparent 35%), #f8f7fc;
+  /* Fondo plano y suave (sin degradados, ver sistema de diseño). */
+  background: var(--bg);
   content: '';
 }
 
@@ -31,7 +31,7 @@
 .pagina-auth .pagina-cabecera p { color: #746b82; line-height: 1.55; }
 .pagina-auth .auth-marca { color: #2f1c4a; font-size: 1.55rem; letter-spacing: -.04em; }
 .pagina-auth .auth-marca b { color: #8636bd; }
-.pagina-auth .boton-primario { min-height: 48px; border-radius: 12px; background: linear-gradient(110deg, #6430a3, #923fc0); box-shadow: 0 9px 20px rgba(109, 51, 166, .24); }
+.pagina-auth .boton-primario { min-height: 48px; border-radius: 12px; box-shadow: 0 6px 16px rgba(79, 70, 229, .22); }
 .pagina-auth .campo input { min-height: 46px; border-radius: 12px; background: #fff; }
 .pagina-auth .auth-enlaces { justify-content: center; gap: 12px 24px; }
 .pagina-auth .boton-enlace { color: #7133a7; }
@@ -75,3 +75,16 @@
   .pagina.pagina-auth { min-height: 100svh; padding: 36px 18px; }
   .pagina-auth > .tarjeta.formulario { padding: 22px 18px; }
 }
+
+/* Casilla "Acepto los Términos y la Política de privacidad" del registro. */
+.auth-casilla { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; font-size: 0.9rem; line-height: 1.5; }
+.auth-casilla input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--primary); cursor: pointer; }
+.auth-casilla .boton-enlace { font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.auth-casilla .campo-error { grid-column: 2; }
+.auth-casilla-error input { outline: 2px solid var(--bad); outline-offset: 2px; }
+
+/* Pie de página debajo de las pantallas de cuenta. */
+.pantalla-publica { display: flex; flex-direction: column; min-height: 100vh; }
+.pantalla-publica > main { flex: 1; }
+.pantalla-publica .pagina.pagina-auth { min-height: auto; }
+.auth-volver { align-self: flex-start; }

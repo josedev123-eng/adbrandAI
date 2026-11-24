@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adbrand.core.network.Resultado
 import com.adbrand.data.repository.AccesoCuentaRepository
-import com.adbrand.data.repository.AccesoCuentaRepositoryRemoto
+import com.adbrand.data.repository.AccesoCuentaRepositoryFirebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +21,7 @@ data class AccesoCuentaEstado(
 )
 
 class AccesoCuentaViewModel(
-    private val repo: AccesoCuentaRepository = AccesoCuentaRepositoryRemoto()
+    private val repo: AccesoCuentaRepository = AccesoCuentaRepositoryFirebase()
 ) : ViewModel() {
     private val _estado = MutableStateFlow(AccesoCuentaEstado())
     val estado: StateFlow<AccesoCuentaEstado> = _estado.asStateFlow()

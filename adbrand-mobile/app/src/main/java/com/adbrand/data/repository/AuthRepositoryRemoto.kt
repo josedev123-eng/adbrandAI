@@ -1,5 +1,6 @@
 package com.adbrand.data.repository
 
+import com.adbrand.core.network.RespuestaHttp
 import com.adbrand.core.network.Resultado
 import com.adbrand.core.session.AlmacenSesion
 import com.adbrand.core.session.GestorSesion
@@ -16,6 +17,11 @@ class AuthRepositoryRemoto(
     override suspend fun iniciarSesion(correo: String, contrasena: String): Resultado<Usuario> {
         val respuesta = AuthApi.iniciarSesion(correo.trim(), contrasena)
             .getOrElse { return sinConexion(it) }
+        return leerSesion(respuesta)
+    }
+
+    // Lee la respuesta de inicio de sesión de Spring (la misma con contraseña o con Firebase) y guarda los tokens.
+    fun leerSesion(respuesta: RespuestaHttp): Resultado<Usuario> {
         if (!respuesta.esExitosa) {
             return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
         }
@@ -47,7 +53,7 @@ class AuthRepositoryRemoto(
         return Resultado.Exito(Unit)
     }
 
-    private fun sinConexion(error: Throwable): Resultado.Error =
+    fun sinConexion(error: Throwable): Resultado.Error =
         Resultado.Error(
             if (error is IOException) "No se pudo conectar con el servidor. Revisa tu conexión."
             else "Ocurrió un error inesperado."

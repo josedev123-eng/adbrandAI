@@ -50,9 +50,18 @@ public class LoginService {
             throw new NoAutenticadoException("CREDENCIALES_INVALIDAS", MENSAJE_CREDENCIALES);
         }
 
-        Usuario usuario = encontrado.get();
+        return entregarSesion(encontrado.get());
+    }
+
+    // Revisa que la cuenta esté activa y entrega los tokens. La usa también el inicio de sesión con Firebase (app móvil).
+    @Transactional
+    public LoginResponse entregarSesion(Usuario usuario) {
         if (usuario.getEstado() == EstadoUsuario.INACTIVO) {
-            throw new AccesoDenegadoException("CUENTA_INACTIVA", MENSAJE_CUENTA_INACTIVA);
+            // Si la suspendió el administrador, se explica el motivo (V45).
+            String mensaje = usuario.getFechaSuspension() == null
+                    ? MENSAJE_CUENTA_INACTIVA
+                    : com.adbrand.core.auth.config.MensajesCuenta.suspendida(usuario.getMotivoSuspension());
+            throw new AccesoDenegadoException("CUENTA_INACTIVA", mensaje);
         }
 
         usuario.setUltimoAcceso(LocalDateTime.now());

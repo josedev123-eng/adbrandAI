@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -60,6 +61,7 @@ import com.adbrand.ui.perfil.screens.DatosEmpresaScreen
 import com.adbrand.ui.perfil.screens.PerfilNegocioScreen
 import com.adbrand.ui.plan.screens.PantallaPlanScreen
 import com.adbrand.ui.previsualizacion.screens.PrevisualizacionScreen
+import com.adbrand.ui.revision.screens.RevisionScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -76,13 +78,16 @@ private const val RUTA_PREVISUALIZACION = "previsualizacion"
 private const val RUTA_CAMPANA = "campana/{id}"
 private const val RUTA_PLAN = "plan"
 private const val RUTA_AVISOS = "avisos"
+// HU 53 y 54: contenido por revisar (aprobar o rechazar).
+private const val RUTA_REVISION = "revision"
 
 private val DESTINOS_PRINCIPALES = setOf(
     RUTA_PANEL,
     RUTA_EMPRESA,
     RUTA_CREAR,
     RUTA_PERFIL,
-    RUTA_PREVISUALIZACION
+    RUTA_PREVISUALIZACION,
+    RUTA_REVISION
 )
 
 // HU 50: mientras el usuario está en apertura o cuenta no se salta a un aviso;
@@ -159,7 +164,8 @@ fun AppAdbrand() {
             ItemNavegacion(RUTA_EMPRESA, "Empresa", Icons.Filled.Business),
             ItemNavegacion(RUTA_CREAR, "Crear", Icons.Filled.Add, destacado = true),
             ItemNavegacion(RUTA_PERFIL, "Perfil", Icons.Filled.Person),
-            ItemNavegacion(RUTA_PREVISUALIZACION, "Vista", Icons.Filled.Visibility)
+            ItemNavegacion(RUTA_PREVISUALIZACION, "Vista", Icons.Filled.Visibility),
+            ItemNavegacion(RUTA_REVISION, "Revisar", Icons.Filled.FactCheck)
         )
     }
 
@@ -270,6 +276,9 @@ fun AppAdbrand() {
             composable(RUTA_PREVISUALIZACION) {
                 PrevisualizacionScreen(alCrearAnuncio = { irA(RUTA_CREAR) })
             }
+
+            // HU 53 y 54: aprobar o rechazar el contenido generado.
+            composable(RUTA_REVISION) { RevisionScreen() }
 
             // HU 49: ficha de campaña que se abre desde el aviso de recordatorio.
             composable(

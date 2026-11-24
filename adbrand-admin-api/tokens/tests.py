@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase
 
 from core.pruebas import con_sesion, crear_admin, iniciar_sesion
 from moderacion.models import PerfilNegocio
+from suscripciones.models import Plan, Suscripcion
 
 from django.test import override_settings
 
@@ -211,6 +212,29 @@ class AlertaConsumoTests(APITestCase):
         self.assertEqual([alerta["usuario_id"] for alerta in datos["alertas"]], [2])
         self.assertEqual(limite_de_empresa(1).limite_mensual, 5000)
         self.assertEqual(limite_de_empresa(2).limite_mensual, 1000)
+
+    def test_con_plan_pagado_activo_usa_el_limite_del_plan_igual_que_spring(self):
+        self.limite(10000)  # por defecto = plan gratuito
+        Plan.objects.create(nombre="Pro", precio=59.90, limite_tokens=150000, descripcion="Pro")
+        hoy = timezone.localdate()
+        Suscripcion.objects.create(
+            usuario_id=1, cliente="Panadería", plan="Pro", monto=59.90, estado=Suscripcion.ACTIVA,
+            fecha_inicio=hoy, fecha_vencimiento=hoy + timedelta(days=20),
+        )
+        # Una suscripción vencida no cuenta.
+        Suscripcion.objects.create(
+            usuario_id=2, cliente="Bodega", plan="Pro", monto=59.90, estado=Suscripcion.ACTIVA,
+            fecha_inicio=hoy - timedelta(days=60), fecha_vencimiento=hoy - timedelta(days=30),
+        )
+        consumir(1, 9000)  # 90 % del gratuito, pero solo 6 % de su plan
+        consumir(2, 9000)
+
+        datos = self.consultar()
+
+        self.assertEqual(self.fila(datos, 1)["limite"], 150000)
+        self.assertEqual(self.fila(datos, 2)["limite"], 10000)
+        self.assertEqual([alerta["usuario_id"] for alerta in datos["alertas"]], [2])
+        self.assertEqual(limite_de_empresa(1).limite_mensual, 150000)
 
     def test_respeta_un_porcentaje_de_aviso_distinto_de_80(self):
         self.limite(1000, porcentaje_aviso=50)

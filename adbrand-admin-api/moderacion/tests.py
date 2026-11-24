@@ -1,7 +1,10 @@
+from django.core import mail
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from core.pruebas import crear_admin, iniciar_sesion, usar_vista_de_flyway
+
+from empresas.models import Empresa
 
 from .models import Contenido, PerfilNegocio
 
@@ -374,4 +377,46 @@ class HistorialContenidoTests(APITestCase):
         iniciar_sesion(self.client, crear_admin("SUPERADMIN"))
 
         self.assertEqual(self.client.get(URL_HISTORIAL).status_code, 200)
+
+
+class AvisoAlDuenoTests(APITestCase):
+    """Al moderar, el dueño se entera: queda el aviso para "Mis anuncios" (V44) y le llega un correo."""
+
+    @classmethod
+    def setUpTestData(cls):
+        Empresa.objects.create(id=1, nombre="Rosa", correo="rosa@panaderia.pe", nombre_empresa="Panadería Doña Rosa")
+        cls.moderador = crear_admin("MODERADOR")
+
+    def setUp(self):
+        iniciar_sesion(self.client, self.moderador)
+
+    def moderar(self, contenido, cuerpo):
+        return self.client.post(f"/api/moderacion/contenidos/{contenido.id}/moderar/", cuerpo, format="json")
+
+    def test_al_aprobar_queda_el_aviso_y_le_llega_un_correo(self):
+        dudoso = crear_contenido("DUDOSO", "Pan de yema", motivo="Revisar")
+
+        self.assertEqual(self.moderar(dudoso, {"accion": "APROBAR"}).status_code, 200)
+
+        dudoso.refresh_from_db()
+        self.assertTrue(dudoso.aviso_pendiente)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["rosa@panaderia.pe"])
+        self.assertEqual(mail.outbox[0].subject, "Tu anuncio fue aprobado")
+
+    def test_al_rechazar_el_correo_explica_el_motivo(self):
+        dudoso = crear_contenido("DUDOSO", "Cigarrillos importados", motivo="Revisar")
+
+        self.moderar(dudoso, {"accion": "RECHAZAR", "motivo_rechazo": "Publicidad de tabaco."})
+
+        self.assertEqual(mail.outbox[0].subject, "Tu anuncio no fue aprobado")
+        self.assertIn("Motivo: Publicidad de tabaco.", mail.outbox[0].body)
+
+    def test_si_la_empresa_no_tiene_cuenta_se_modera_igual_sin_correo(self):
+        dudoso = crear_contenido("DUDOSO", "Promo", motivo="Revisar")
+        dudoso.usuario_id = 999
+        dudoso.save(update_fields=["usuario_id"])
+
+        self.assertEqual(self.moderar(dudoso, {"accion": "APROBAR"}).status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)
 

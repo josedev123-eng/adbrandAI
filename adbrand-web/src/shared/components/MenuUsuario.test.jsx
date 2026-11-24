@@ -35,4 +35,27 @@ describe('MenuUsuario (menú lateral)', () => {
     expect(iniciales('bodega')).toBe('B')
     expect(iniciales('')).toBe('A')
   })
+
+  it('en celular el botón ☰ abre y cierra el menú, y avisa si hay novedades dentro', async () => {
+    render(<MenuUsuario actual="inicio" alCambiar={vi.fn()} empresa="Bodega" alSalir={vi.fn()} contadores={{ misAnuncios: 2 }} />)
+    const boton = screen.getByRole('button', { name: 'Abrir menú' })
+
+    expect(boton).toHaveAttribute('aria-expanded', 'false')
+    expect(document.querySelector('.menu-hamburguesa-aviso')).toBeInTheDocument()
+
+    await userEvent.click(boton)
+    expect(screen.getByRole('button', { name: 'Cerrar menú' })).toHaveAttribute('aria-expanded', 'true')
+
+    await userEvent.keyboard('{Escape}')
+    expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('al elegir una opción el menú se cierra solo', async () => {
+    render(<MenuUsuario actual="inicio" alCambiar={vi.fn()} empresa="Bodega" alSalir={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Calendario' }))
+
+    expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false')
+  })
 })

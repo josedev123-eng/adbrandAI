@@ -1,0 +1,25 @@
+/* Empresas: lista de PYMEs y ventanas para suspender o reactivar. Lo común está en styles/sistema-diseno.css. */
+.pagina.pagina-empresas { max-width: 1100px; }
+
+.empresas-filtros { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 16px; }
+@media (max-width: 640px) { .empresas-filtros { grid-template-columns: 1fr; } }
+
+.empresas-tabla-contenedor { overflow-x: auto; }
+.empresas-tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.empresas-tabla th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.empresas-tabla td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.empresas-tabla td strong, .empresas-tabla td small { display: block; }
+.empresas-tabla td small { color: var(--muted); font-size: 0.8rem; }
+.empresas-numero { text-align: right; white-space: nowrap; }
+.empresa-suspendida { background: var(--bad-soft); }
+.empresas-rechazos-alto { color: var(--bad); font-weight: 700; }
+.empresas-estado { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-size: 0.78rem; font-weight: 700; }
+.empresas-estado-suspendida { background: var(--bad); color: #ffffff; }
+.empresas-motivo { margin-top: 4px; max-width: 260px; }
+.boton-pequeno { padding: 6px 12px; font-size: 0.82rem; }
+
+.empresas-fondo { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(27, 29, 46, 0.45); }
+.empresas-ventana { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; padding: 24px; border-radius: 14px; background: var(--surface); box-shadow: 0 20px 50px rgba(27, 29, 46, 0.25); }
+.empresas-ventana h2 { margin: 0; font-size: 1.15rem; }
+.empresas-ventana p { margin: 0; color: var(--muted); }
+.empresas-ventana-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }

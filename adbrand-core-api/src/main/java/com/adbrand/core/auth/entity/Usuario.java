@@ -38,6 +38,13 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
+    // Si el administrador suspendió la cuenta (estado INACTIVO): el porqué y cuándo (V45). Lo escribe Django.
+    @Column(name = "motivo_suspension", length = 300)
+    private String motivoSuspension;
+
+    @Column(name = "fecha_suspension")
+    private java.time.OffsetDateTime fechaSuspension;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -60,6 +67,18 @@ public class Usuario {
 
     @Column(length = 250)
     private String direccion;
+
+    // Color del avatar elegido en "Mi cuenta" (V42). null = automático según el nombre.
+    @Column(name = "color_avatar", length = 20)
+    private String colorAvatar;
+
+    // App móvil: id de la cuenta en Firebase Authentication (V49). null si nunca entró con Firebase.
+    @Column(name = "firebase_uid", length = 128, unique = true)
+    private String firebaseUid;
+
+    // Si ya vio o saltó el tutorial guiado de la web (V46).
+    @Column(name = "tutorial_visto", nullable = false)
+    private boolean tutorialVisto;
 
     @PrePersist
     void alCrear() {
@@ -89,6 +108,12 @@ public class Usuario {
     public EstadoUsuario getEstado() { return estado; }
     public void setEstado(EstadoUsuario estado) { this.estado = estado; }
 
+    public String getMotivoSuspension() { return motivoSuspension; }
+    public void setMotivoSuspension(String motivoSuspension) { this.motivoSuspension = motivoSuspension; }
+
+    public java.time.OffsetDateTime getFechaSuspension() { return fechaSuspension; }
+    public void setFechaSuspension(java.time.OffsetDateTime fechaSuspension) { this.fechaSuspension = fechaSuspension; }
+
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 
     public LocalDateTime getUltimoAcceso() { return ultimoAcceso; }
@@ -105,4 +130,11 @@ public class Usuario {
 
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+
+    public String getColorAvatar() { return colorAvatar; }
+    public void setColorAvatar(String colorAvatar) { this.colorAvatar = colorAvatar; }
+    public String getFirebaseUid() { return firebaseUid; }
+    public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
+    public boolean isTutorialVisto() { return tutorialVisto; }
+    public void setTutorialVisto(boolean tutorialVisto) { this.tutorialVisto = tutorialVisto; }
 }

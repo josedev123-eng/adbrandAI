@@ -1,6 +1,7 @@
 // View: editor de los colores de la marca con selector (HU-30). La lógica está en useEditarColores.
 // Usa los estilos del editor de la HU-32 (EditarKitMarcaView.css) para que se vean igual.
 // Criterio 1: al lado, un anuncio de ejemplo pintado con los colores, que cambia mientras se editan.
+import Aviso from '../../../shared/components/Aviso'
 import { useEditarColores } from '../viewmodels/useEditarColores'
 import AnuncioVistaPrevia from './AnuncioVistaPrevia'
 import './EditarKitMarcaView.css'
@@ -35,7 +36,7 @@ export default function EditarColoresView({ kit, alGuardar, alCancelar }) {
         </p>
       </header>
 
-      {mensaje && <div className={`aviso aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      <Aviso mensaje={mensaje} />
 
       <div className="colores-editor">
         <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
@@ -64,7 +65,7 @@ export default function EditarColoresView({ kit, alGuardar, alCancelar }) {
                     aria-label={`Código del color ${i + 1}`}
                     value={color.hex}
                     maxLength={7}
-                    placeholder="#2E7D32"
+                    placeholder="Ej.: #2E7D32"
                     onChange={(e) => cambiarColor(i, 'hex', e.target.value)}
                   />
                   <input
@@ -72,7 +73,7 @@ export default function EditarColoresView({ kit, alGuardar, alCancelar }) {
                     aria-label={`Nombre o uso del color ${i + 1}`}
                     value={color.nombre}
                     maxLength={100}
-                    placeholder="Rojo horno - Ofertas"
+                    placeholder="Ej.: Rojo horno - Ofertas"
                     onChange={(e) => cambiarColor(i, 'nombre', e.target.value)}
                   />
                   <button

@@ -44,6 +44,16 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/tinta_verde" />
+        <!-- HU 48: comparte la imagen recortada del anuncio (WhatsApp, etc.) sin pedir permisos de almacenamiento. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.archivos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/archivos_compartidos" />
+        </provider>
     </application>
 
 </manifest>

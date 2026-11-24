@@ -1,0 +1,5 @@
+/* Pie de página del panel admin. */
+.pie-admin { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; padding: 14px 24px; color: var(--muted); font-size: 0.8rem; }
+.pie-admin b { color: var(--ia); }
+.pie-admin a { color: var(--muted); }
+.pie-admin a:hover { color: var(--primary); }

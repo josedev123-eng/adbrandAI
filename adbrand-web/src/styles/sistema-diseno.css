@@ -1,0 +1,68 @@
+/* ============================================================================
+   Sistema de diseño de AdBrand.AI (web del usuario).
+   Los colores, letras y sombras (tokens) están en index.css (:root).
+   Aquí van los componentes base que usan TODAS las pantallas. Cada pantalla
+   solo agrega lo suyo con una clase propia (por ejemplo .pagina.pagina-informe).
+   Guía completa: adbrand-docs/frontend/sistema-de-diseno.md
+   ============================================================================ */
+
+/* ---------- Página y encabezado ---------- */
+.pagina { max-width: 680px; margin: 0 auto; padding: 40px 16px; display: flex; flex-direction: column; gap: 20px; }
+.pagina-cabecera p { margin: 4px 0 0; color: var(--muted); }
+
+/* ---------- Tarjeta ---------- */
+.tarjeta { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); }
+
+/* ---------- Formularios ---------- */
+.formulario { display: flex; flex-direction: column; gap: 18px; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campo > span { font-size: 0.85rem; font-weight: 600; }
+.campo input, .campo select, .campo textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font: inherit; color: inherit; }
+.campo textarea { resize: vertical; }
+.campo input:focus, .campo select:focus, .campo textarea:focus { border-color: var(--primary); outline: 2px solid var(--primary-soft); }
+.campo-con-error input, .campo-con-error select, .campo-con-error textarea { border-color: var(--bad); }
+.campo-error { font-size: 0.8rem; color: var(--bad); }
+/* Texto de ejemplo (placeholder): más claro que lo escrito, pero legible (contraste 4.5:1 sobre blanco).
+   Los ejemplos empiezan con "Ej.:" para que no parezcan datos ya llenados. */
+::placeholder { color: #6e7290; opacity: 1; }
+.campo-ayuda { font-size: 0.78rem; color: var(--muted); }
+@media (max-width: 560px) { .fila { grid-template-columns: 1fr; } }
+
+/* ---------- Botones ----------
+   primario: la acción principal de la pantalla (una sola por pantalla).
+   secundario: acciones de apoyo (Cancelar, Volver, Editar).
+   ia: acciones que usan inteligencia artificial (violeta IA plano). */
+.boton-primario, .boton-secundario, .boton-ia { font-weight: 600; cursor: pointer; transition: background-color 0.15s, box-shadow 0.15s, transform 0.1s; }
+.boton-primario { padding: 11px 18px; border: none; border-radius: 10px; background: var(--primary); color: #ffffff; }
+.boton-primario:hover:not(:disabled) { background: #4338ca; }
+.boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.boton-secundario:hover:not(:disabled) { background: var(--surface-2); }
+.boton-ia { padding: 12px 18px; border: none; border-radius: 12px; background: var(--ia); color: #ffffff; font-weight: 700; }
+.boton-ia:hover:not(:disabled) { background: #9c1488; }
+.boton-primario:active:not(:disabled), .boton-secundario:active:not(:disabled), .boton-ia:active:not(:disabled) { transform: translateY(1px); }
+.boton-primario:disabled, .boton-secundario:disabled, .boton-ia:disabled { opacity: 0.6; cursor: wait; }
+
+/* ---------- Etiquetas ---------- */
+.etiqueta-ia { background: var(--ia-soft); color: var(--ia); font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.etiqueta-simulado { background: var(--warn-soft); color: var(--warn); font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+
+/* ---------- Avisos (ver shared/components/Aviso.jsx) ---------- */
+.aviso { padding: 12px 14px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; }
+.aviso-exito, .aviso-ok { background: var(--ok-soft); color: var(--ok); }
+.aviso-error { background: var(--bad-soft); color: var(--bad); }
+.aviso-info { background: var(--warn-soft); color: var(--warn); }
+.cargando { color: var(--muted); }
+
+/* ---------- Accesibilidad ----------
+   Quien usa teclado ve siempre dónde está (anillo índigo), sin molestar al que usa mouse. */
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+.campo input:focus-visible, .campo select:focus-visible, .campo textarea:focus-visible { outline: 2px solid var(--primary-soft); outline-offset: 0; }
+
+/* Quien pidió menos movimiento en su sistema no ve animaciones. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Texto solo para lectores de pantalla. */
+.solo-lector { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

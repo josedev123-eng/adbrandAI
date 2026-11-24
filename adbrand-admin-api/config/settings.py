@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "moderacion",
     "tokens",
     "servidor",
+    "empresas",
 ]
 
 MIDDLEWARE = [
@@ -149,3 +150,17 @@ CORE_API_URL = os.getenv("CORE_API_URL", "http://localhost:8080")
 
 # Control de gasto de imágenes: retoques de pago por empresa al mes (el mismo valor que usa Spring).
 LIMITE_RETOQUES_MES = int(os.getenv("AI_IMAGE_RETOUCH_LIMIT", "20"))
+
+# Correos (aviso al dueño cuando se modera su anuncio). Sin MAIL_HOST se escriben en la consola,
+# igual que en Spring (MAIL_MOCK). En las pruebas Django los guarda en memoria (mail.outbox).
+DEFAULT_FROM_EMAIL = os.getenv("MAIL_FROM", "no-responder@adbrand.ai")
+if os.getenv("MAIL_HOST"):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.getenv("MAIL_HOST")
+    EMAIL_PORT = int(os.getenv("MAIL_PORT", "587"))
+    EMAIL_HOST_USER = os.getenv("MAIL_USERNAME", "")
+    EMAIL_HOST_PASSWORD = os.getenv("MAIL_PASSWORD", "")
+    EMAIL_USE_TLS = True
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+

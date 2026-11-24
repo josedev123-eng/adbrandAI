@@ -1,6 +1,7 @@
 package com.adbrand.core.calendario.repository;
 
 import com.adbrand.core.calendario.entity.PublicacionProgramada;
+import com.adbrand.core.calendario.entity.EstadoPublicacion;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,9 @@ public interface PublicacionProgramadaRepository extends JpaRepository<Publicaci
 
     // HU 36: una publicación solo se mueve si es de la empresa que inició sesión.
     Optional<PublicacionProgramada> findByIdAndUsuarioId(Long id, Long usuarioId);
+
+    // HU 54: un contenido programado no se rechaza sin quitarlo antes del calendario.
+    boolean existsByContenidoIdAndEstado(Long contenidoId, EstadoPublicacion estado);
 
     // HU 40: publicaciones de una campaña, para filtrar el informe por los anuncios que se programaron en ella.
     List<PublicacionProgramada> findByUsuarioIdAndCampanaId(Long usuarioId, Long campanaId);

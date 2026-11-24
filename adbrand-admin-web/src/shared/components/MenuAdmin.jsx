@@ -1,4 +1,7 @@
 // Menú lateral de la web de administración. Solo dibuja; App decide qué opciones y qué pantalla se muestran.
+import { useEffect, useState } from 'react'
+import { colorDeAvatar } from './avatar'
+import MarcaAdbrand from './MarcaAdbrand'
 import './MenuAdmin.css'
 
 // Trazos de un ícono simple por opción (viewBox 24x24). Se dibujan con línea, sin relleno.
@@ -7,6 +10,7 @@ const ICONOS = {
   revision: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z', 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z'],
   'historial-contenidos': ['M12 7v5l3 2', 'M3 12a9 9 0 1 0 3-6.7', 'M3 4v4h4'],
   administradores: ['M15 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1', 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z', 'M19 8v6', 'M16 11h6'],
+  empresas: ['M3 21h18', 'M5 21V7l7-4 7 4v14', 'M9 10h.01', 'M15 10h.01', 'M9 14h.01', 'M15 14h.01', 'M10 21v-4h4v4'],
   'lista-administradores': ['M9 6h11', 'M9 12h11', 'M9 18h11', 'M4 6h.01', 'M4 12h.01', 'M4 18h.01'],
   auditoria: ['M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3Z', 'M9 12l2 2 4-4'],
   'panel-financiero': ['M3 7h18v10H3z', 'M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z', 'M6 10v4', 'M18 10v4'],
@@ -43,48 +47,93 @@ function iniciales(admin) {
   return `${admin.nombres?.[0] ?? ''}${admin.apellidos?.[0] ?? ''}`.toUpperCase()
 }
 
+// En celular el menú se esconde detrás del botón ☰ y se cierra solo al elegir una opción.
 export default function MenuAdmin({ opciones, actual, alCambiar, admin, nombreRol, alSalir, contadores = {} }) {
+  const [abierto, setAbierto] = useState(false)
+  const hayPendientes = Object.values(contadores).some((n) => n > 0)
+
+  useEffect(() => {
+    if (!abierto) return undefined
+    const alTeclear = (evento) => {
+      if (evento.key === 'Escape') setAbierto(false)
+    }
+    window.addEventListener('keydown', alTeclear)
+    return () => window.removeEventListener('keydown', alTeclear)
+  }, [abierto])
+
+  function elegir(id) {
+    setAbierto(false)
+    alCambiar(id)
+  }
+
   return (
-    <aside className="menu-admin">
-      <span className="menu-marca">
-        AdBrand<b>.AI</b> <small>Admin</small>
-      </span>
-      <nav className="menu-secciones" aria-label="Menú de administración">
-        {agruparPorSeccion(opciones).map((grupo) => (
-          <div key={grupo.titulo} className="menu-seccion">
-            {grupo.titulo && <span className="menu-seccion-titulo">{grupo.titulo}</span>}
-            {grupo.opciones.map((opcion) => (
-              <button
-                key={opcion.id}
-                type="button"
-                className={actual === opcion.id ? 'menu-opcion menu-opcion-activa' : 'menu-opcion'}
-                aria-current={actual === opcion.id ? 'page' : undefined}
-                onClick={() => alCambiar(opcion.id)}
-              >
-                <IconoOpcion id={opcion.id} />
-                {opcion.nombre}
-                {contadores[opcion.id] > 0 && (
-                  <span className="menu-contador" aria-label={`${contadores[opcion.id]} pendientes`}>
-                    {contadores[opcion.id]}
-                  </span>
-                )}
-              </button>
-            ))}
+    <aside className={abierto ? 'menu-admin menu-abierto' : 'menu-admin'}>
+      <div className="menu-cabecera">
+        <MarcaAdbrand etiqueta="Admin" />
+        <button
+          type="button"
+          className="menu-hamburguesa"
+          aria-expanded={abierto}
+          aria-controls="menu-admin-contenido"
+          aria-label={abierto ? 'Cerrar menú' : 'Abrir menú'}
+          onClick={() => setAbierto((actualmente) => !actualmente)}
+        >
+          <span aria-hidden="true">{abierto ? '✕' : '☰'}</span>
+          {!abierto && hayPendientes && <span className="menu-hamburguesa-aviso" aria-hidden="true" />}
+        </button>
+      </div>
+      <div id="menu-admin-contenido" className="menu-contenido">
+        <nav className="menu-secciones" aria-label="Menú de administración">
+          {agruparPorSeccion(opciones).map((grupo) => (
+            <div key={grupo.titulo} className="menu-seccion">
+              {grupo.titulo && <span className="menu-seccion-titulo">{grupo.titulo}</span>}
+              {grupo.opciones.map((opcion) => (
+                <button
+                  key={opcion.id}
+                  type="button"
+                  className={actual === opcion.id ? 'menu-opcion menu-opcion-activa' : 'menu-opcion'}
+                  aria-current={actual === opcion.id ? 'page' : undefined}
+                  onClick={() => elegir(opcion.id)}
+                >
+                  <IconoOpcion id={opcion.id} />
+                  {opcion.nombre}
+                  {contadores[opcion.id] > 0 && (
+                    <span className="menu-contador" aria-label={`${contadores[opcion.id]} pendientes`}>
+                      {contadores[opcion.id]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+        {admin && (
+          <div className="menu-cuenta">
+            <span
+              className="menu-avatar"
+              aria-hidden="true"
+              style={{ background: colorDeAvatar(`${admin.nombres ?? ''} ${admin.apellidos ?? ''}`) }}
+            >
+              {iniciales(admin)}
+            </span>
+            <span className="menu-usuario">
+              {admin.nombres} {admin.apellidos}
+              <small>{nombreRol}</small>
+            </span>
+            <button
+              type="button"
+              className={actual === 'mi-cuenta' ? 'menu-mi-cuenta menu-mi-cuenta-activa' : 'menu-mi-cuenta'}
+              aria-current={actual === 'mi-cuenta' ? 'page' : undefined}
+              onClick={() => elegir('mi-cuenta')}
+            >
+              Mi cuenta
+            </button>
+            <button type="button" className="menu-salir" onClick={alSalir}>
+              Cerrar sesión
+            </button>
           </div>
-        ))}
-      </nav>
-      {admin && (
-        <div className="menu-cuenta">
-          <span className="menu-avatar" aria-hidden="true">{iniciales(admin)}</span>
-          <span className="menu-usuario">
-            {admin.nombres} {admin.apellidos}
-            <small>{nombreRol}</small>
-          </span>
-          <button type="button" className="menu-salir" onClick={alSalir}>
-            Cerrar sesión
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   )
 }

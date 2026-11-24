@@ -1,0 +1,143 @@
+/* Tutorial guiado: pantalla oscurecida, un hueco iluminado sobre la opción y una tarjeta con la explicación. */
+.tutorial { position: fixed; inset: 0; z-index: 1000; }
+
+.tutorial-bloqueo { position: fixed; inset: 0; }
+.tutorial-bloqueo-oscuro { background: rgba(15, 17, 30, 0.62); }
+
+/* Paneles oscuros alrededor del hueco y un borde de color sobre la opción que se explica. */
+.tutorial-sombra { position: fixed; background: rgba(15, 17, 30, 0.62); pointer-events: none; }
+.tutorial-hueco {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--acento), 0 0 24px rgba(249, 115, 22, 0.45);
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.tutorial-tarjeta {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px rgba(15, 17, 30, 0.3);
+  transition: top 0.25s ease, left 0.25s ease;
+}
+
+.tutorial-tarjeta-centro {
+  top: 50%;
+  left: 50%;
+  width: min(420px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+}
+
+.tutorial-tarjeta h2 { margin: 0; font-size: 1.2rem; }
+.tutorial-tarjeta p { margin: 0; color: var(--muted); line-height: 1.55; }
+.tutorial-progreso { color: var(--primary); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Emoji grande en un círculo de color: entra rebotando; el 👋 de bienvenida además saluda. */
+.tutorial-cabecera { display: flex; align-items: center; gap: 12px; }
+.tutorial-emoji {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  font-size: 1.7rem;
+  line-height: 1;
+  animation: tutorial-rebote 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.tutorial-emoji-saludo {
+  transform-origin: 70% 80%;
+  animation: tutorial-rebote 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, tutorial-saludo 1.4s ease-in-out 0.6s 2;
+}
+
+/* Barra de avance que se llena paso a paso. */
+.tutorial-barra { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.tutorial-barra span { display: block; height: 100%; border-radius: inherit; background: var(--primary); transition: width 0.4s ease; }
+
+.tutorial-acciones { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+.tutorial-terminar { margin-right: auto; color: var(--muted); font-size: 0.9rem; }
+
+/* Botón ✕ en la esquina: pregunta si quiere terminar. */
+.tutorial-cerrar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.tutorial-cerrar:hover, .tutorial-cerrar:focus-visible { background: var(--surface-2); color: var(--fg); }
+
+/* Pregunta "¿Terminar el recorrido aquí?" con las opciones continuar o terminar. */
+.tutorial-confirmar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--warn-soft);
+  animation: tutorial-entrada 0.25s ease-out both;
+}
+.tutorial-confirmar p { margin: 0; color: var(--fg); line-height: 1.5; }
+.tutorial-confirmar .tutorial-acciones { margin-top: 0; }
+
+/* Cada paso entra con un pequeño salto y el borde de la opción resaltada "late". */
+.tutorial-tarjeta { animation: tutorial-entrada 0.35s ease-out both; }
+.tutorial-tarjeta-centro { animation-name: tutorial-entrada-centro; }
+.tutorial-hueco { animation: tutorial-latido 1.6s ease-in-out infinite; }
+
+/* Confeti del último paso. */
+.tutorial-confeti { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+.tutorial-confeti span {
+  position: absolute;
+  top: -16px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  animation-name: tutorial-caida;
+  animation-timing-function: cubic-bezier(0.25, 0.6, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes tutorial-entrada {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tutorial-entrada-centro {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+@keyframes tutorial-rebote {
+  from { opacity: 0; transform: scale(0.4) rotate(-12deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tutorial-saludo {
+  0%, 100% { transform: rotate(0); }
+  20%, 60% { transform: rotate(16deg); }
+  40%, 80% { transform: rotate(-8deg); }
+}
+@keyframes tutorial-latido {
+  0%, 100% { box-shadow: 0 0 0 3px var(--acento), 0 0 0 0 rgba(249, 115, 22, 0.55); }
+  50% { box-shadow: 0 0 0 3px var(--acento), 0 0 0 12px rgba(249, 115, 22, 0); }
+}
+@keyframes tutorial-caida {
+  from { top: -16px; transform: rotate(0) translateX(0); }
+  to { top: 105%; transform: rotate(560deg) translateX(30px); }
+}
+
+/* Quien pidió menos movimiento en su sistema ve el tutorial sin animaciones ni confeti. */
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-hueco, .tutorial-tarjeta, .tutorial-emoji, .tutorial-barra span, .tutorial-confirmar { transition: none; animation: none; }
+  .tutorial-confeti { display: none; }
+}

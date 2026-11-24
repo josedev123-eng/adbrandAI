@@ -56,6 +56,25 @@ public class Contenido {
     @Column(name = "prompt_original", columnDefinition = "TEXT")
     private String promptOriginal;
 
+    // HU 53 y 54: lo que decidió el dueño desde el móvil (V41).
+    @Enumerated(EnumType.STRING)
+    @Column(name = "decision_dueno", nullable = false, length = 20)
+    private DecisionDueno decisionDueno = DecisionDueno.PENDIENTE;
+
+    @Column(name = "fecha_decision")
+    private LocalDateTime fechaDecision;
+
+    // HU 54: motivo opcional del dueño al rechazar (V48).
+    @Column(name = "motivo_dueno", length = 300)
+    private String motivoDueno;
+
+    // HU 15: quién moderó el contenido (lo escribe Django) y si el dueño todavía no vio esa decisión (V44).
+    @Column(name = "moderador_id")
+    private Long moderadorId;
+
+    @Column(name = "aviso_pendiente", nullable = false)
+    private boolean avisoPendiente;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -101,6 +120,22 @@ public class Contenido {
 
     public String getPromptOriginal() { return promptOriginal; }
     public void setPromptOriginal(String promptOriginal) { this.promptOriginal = promptOriginal; }
+
+    public DecisionDueno getDecisionDueno() { return decisionDueno; }
+    public void setDecisionDueno(DecisionDueno decisionDueno) { this.decisionDueno = decisionDueno; }
+
+    public LocalDateTime getFechaDecision() { return fechaDecision; }
+
+    public Long getModeradorId() { return moderadorId; }
+    public void setModeradorId(Long moderadorId) { this.moderadorId = moderadorId; }
+
+    public boolean isAvisoPendiente() { return avisoPendiente; }
+    public void setAvisoPendiente(boolean avisoPendiente) { this.avisoPendiente = avisoPendiente; }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public void setFechaDecision(LocalDateTime fechaDecision) { this.fechaDecision = fechaDecision; }
+    public String getMotivoDueno() { return motivoDueno; }
+    public void setMotivoDueno(String motivoDueno) { this.motivoDueno = motivoDueno; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 }

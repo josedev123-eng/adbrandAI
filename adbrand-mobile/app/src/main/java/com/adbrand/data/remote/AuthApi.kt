@@ -31,6 +31,21 @@ object AuthApi {
         return ClienteApi.ejecutarAsync("POST", "auth/login", cuerpo, ClienteApi.clienteSinSesion)
     }
 
+    // Firebase Authentication: Spring verifica el ID token de Firebase y devuelve la sesión de siempre.
+    suspend fun iniciarSesionFirebase(idToken: String): Result<RespuestaHttp> = ClienteApi.ejecutarAsync(
+        "POST", "auth/firebase", JSONObject().put("idToken", idToken).toString(), ClienteApi.clienteSinSesion
+    )
+
+    suspend fun registrarFirebase(idToken: String, nombre: String, nombreEmpresa: String): Result<RespuestaHttp> {
+        val cuerpo = JSONObject().put("idToken", idToken).put("nombre", nombre).put("nombreEmpresa", nombreEmpresa).toString()
+        return ClienteApi.ejecutarAsync("POST", "auth/firebase/registro", cuerpo, ClienteApi.clienteSinSesion)
+    }
+
+    // Con la sesión de siempre (ya guardada): une la cuenta de la web con su usuario de Firebase recién creado.
+    suspend fun vincularFirebase(idToken: String): Result<RespuestaHttp> = ClienteApi.ejecutarAsync(
+        "POST", "cuenta/firebase/vincular", JSONObject().put("idToken", idToken).toString()
+    )
+
     fun renovar(tokenRenovacion: String): Result<RespuestaHttp> {
         val cuerpo = JSONObject().put("tokenRenovacion", tokenRenovacion).toString()
         return ClienteApi.ejecutar("POST", "auth/renovar", cuerpo, ClienteApi.clienteSinSesion)

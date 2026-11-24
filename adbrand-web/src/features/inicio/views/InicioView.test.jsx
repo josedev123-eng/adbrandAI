@@ -6,12 +6,14 @@ import { listarKitsMarca } from '../../brandkit/models/brandkitApi'
 import { obtenerCalendario } from '../../calendario/models/calendarioApi'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 import { obtenerInformeCampanas } from '../../reportes/models/reportesApi'
+import { obtenerConsumoMes } from '../../pagos/models/pagosApi'
 import { proximasPublicaciones } from '../viewmodels/useInicio'
 import InicioView from './InicioView'
 
 vi.mock('../../brandkit/models/brandkitApi', async (importOriginal) => ({ ...(await importOriginal()), listarKitsMarca: vi.fn() }))
 vi.mock('../../calendario/models/calendarioApi', async (importOriginal) => ({ ...(await importOriginal()), obtenerCalendario: vi.fn() }))
 vi.mock('../../negocio/models/perfilNegocioApi', async (importOriginal) => ({ ...(await importOriginal()), obtenerPerfil: vi.fn() }))
+vi.mock('../../pagos/models/pagosApi', async (importOriginal) => ({ ...(await importOriginal()), obtenerConsumoMes: vi.fn() }))
 vi.mock('../../reportes/models/reportesApi', async (importOriginal) => ({ ...(await importOriginal()), obtenerInformeCampanas: vi.fn() }))
 
 function tarjeta(titulo) {
@@ -32,6 +34,7 @@ describe('InicioView', () => {
     listarKitsMarca.mockResolvedValue([
       { id: 3, nombreNegocio: 'Panadería Doña Rosa', paletaColores: '#D97724 - Ámbar\n#6E3B1E - Marrón' },
     ])
+    obtenerConsumoMes.mockResolvedValue({ tokensUsados: 8500, limite: 10000, porcentaje: 85, origen: 'GRATUITO', plan: null, enAlerta: true, agotado: false })
     obtenerCalendario.mockResolvedValue([
       { id: 1, titulo: 'Pan de yema 2x1', redSocial: 'INSTAGRAM', fecha: '2099-12-01', hora: '10:00', estado: 'PROGRAMADA', campanaColor: '#C62828' },
     ])
@@ -84,5 +87,15 @@ describe('InicioView', () => {
     ]
 
     expect(proximasPublicaciones(lista, '2026-11-22').map((p) => p.id)).toEqual([4, 1])
+  })
+
+  it('muestra el consumo de IA del mes con su plan y avisa al acercarse al límite', async () => {
+    render(<InicioView empresa="Panadería Doña Rosa" alAbrir={() => {}} />)
+
+    const consumo = await screen.findByRole('progressbar', { name: 'Tokens de IA usados este mes' })
+    expect(consumo).toHaveAttribute('aria-valuenow', '85')
+    expect(screen.getByText('Plan gratuito')).toBeInTheDocument()
+    expect(screen.getByText(/Te estás acercando al límite/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mejorar plan →' })).toBeInTheDocument()
   })
 })

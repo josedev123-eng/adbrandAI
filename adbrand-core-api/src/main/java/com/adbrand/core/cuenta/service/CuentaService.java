@@ -39,6 +39,9 @@ public class CuentaService {
         usuario.setRazonSocial(datos.razonSocial());
         usuario.setTelefono(datos.telefono());
         usuario.setDireccion(datos.direccion());
+        if (datos.colorAvatar() != null) {
+            usuario.setColorAvatar(datos.colorAvatar().isEmpty() ? null : datos.colorAvatar());
+        }
 
         try {
             return EmpresaResponse.desde(usuarios.saveAndFlush(usuario));
@@ -46,6 +49,12 @@ public class CuentaService {
             // Dos cuentas guardando el mismo RUC al mismo tiempo: la base lo rechaza por el UNIQUE.
             throw new ConflictoException(RUC_REPETIDO, MENSAJE_RUC_REPETIDO);
         }
+    }
+
+    // Tutorial guiado: la empresa lo terminó o lo saltó; ya no se le muestra solo.
+    @Transactional
+    public void marcarTutorialVisto(Long usuarioId) {
+        buscar(usuarioId).setTutorialVisto(true);
     }
 
     // Si la cuenta ya no existe, el token no sirve.

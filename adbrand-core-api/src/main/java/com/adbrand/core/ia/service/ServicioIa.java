@@ -33,6 +33,14 @@ public class ServicioIa {
         this.registroConsumo = registroConsumo;
     }
 
+    // Límite mensual del plan. Se inyecta aparte para no cambiar el constructor que usan las pruebas.
+    private LimiteConsumoIa limiteConsumo;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setLimiteConsumo(LimiteConsumoIa limiteConsumo) {
+        this.limiteConsumo = limiteConsumo;
+    }
+
     public boolean esSimulado() {
         return ia.mock();
     }
@@ -46,6 +54,10 @@ public class ServicioIa {
 
     // HU 17: genera igual que generarTexto y además suma los tokens usados a la empresa que lo pidió.
     public String generarTexto(String sistema, String usuario, Long usuarioId, OrigenConsumo origen) {
+        // Antes de gastar tokens se revisa el límite del mes (también en modo simulado, para que la demo lo muestre).
+        if (limiteConsumo != null) {
+            limiteConsumo.verificarDisponible(usuarioId);
+        }
         if (ia.mock()) {
             String texto = respuestaSimulada(usuario);
             registrarConsumo(usuarioId, origen, sistema + usuario, texto, null);

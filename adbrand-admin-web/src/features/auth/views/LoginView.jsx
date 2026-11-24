@@ -1,10 +1,13 @@
 // View: pantalla de inicio de sesión de la web de administración.
+import InputContrasena from '../../../shared/components/InputContrasena'
 import { useSesion } from '../../../app/context/useSesion'
 import { useLogin } from '../viewmodels/useLogin'
 import './LoginView.css'
 
-export default function LoginView() {
-  const { aviso } = useSesion()
+export default function LoginView({ irARecuperar, aviso: avisoExterno }) {
+  const { aviso: avisoSesion } = useSesion()
+  // Aviso de la sesión (venció) o de otra pantalla (por ejemplo, "tu contraseña se cambió").
+  const aviso = avisoExterno ?? avisoSesion
   const { correo, contrasena, errores, error, enviando, cambiarCorreo, cambiarContrasena, enviar } = useLogin()
 
   return (
@@ -30,18 +33,19 @@ export default function LoginView() {
               type="email"
               autoComplete="username"
               value={correo}
+              maxLength={150}
               onChange={(e) => cambiarCorreo(e.target.value)}
-              placeholder="nombre@adbrand.pe"
+              placeholder="Ej.: nombre@adbrand.pe"
             />
             {errores.correo && <small>{errores.correo}</small>}
           </label>
 
           <label className={errores.contrasena ? 'login-campo login-campo-error' : 'login-campo'}>
             <span>Contraseña</span>
-            <input
-              type="password"
+            <InputContrasena
               autoComplete="current-password"
               value={contrasena}
+              maxLength={128}
               onChange={(e) => cambiarContrasena(e.target.value)}
             />
             {errores.contrasena && <small>{errores.contrasena}</small>}
@@ -51,6 +55,11 @@ export default function LoginView() {
             {enviando ? 'Ingresando…' : 'Ingresar'}
           </button>
         </form>
+        {irARecuperar && (
+          <button type="button" className="login-enlace" onClick={irARecuperar}>
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
       </section>
     </main>
   )

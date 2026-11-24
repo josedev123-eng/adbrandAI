@@ -1,6 +1,7 @@
 // ViewModel: editor de la identidad visual del kit (HU-31). Cambia tipografías y voz de marca sin tocar lo demás.
 import { useState } from 'react'
 import { guardarIdentidadKitMarca } from '../models/brandkitApi'
+import { useCambiosSinGuardar } from '../../../shared/hooks/useCambiosSinGuardar'
 
 export const MAXIMO_TIPOGRAFIA = 200
 export const MAXIMO_VOZ = 1000
@@ -23,6 +24,8 @@ export function useEditarIdentidad(kit, alGuardar) {
     vozMarca: kit.vozMarca ?? '',
   })
   const [errores, setErrores] = useState({})
+  // Aviso si sale del editor con cambios sin guardar.
+  useCambiosSinGuardar(identidad)
   const [mensaje, setMensaje] = useState(null)
   const [guardando, setGuardando] = useState(false)
 

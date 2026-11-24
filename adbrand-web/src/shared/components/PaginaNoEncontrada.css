@@ -1,0 +1,5 @@
+/* Página 404. */
+.pagina.pagina-no-encontrada { align-items: center; justify-content: center; min-height: 60vh; text-align: center; }
+.no-encontrada-codigo { font-family: var(--f-display); font-size: clamp(4rem, 14vw, 7rem); font-weight: 700; line-height: 1; color: var(--primary); letter-spacing: -0.04em; }
+.pagina-no-encontrada h1 { font-size: 1.6rem; }
+.pagina-no-encontrada p { margin: 0; max-width: 32em; color: var(--muted); line-height: 1.6; }

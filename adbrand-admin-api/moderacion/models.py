@@ -19,6 +19,8 @@ class Contenido(models.Model):
     moderador_id = models.BigIntegerField(null=True, blank=True)
     fecha_creacion = models.DateTimeField()
     fecha_actualizacion = models.DateTimeField()
+    # V44: queda en True al moderar, hasta que el dueño abre "Mis anuncios" en la web (lo apaga Spring).
+    aviso_pendiente = models.BooleanField(default=False)
 
     class Meta:
         managed = False  # la tabla la crea Flyway (V3)
