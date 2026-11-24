@@ -15,12 +15,16 @@ import org.springframework.data.repository.query.Param;
 public interface MetricasPublicacionRepository extends Repository<PublicacionProgramada, Long> {
 
     // Cuántas publicaciones tiene la empresa por red social y por estado.
+    // HU 60: solo las de un día entre desde y hasta (los dos incluidos).
     @Query("""
             SELECT p.redSocial AS redSocial, p.estado AS estado, COUNT(p) AS cantidad
             FROM PublicacionProgramada p
             WHERE p.usuarioId = :usuarioId
+              AND p.fecha BETWEEN :desde AND :hasta
             GROUP BY p.redSocial, p.estado""")
-    List<ConteoPorRedYEstado> contarPorRedYEstado(@Param("usuarioId") Long usuarioId);
+    List<ConteoPorRedYEstado> contarPorRedYEstado(@Param("usuarioId") Long usuarioId,
+                                                  @Param("desde") LocalDate desde,
+                                                  @Param("hasta") LocalDate hasta);
 
     // Las siguientes publicaciones programadas desde este momento, en el orden en que salen.
     @Query("""

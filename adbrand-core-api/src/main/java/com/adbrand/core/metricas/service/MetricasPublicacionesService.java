@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 // HU 58: arma las métricas de las publicaciones del calendario de la empresa que inició sesión.
 // Cuenta las mismas filas que muestra el calendario de la web, así los números coinciden (criterio 2).
+// HU 60: los totales se pueden filtrar por periodo; las próximas siempre son las que vienen desde hoy.
 @Service
 public class MetricasPublicacionesService {
 
@@ -39,9 +40,16 @@ public class MetricasPublicacionesService {
 
     @Transactional(readOnly = true)
     public MetricasPublicacionesResponse publicaciones(Long usuarioId) {
+        return publicaciones(usuarioId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public MetricasPublicacionesResponse publicaciones(Long usuarioId, String desde, String hasta) {
+        Periodo periodo = Periodo.de(desde, hasta);
+
         // La consulta solo trae las combinaciones que tienen publicaciones; las demás quedan en cero.
         Map<RedSocialPublicacion, Map<EstadoPublicacion, Long>> conteos = new EnumMap<>(RedSocialPublicacion.class);
-        for (ConteoPorRedYEstado conteo : repositorio.contarPorRedYEstado(usuarioId)) {
+        for (ConteoPorRedYEstado conteo : repositorio.contarPorRedYEstado(usuarioId, periodo.primerDia(), periodo.ultimoDia())) {
             conteos.computeIfAbsent(conteo.getRedSocial(), red -> new EnumMap<>(EstadoPublicacion.class))
                     .put(conteo.getEstado(), conteo.getCantidad());
         }
