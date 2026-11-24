@@ -4,6 +4,7 @@ import com.adbrand.core.network.Resultado
 import com.adbrand.data.repository.MetricasRepository
 import com.adbrand.domain.model.ContenidoPorMes
 import com.adbrand.domain.model.MetricasContenido
+import com.adbrand.domain.model.MetricasPublicaciones
 import com.adbrand.ui.metricas.screens.etiquetaMes
 import com.adbrand.ui.metricas.viewmodel.MetricasViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,13 +39,16 @@ class MetricasViewModelTest {
     }
 
     private class RepositorioFalso(
-        private val resultado: Resultado<MetricasContenido>
+        private val resultado: Resultado<MetricasContenido>,
+        private val publicaciones: Resultado<MetricasPublicaciones> = Resultado.Exito(MetricasPublicaciones())
     ) : MetricasRepository {
         var llamadas = 0
         override suspend fun contenido(): Resultado<MetricasContenido> {
             llamadas++
             return resultado
         }
+
+        override suspend fun publicaciones(): Resultado<MetricasPublicaciones> = publicaciones
     }
 
     @Test

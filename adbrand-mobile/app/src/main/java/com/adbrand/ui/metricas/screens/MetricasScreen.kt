@@ -37,8 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adbrand.core.theme.BordeSuave
 import com.adbrand.core.theme.IndigoAdbrand
+import com.adbrand.core.theme.TextoSecundario
 import com.adbrand.domain.model.ContenidoPorMes
 import com.adbrand.domain.model.MetricasContenido
+import com.adbrand.domain.model.MetricasPublicaciones
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.TarjetaSeccion
 import com.adbrand.ui.metricas.viewmodel.MetricasViewModel
@@ -51,6 +53,7 @@ private val RojoRechazado = Color(0xFFB91C1C)
 private val MESES = listOf("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
 
 // HU 57: tarjetas con los anuncios generados, aprobados, en revisión y rechazados, y la cantidad por mes.
+// HU 58: debajo, las publicaciones del calendario por red social.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MetricasScreen(
@@ -105,6 +108,7 @@ fun MetricasScreen(
                 if (metricas.porMes.isNotEmpty()) {
                     item { AnunciosPorMes(metricas.porMes) }
                 }
+                item { PublicacionesPorRedSocial(estado.publicaciones) }
             }
         }
     }
@@ -161,6 +165,55 @@ private fun AnunciosPorMes(porMes: List<ContenidoPorMes>) {
             }
         }
     }
+}
+
+// HU 58: totales del calendario y un gráfico con dos barras por red social (programadas y publicadas).
+@Composable
+private fun PublicacionesPorRedSocial(publicaciones: MetricasPublicaciones) {
+    val maximo = publicaciones.porRed.maxOfOrNull { maxOf(it.programadas, it.publicadas) }?.coerceAtLeast(1) ?: 1
+    TarjetaSeccion(
+        titulo = "Publicaciones",
+        subtitulo = "Las mismas que tienes en el calendario de la web."
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TarjetaNumero("Programadas", publicaciones.programadas, IndigoAdbrand, Modifier.weight(1f))
+            TarjetaNumero("Publicadas", publicaciones.publicadas, VerdeAprobado, Modifier.weight(1f))
+            TarjetaNumero("Canceladas", publicaciones.canceladas, TextoSecundario, Modifier.weight(1f))
+        }
+        publicaciones.porRed.forEach { red ->
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(nombreRed(red.redSocial), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                BarraConValor("Programadas", red.programadas, maximo, IndigoAdbrand)
+                BarraConValor("Publicadas", red.publicadas, maximo, VerdeAprobado)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BarraConValor(etiqueta: String, valor: Long, maximo: Long, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(etiqueta, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(84.dp))
+        Box(modifier = Modifier.weight(1f).height(12.dp).clip(RoundedCornerShape(6.dp)).background(BordeSuave)) {
+            if (valor > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(valor.toFloat() / maximo)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(color)
+                )
+            }
+        }
+        Text(valor.toString(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+    }
+}
+
+// "INSTAGRAM" → "Instagram".
+internal fun nombreRed(red: String): String = when (red) {
+    "INSTAGRAM" -> "Instagram"
+    "FACEBOOK" -> "Facebook"
+    else -> red
 }
 
 // "2026-11" → "Nov 2026".

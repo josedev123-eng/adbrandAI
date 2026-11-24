@@ -4,11 +4,51 @@ import com.adbrand.core.network.Resultado
 import com.adbrand.data.remote.MetricasApi
 import com.adbrand.domain.model.ContenidoPorMes
 import com.adbrand.domain.model.MetricasContenido
+import com.adbrand.domain.model.MetricasPublicaciones
+import com.adbrand.domain.model.ProximaPublicacion
+import com.adbrand.domain.model.PublicacionesPorRed
 import java.io.IOException
+import org.json.JSONArray
 import org.json.JSONObject
 
 // HU 57: traduce { total, aprobados, enRevision, rechazados, porMes } del backend al modelo de la app.
+// HU 58: traduce { programadas, publicadas, canceladas, porRed, proximas }.
 class MetricasRepositoryRemoto : MetricasRepository {
+
+    override suspend fun publicaciones(): Resultado<MetricasPublicaciones> {
+        val respuesta = MetricasApi.publicaciones().getOrElse { return errorDeRed(it) }
+        if (!respuesta.esExitosa) {
+            return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
+        }
+        return runCatching { Resultado.Exito(publicacionesDesdeJson(JSONObject(respuesta.cuerpo))) }
+            .getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
+    }
+
+    private fun publicacionesDesdeJson(json: JSONObject): MetricasPublicaciones = MetricasPublicaciones(
+        programadas = json.optLong("programadas"),
+        publicadas = json.optLong("publicadas"),
+        canceladas = json.optLong("canceladas"),
+        porRed = lista(json.optJSONArray("porRed")) { red ->
+            PublicacionesPorRed(red.optString("redSocial"), red.optLong("programadas"), red.optLong("publicadas"))
+        },
+        proximas = lista(json.optJSONArray("proximas")) { p ->
+            ProximaPublicacion(
+                id = p.optLong("id"),
+                titulo = p.optString("titulo"),
+                redSocial = p.optString("redSocial"),
+                fecha = p.optString("fecha"),
+                hora = p.optString("hora"),
+                campanaNombre = if (p.isNull("campanaNombre")) null else p.optString("campanaNombre"),
+                campanaColor = if (p.isNull("campanaColor")) null else p.optString("campanaColor")
+            )
+        }
+    )
+
+    private fun <T> lista(arreglo: JSONArray?, convertir: (JSONObject) -> T): List<T> = buildList {
+        if (arreglo != null) {
+            for (indice in 0 until arreglo.length()) add(convertir(arreglo.getJSONObject(indice)))
+        }
+    }
 
     override suspend fun contenido(): Resultado<MetricasContenido> {
         val respuesta = MetricasApi.contenido().getOrElse { return errorDeRed(it) }
