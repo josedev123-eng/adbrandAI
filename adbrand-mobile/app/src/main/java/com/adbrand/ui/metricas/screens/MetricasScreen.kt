@@ -48,6 +48,8 @@ import com.adbrand.domain.model.MetricasPublicaciones
 import com.adbrand.domain.model.OpcionPeriodo
 import com.adbrand.domain.model.ProximaPublicacion
 import com.adbrand.ui.components.AvisoEstado
+import com.adbrand.ui.components.BotonPrincipal
+import com.adbrand.ui.components.TipoAviso
 import com.adbrand.ui.components.TarjetaSeccion
 import com.adbrand.ui.metricas.viewmodel.MetricasViewModel
 
@@ -86,7 +88,9 @@ fun MetricasScreen(
                     hasta = estado.hastaTexto,
                     alElegir = viewModel::elegirPeriodo,
                     alCambiarDesde = viewModel::cambiarDesde,
-                    alCambiarHasta = viewModel::cambiarHasta
+                    alCambiarHasta = viewModel::cambiarHasta,
+                    aviso = estado.avisoPeriodo,
+                    alAplicar = viewModel::aplicarRango
                 )
             }
 
@@ -141,7 +145,9 @@ private fun SelectorPeriodo(
     hasta: String,
     alElegir: (OpcionPeriodo) -> Unit,
     alCambiarDesde: (String) -> Unit,
-    alCambiarHasta: (String) -> Unit
+    alCambiarHasta: (String) -> Unit,
+    aviso: String?,
+    alAplicar: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -172,6 +178,8 @@ private fun SelectorPeriodo(
                     modifier = Modifier.weight(1f)
                 )
             }
+            BotonPrincipal(texto = "Aplicar", onClick = alAplicar)
+            aviso?.let { AvisoEstado(it, tipo = TipoAviso.ERROR) }
         }
     }
 }

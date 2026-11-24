@@ -30,4 +30,27 @@ object PeriodoMetricas {
         )
         OpcionPeriodo.RANGO -> RangoFechas(desde.trim().ifBlank { null }, hasta.trim().ifBlank { null })
     }
+
+    // HU 60, criterio 2: las mismas reglas que revisa Spring (FECHA_INVALIDA y FECHAS_INVALIDAS).
+    // Devuelve el aviso a mostrar, o null si el rango se puede aplicar. Una fecha vacía deja ese lado abierto.
+    fun validar(desde: String, hasta: String): String? {
+        val inicio = fecha(desde)
+        val fin = fecha(hasta)
+        if (inicio == FECHA_MAL_ESCRITA || fin == FECHA_MAL_ESCRITA) {
+            return "Escribe las fechas como AAAA-MM-DD."
+        }
+        if (inicio != null && fin != null && inicio.isAfter(fin)) {
+            return "La fecha de inicio no puede ser posterior a la fecha de fin."
+        }
+        return null
+    }
+
+    // Marca una fecha que no se pudo leer (distinta de "vacía", que es null).
+    private val FECHA_MAL_ESCRITA = LocalDate.MIN
+
+    private fun fecha(texto: String): LocalDate? {
+        val limpio = texto.trim()
+        if (limpio.isEmpty()) return null
+        return runCatching { LocalDate.parse(limpio) }.getOrDefault(FECHA_MAL_ESCRITA)
+    }
 }

@@ -5,6 +5,7 @@ import com.adbrand.core.network.Resultado
 import com.adbrand.data.repository.MetricasRepository
 import com.adbrand.domain.model.MetricasContenido
 import com.adbrand.domain.model.MetricasPublicaciones
+import com.adbrand.domain.model.RangoFechas
 import com.adbrand.domain.model.ProximaPublicacion
 import com.adbrand.domain.model.PublicacionesPorRed
 import com.adbrand.ui.metricas.screens.colorDesdeHex
@@ -43,8 +44,8 @@ class MetricasPublicacionesViewModelTest {
     private class RepositorioFalso(
         private val publicaciones: Resultado<MetricasPublicaciones>
     ) : MetricasRepository {
-        override suspend fun contenido(): Resultado<MetricasContenido> = Resultado.Exito(MetricasContenido())
-        override suspend fun publicaciones(): Resultado<MetricasPublicaciones> = publicaciones
+        override suspend fun contenido(rango: RangoFechas): Resultado<MetricasContenido> = Resultado.Exito(MetricasContenido())
+        override suspend fun publicaciones(rango: RangoFechas): Resultado<MetricasPublicaciones> = publicaciones
     }
 
     @Test

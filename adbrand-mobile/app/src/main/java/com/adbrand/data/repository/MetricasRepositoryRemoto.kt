@@ -7,6 +7,7 @@ import com.adbrand.domain.model.MetricasContenido
 import com.adbrand.domain.model.MetricasPublicaciones
 import com.adbrand.domain.model.ProximaPublicacion
 import com.adbrand.domain.model.PublicacionesPorRed
+import com.adbrand.domain.model.RangoFechas
 import java.io.IOException
 import org.json.JSONArray
 import org.json.JSONObject
@@ -15,8 +16,8 @@ import org.json.JSONObject
 // HU 58: traduce { programadas, publicadas, canceladas, porRed, proximas }.
 class MetricasRepositoryRemoto : MetricasRepository {
 
-    override suspend fun publicaciones(): Resultado<MetricasPublicaciones> {
-        val respuesta = MetricasApi.publicaciones().getOrElse { return errorDeRed(it) }
+    override suspend fun publicaciones(rango: RangoFechas): Resultado<MetricasPublicaciones> {
+        val respuesta = MetricasApi.publicaciones(rango).getOrElse { return errorDeRed(it) }
         if (!respuesta.esExitosa) {
             return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
         }
@@ -50,8 +51,8 @@ class MetricasRepositoryRemoto : MetricasRepository {
         }
     }
 
-    override suspend fun contenido(): Resultado<MetricasContenido> {
-        val respuesta = MetricasApi.contenido().getOrElse { return errorDeRed(it) }
+    override suspend fun contenido(rango: RangoFechas): Resultado<MetricasContenido> {
+        val respuesta = MetricasApi.contenido(rango).getOrElse { return errorDeRed(it) }
         if (!respuesta.esExitosa) {
             return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
         }
