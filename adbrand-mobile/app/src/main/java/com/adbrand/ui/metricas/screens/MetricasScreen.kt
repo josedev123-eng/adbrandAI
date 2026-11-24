@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +45,7 @@ import com.adbrand.core.theme.TextoSecundario
 import com.adbrand.domain.model.ContenidoPorMes
 import com.adbrand.domain.model.MetricasContenido
 import com.adbrand.domain.model.MetricasPublicaciones
+import com.adbrand.domain.model.OpcionPeriodo
 import com.adbrand.domain.model.ProximaPublicacion
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.TarjetaSeccion
@@ -74,6 +79,17 @@ fun MetricasScreen(
                 .padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item {
+                SelectorPeriodo(
+                    opcion = estado.periodo,
+                    desde = estado.desdeTexto,
+                    hasta = estado.hastaTexto,
+                    alElegir = viewModel::elegirPeriodo,
+                    alCambiarDesde = viewModel::cambiarDesde,
+                    alCambiarHasta = viewModel::cambiarHasta
+                )
+            }
+
             if (estado.cargando) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
@@ -111,6 +127,50 @@ fun MetricasScreen(
                 }
                 item { PublicacionesPorRedSocial(estado.publicaciones) }
                 item { ProximasPublicaciones(estado.publicaciones.proximas) }
+            }
+        }
+    }
+}
+
+// HU 60: elegir el periodo de las métricas. Con "Rango propio" aparecen los campos Desde y Hasta.
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SelectorPeriodo(
+    opcion: OpcionPeriodo,
+    desde: String,
+    hasta: String,
+    alElegir: (OpcionPeriodo) -> Unit,
+    alCambiarDesde: (String) -> Unit,
+    alCambiarHasta: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OpcionPeriodo.entries.forEach { posible ->
+                FilterChip(
+                    selected = posible == opcion,
+                    onClick = { alElegir(posible) },
+                    label = { Text(posible.etiqueta) }
+                )
+            }
+        }
+        if (opcion == OpcionPeriodo.RANGO) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = desde,
+                    onValueChange = alCambiarDesde,
+                    label = { Text("Desde") },
+                    placeholder = { Text("AAAA-MM-DD") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = hasta,
+                    onValueChange = alCambiarHasta,
+                    label = { Text("Hasta") },
+                    placeholder = { Text("AAAA-MM-DD") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }

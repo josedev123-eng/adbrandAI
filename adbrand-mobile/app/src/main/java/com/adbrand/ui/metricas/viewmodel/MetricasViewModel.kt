@@ -7,6 +7,7 @@ import com.adbrand.data.repository.MetricasRepository
 import com.adbrand.data.repository.MetricasRepositoryRemoto
 import com.adbrand.domain.model.MetricasContenido
 import com.adbrand.domain.model.MetricasPublicaciones
+import com.adbrand.domain.model.OpcionPeriodo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,12 +15,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // HU 57: estado de la pantalla de métricas. HU 58: también las publicaciones del calendario.
+// HU 60: el periodo elegido y las fechas que escribe el usuario en "Rango propio" (AAAA-MM-DD).
 data class MetricasEstado(
     val cargando: Boolean = false,
     val metricas: MetricasContenido = MetricasContenido(),
     val publicaciones: MetricasPublicaciones = MetricasPublicaciones(),
     val error: String? = null,
-    val cargado: Boolean = false
+    val cargado: Boolean = false,
+    val periodo: OpcionPeriodo = OpcionPeriodo.TODO,
+    val desdeTexto: String = "",
+    val hastaTexto: String = ""
 )
 
 class MetricasViewModel(
@@ -47,5 +52,18 @@ class MetricasViewModel(
                 )
             }
         }
+    }
+
+    // HU 60: el selector de periodo.
+    fun elegirPeriodo(opcion: OpcionPeriodo) {
+        _estado.update { it.copy(periodo = opcion) }
+    }
+
+    fun cambiarDesde(texto: String) {
+        _estado.update { it.copy(desdeTexto = texto) }
+    }
+
+    fun cambiarHasta(texto: String) {
+        _estado.update { it.copy(hastaTexto = texto) }
     }
 }
