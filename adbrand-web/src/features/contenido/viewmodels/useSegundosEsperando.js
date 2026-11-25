@@ -1,21 +1,22 @@
-// Cuenta los segundos mientras "activo" es true (por ejemplo, mientras la IA genera). Vuelve a 0 al empezar de nuevo.
+// Cuenta los segundos de una espera (por ejemplo, mientras la IA genera) desde "desde" (milisegundos).
+// Como "desde" es la hora en que se pidió, si el dueño sale de la pantalla y vuelve, el contador sigue
+// desde donde iba en vez de volver a 0.
 import { useEffect, useState } from 'react'
 
-export function useSegundosEsperando(activo) {
-  const [segundos, setSegundos] = useState(0)
-  const [activoAntes, setActivoAntes] = useState(activo)
-
-  // Al empezar o terminar una espera, el contador se reinicia (durante el render, sin efecto).
-  if (activo !== activoAntes) {
-    setActivoAntes(activo)
-    setSegundos(0)
-  }
+export function useSegundosEsperando(activo, desde) {
+  const [ahora, setAhora] = useState(() => Date.now())
 
   useEffect(() => {
     if (!activo) return undefined
-    const reloj = setInterval(() => setSegundos((s) => s + 1), 1000)
-    return () => clearInterval(reloj)
+    const tic = () => setAhora(Date.now())
+    const primero = setTimeout(tic, 0)
+    const reloj = setInterval(tic, 1000)
+    return () => {
+      clearTimeout(primero)
+      clearInterval(reloj)
+    }
   }, [activo])
 
-  return segundos
+  if (!activo || desde == null) return 0
+  return Math.max(0, Math.floor((ahora - desde) / 1000))
 }

@@ -3,6 +3,7 @@
 import { NOMBRES_TONO, REDES } from '../models/anunciosApi'
 import { MAXIMO_OFERTA, useGenerarAnuncio } from '../viewmodels/useGenerarAnuncio'
 import { useSegundosEsperando } from '../viewmodels/useSegundosEsperando'
+import { generacionActual } from '../models/generacionEnCurso'
 import ListoParaPublicar from './ListoParaPublicar'
 import './GenerarAnuncioView.css'
 
@@ -69,7 +70,8 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
   // HU 13: si el filtro lo marcó como dudoso, no se puede copiar para publicarlo.
   const enRevision = anuncio?.estado === 'DUDOSO'
   const cargando = generando || regenerando
-  const segundosEsperando = useSegundosEsperando(generando)
+  // Cuenta desde que se pidió, aunque el dueño haya salido y vuelto a la pantalla.
+  const segundosEsperando = useSegundosEsperando(generando, generacionActual()?.inicio)
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -203,7 +205,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
                   noValidate
                 >
                   <label className={errorInstruccion ? 'campo campo-con-error' : 'campo'}>
-                    <span>¿Qué quieres cambiar de la foto? (el diseño con tu marca se arma solo)</span>
+                    <span>¿Qué quieres cambiar de la foto?</span>
                     <div className="retoque-fila">
                       <input
                         type="text"
