@@ -43,8 +43,6 @@ import com.adbrand.core.notificaciones.BuzonNotificacion
 import com.adbrand.core.notificaciones.GestorPush
 import com.adbrand.core.notificaciones.MemoriaAvisos
 import com.adbrand.core.notificaciones.RutasAviso
-import com.adbrand.core.network.Resultado
-import com.adbrand.data.repository.AuthRepositoryRemoto
 import com.adbrand.ui.notificaciones.BannerAviso
 import com.adbrand.ui.notificaciones.DialogoPermisoAvisos
 import com.adbrand.ui.anuncio.screens.CrearAnuncioScreen
@@ -104,10 +102,6 @@ private val DESTINOS_SIN_AVISOS = setOf(
     RUTA_RECUPERAR,
     RUTA_BIENVENIDA
 )
-
-// HU 55: usuario demo con el que la app inicia sesión automáticamente al correr.
-private const val DEMO_CORREO = "demo@adbrand.ai"
-private const val DEMO_CONTRASENA = "Demo1234"
 
 // HU 42: la app se presenta con una apertura de marca y, al terminar, entra al
 // panel si ya hay sesión o al login si no; HU 55: si no hay sesión, arranca con
@@ -222,14 +216,10 @@ fun AppAdbrand() {
                             popUpTo(RUTA_APERTURA) { inclusive = true }
                         }
                     } else {
-                        // HU 55: cuando la app corre y no hay sesión, inicia sesión
-                        // automáticamente con el usuario demo del entorno local.
-                        alcance.launch {
-                            val resultado = AuthRepositoryRemoto().iniciarSesion(DEMO_CORREO, DEMO_CONTRASENA)
-                            val destino = if (resultado is Resultado.Exito) RUTA_PANEL else RUTA_LOGIN
-                            navegador.navigate(destino) {
-                                popUpTo(RUTA_APERTURA) { inclusive = true }
-                            }
+                        // Sin sesión se muestra el inicio de sesión (con Firebase Authentication).
+                        // Antes entraba solo con un usuario demo; se quitó para que siempre se vea el login.
+                        navegador.navigate(RUTA_LOGIN) {
+                            popUpTo(RUTA_APERTURA) { inclusive = true }
                         }
                     }
                 }
