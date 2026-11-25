@@ -30,6 +30,9 @@ describe('IdentidadMarca', () => {
     render(<IdentidadMarca kit={KIT} alActualizar={alActualizar} />)
 
     expect(screen.getByText('“El sabor de tu barrio”')).toBeInTheDocument()
+    // Con un eslogan ya elegido, las otras opciones aparecen al tocar "Cambiar eslogan".
+    expect(screen.queryByRole('button', { name: 'Pan con cariño' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar eslogan' }))
     await userEvent.click(screen.getByRole('button', { name: 'Pan con cariño' }))
 
     expect(elegirEslogan).toHaveBeenCalledWith(7, 'Pan con cariño')
@@ -40,6 +43,7 @@ describe('IdentidadMarca', () => {
     elegirEslogan.mockResolvedValue(KIT)
     render(<IdentidadMarca kit={KIT} alActualizar={vi.fn()} />)
 
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar eslogan' }))
     await userEvent.type(screen.getByLabelText('¿Prefieres el tuyo?'), 'La casa del buen pan')
     await userEvent.click(screen.getByRole('button', { name: 'Usar este' }))
 
@@ -90,5 +94,16 @@ describe('IdentidadMarca', () => {
     render(<IdentidadMarca kit={KIT} alActualizar={vi.fn()} />)
 
     expect(screen.queryByRole('button', { name: '✦ Editar con IA' })).toBeNull()
+  })
+
+  it('con logo elegido no ofrece más logos hasta tocar "Cambiar logo", y "Cancelar" lo vuelve a cerrar', async () => {
+    render(<IdentidadMarca kit={{ ...KIT, logoImagen: 'data:image/png;base64,ACTUAL' }} alActualizar={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: '✦ Proponme 3 logos' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar logo' }))
+    expect(screen.getByRole('button', { name: '✦ Proponme 3 logos' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('button', { name: '✦ Proponme 3 logos' })).toBeNull()
   })
 })

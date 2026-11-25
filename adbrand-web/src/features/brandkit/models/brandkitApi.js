@@ -17,6 +17,11 @@ export function generarKitMarca(datos) {
   return apiRequest('/kit-marca/generar', { method: 'POST', body: datos, tiempoMaximo: TIEMPO_IA }).then(olvidarDespues('kits'))
 }
 
+// "Pedir otra versión": un kit nuevo con los mismos datos con que se pidió este (no depende del formulario).
+export function pedirOtraVersionKit(id) {
+  return apiRequest(`/kit-marca/${id}/otra-version`, { method: 'POST', tiempoMaximo: TIEMPO_IA }).then(olvidarDespues('kits'))
+}
+
 export function obtenerKitMarca(id) {
   return apiRequest(`/kit-marca/${id}`)
 }

@@ -139,6 +139,20 @@ public class KitMarcaService {
         return valor.asText();
     }
 
+    // "Pedir otra versión": un kit nuevo con los mismos datos con que se pidió este (nombre, rubro, estilo,
+    // colores sugeridos, valores, sentimiento y diferencial). Así funciona también al abrir un kit guardado,
+    // cuando el formulario de la web está vacío. El eslogan no se repite: la IA propone 3 nuevos.
+    public KitMarcaGeneradoResponse otraVersion(Long usuarioId, Long kitId) {
+        KitMarca kit = kits.findById(kitId)
+                .filter(encontrado -> encontrado.getUsuarioId().equals(usuarioId))
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "KIT_MARCA_NO_ENCONTRADO", "Kit de Marca no encontrado: " + kitId));
+        return generar(usuarioId, new GenerarKitMarcaRequest(kit.getNombreNegocio(), kit.getSector(),
+                kit.getPaletaSugerida(), kit.getValoresEslogan(),
+                kit.getEstiloVisual() == null || kit.getEstiloVisual().isBlank() ? "MODERNO" : kit.getEstiloVisual(),
+                kit.getSentimiento(), kit.getDiferencial(), null));
+    }
+
     @Transactional(readOnly = true)
     public KitMarcaGeneradoResponse obtener(Long usuarioId, Long kitId) {
         // HU 32: el kit de otra empresa responde 404 igual que uno que no existe (antes daba 500).

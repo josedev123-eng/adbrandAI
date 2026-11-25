@@ -1,6 +1,6 @@
 // ViewModel: estado del formulario, validaciones y envío (HU-11).
 import { useEffect, useState } from 'react'
-import { generarKitMarca, listarKitsMarca, obtenerKitMarca, ESTILOS_VISUALES } from '../models/brandkitApi'
+import { generarKitMarca, listarKitsMarca, obtenerKitMarca, pedirOtraVersionKit, ESTILOS_VISUALES } from '../models/brandkitApi'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 
 const FORMULARIO_VACIO = {
@@ -102,8 +102,22 @@ export function useSolicitarKitMarca() {
     }
   }
 
-  function pedirOtraVersion() {
-    return generar()
+  // Antes llamaba a generar(), que revisa el formulario: al abrir un kit guardado el formulario está vacío, la
+  // validación fallaba sin mostrarse y el botón "no hacía nada" (y al aceptar salía el error del estilo visual).
+  async function pedirOtraVersion() {
+    if (!kit?.id) return generar()
+    setAviso(null)
+    setGenerando(true)
+    try {
+      const nuevo = await pedirOtraVersionKit(kit.id)
+      setKit(nuevo)
+      setKitsGuardados((actuales) => [...actuales, nuevo])
+      setAviso({ tipo: 'exito', texto: 'Listo: esta es otra versión de tu Kit de Marca.' })
+    } catch (error) {
+      setAviso({ tipo: 'error', texto: error?.message || 'No se pudo generar otra versión.' })
+    } finally {
+      setGenerando(false)
+    }
   }
 
   function aceptarKit() {

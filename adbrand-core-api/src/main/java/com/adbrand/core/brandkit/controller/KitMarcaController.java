@@ -40,6 +40,12 @@ public class KitMarcaController {
         return servicio.generar(usuarioId, datos);
     }
 
+    // "Pedir otra versión" de un kit (con los mismos datos con que se pidió).
+    @PostMapping("/{id}/otra-version")
+    public KitMarcaGeneradoResponse otraVersion(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
+        return servicio.otraVersion(usuarioId, id);
+    }
+
     @GetMapping("/{id}")
     public KitMarcaGeneradoResponse obtener(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
         return servicio.obtener(usuarioId, id);

@@ -10,10 +10,10 @@ export const FORMATOS_IMAGEN = [
 ]
 
 // "condiciones": vigencia y stock (INDECOPI) que el dueño completó; van en letra chica dentro del diseño.
-export function useImagenConMarca(anuncioId, condiciones = {}) {
+export function useImagenConMarca(anuncioId, condiciones = {}, formatoInicial = 'CUADRADO') {
   const hasta = condiciones.hasta ?? ''
   const stock = condiciones.stock ?? ''
-  const [formato, setFormato] = useState('CUADRADO')
+  const [formato, setFormato] = useState(formatoInicial ?? 'CUADRADO')
   // { formato, blob, url } de la última imagen que llegó, o { formato, error }.
   const [resultado, setResultado] = useState(null)
   const [aviso, setAviso] = useState(null)

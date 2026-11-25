@@ -5,10 +5,11 @@ import '../../../shared/components/EstadosLista.css'
 
 const PROPORCION = { CUADRADO: '1 / 1', VERTICAL: '9 / 16', HORIZONTAL: '1200 / 628' }
 
-export default function ImagenConMarca({ anuncioId, texto, condiciones }) {
+export default function ImagenConMarca({ anuncioId, texto, condiciones, formatoInicial }) {
   const { formato, elegirFormato, url, cargando, error, aviso, descargar, compartir } = useImagenConMarca(
     anuncioId,
     condiciones,
+    formatoInicial,
   )
 
   return (

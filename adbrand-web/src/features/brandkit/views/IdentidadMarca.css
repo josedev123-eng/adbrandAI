@@ -38,3 +38,7 @@
 .retocar-logo-comparar img { width: 110px; height: 110px; object-fit: contain; border-radius: 12px; border: 1px solid var(--line); background: #ffffff; }
 .retocar-logo-comparar figcaption { font-size: 0.8rem; color: var(--muted); }
 .retocar-logo-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Título del bloque con su acción ("Cambiar eslogan", "Cambiar logo", "Cancelar"). */
+.identidad-titulo-bloque { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.identidad-titulo-bloque h3 { margin: 0; }

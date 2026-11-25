@@ -34,7 +34,6 @@ function SelectEstilo({ valor, error, onChange, opciones }) {
           </option>
         ))}
       </select>
-      {error && <small className="campo-error">{error}</small>}
     </Campo>
   )
 }
