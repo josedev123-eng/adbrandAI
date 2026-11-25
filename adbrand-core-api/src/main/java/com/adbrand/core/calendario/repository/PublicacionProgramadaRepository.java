@@ -23,6 +23,9 @@ public interface PublicacionProgramadaRepository extends JpaRepository<Publicaci
     // HU 54: un contenido programado no se rechaza sin quitarlo antes del calendario.
     boolean existsByContenidoIdAndEstado(Long contenidoId, EstadoPublicacion estado);
 
+    // "Cancelar publicación" en Mis anuncios: las programaciones pendientes de ese anuncio se cancelan.
+    List<PublicacionProgramada> findByContenidoIdAndEstado(Long contenidoId, EstadoPublicacion estado);
+
     // HU 40: publicaciones de una campaña, para filtrar el informe por los anuncios que se programaron en ella.
     List<PublicacionProgramada> findByUsuarioIdAndCampanaId(Long usuarioId, Long campanaId);
 }

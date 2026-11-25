@@ -52,4 +52,16 @@ class OcasionYRedesTest {
         assertThat(fechas.stream().filter(f -> f.nombre().equals("Halloween")).findFirst().orElseThrow()
                 .ideaPara("Panadería")).contains("calabaza");
     }
+
+    @Test
+    void laImagenSeAmbientaEnLaFechaEspecial() {
+        assertThat(com.adbrand.core.contenido.service.OpcionesAnuncioService.ambienteDeOcasion("Black Friday"))
+                .contains("Black Friday").contains("no text");
+        assertThat(com.adbrand.core.contenido.service.OpcionesAnuncioService.ambienteDeOcasion("Navidad"))
+                .contains("Christmas");
+        assertThat(com.adbrand.core.contenido.service.OpcionesAnuncioService.ambienteDeOcasion("Día de la Primavera"))
+                .contains("Día de la Primavera in Peru");
+        assertThat(com.adbrand.core.contenido.service.OpcionesAnuncioService.ambienteDeOcasion(null)).isEmpty();
+    }
 }
+

@@ -76,6 +76,45 @@ public class RevisionDuenoService {
         return ContenidoPorRevisarResponse.desde(contenidos.save(contenido));
     }
 
+    // "Cancelar publicación" (Mis anuncios): el dueño ya no quiere publicar este anuncio. Queda como cancelado
+    // (no se puede programar ni publicar) y, si estaba programado en el calendario, esas fechas se cancelan
+    // solas (no hace falta quitarlo antes, como al rechazar). Devuelve cuántas programaciones se cancelaron.
+    @Transactional
+    public int cancelarPublicacion(Long usuarioId, Long contenidoId) {
+        Contenido contenido = propio(usuarioId, contenidoId);
+        var programadas = publicaciones.findByContenidoIdAndEstado(contenidoId, EstadoPublicacion.PROGRAMADA);
+        programadas.forEach(p -> p.setEstado(EstadoPublicacion.CANCELADA));
+        publicaciones.saveAll(programadas);
+        contenido.setDecisionDueno(DecisionDueno.RECHAZADO);
+        contenido.setMotivoDueno("Publicación cancelada por el dueño.");
+        contenido.setFechaDecision(LocalDateTime.now());
+        contenidos.save(contenido);
+        return programadas.size();
+    }
+
+    // "Volver a activar": el anuncio cancelado vuelve a estar listo para publicar (las fechas canceladas no vuelven).
+    @Transactional
+    public void reactivar(Long usuarioId, Long contenidoId) {
+        Contenido contenido = propio(usuarioId, contenidoId);
+        contenido.setDecisionDueno(DecisionDueno.APROBADO);
+        contenido.setMotivoDueno(null);
+        contenido.setFechaDecision(LocalDateTime.now());
+        contenidos.save(contenido);
+    }
+
+    // HU 63: "Eliminar" en Mis anuncios, solo para los que ya cancelaste en AdBrand. No se borra la fila
+    // (informes, historial del moderador y métricas la usan): deja de verse en tus listas.
+    @Transactional
+    public void eliminar(Long usuarioId, Long contenidoId) {
+        Contenido contenido = propio(usuarioId, contenidoId);
+        if (contenido.getDecisionDueno() != DecisionDueno.RECHAZADO) {
+            throw new SolicitudInvalidaException("SOLO_CANCELADOS",
+                    "Primero cancélalo en AdBrand; solo se pueden eliminar los anuncios cancelados.");
+        }
+        contenido.setEliminado(true);
+        contenidos.save(contenido);
+    }
+
     // El contenido de otra empresa se trata como inexistente, igual que en el calendario.
     private Contenido propio(Long usuarioId, Long contenidoId) {
         return contenidos.findById(contenidoId)

@@ -34,6 +34,25 @@ public class RevisionDuenoController {
         return servicio.aprobar(usuarioId, id);
     }
 
+    // Mis anuncios: "Cancelar publicación" (y cancela sus fechas en el calendario) y "Volver a activar".
+    @PostMapping("/{id}/cancelar-publicacion")
+    public java.util.Map<String, Integer> cancelarPublicacion(@RequestAttribute("usuarioId") Long usuarioId,
+                                                              @PathVariable Long id) {
+        return java.util.Map.of("programacionesCanceladas", servicio.cancelarPublicacion(usuarioId, id));
+    }
+
+    // HU 63: eliminar un anuncio cancelado (deja de verse en Mis anuncios). 400 SOLO_CANCELADOS si no lo está.
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void eliminar(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
+        servicio.eliminar(usuarioId, id);
+    }
+
+    @PostMapping("/{id}/reactivar")
+    public void reactivar(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
+        servicio.reactivar(usuarioId, id);
+    }
+
     // HU 54: el cuerpo es opcional; { "motivo": "..." } si el dueño quiere explicar por qué.
     @PostMapping("/{id}/rechazar")
     public ContenidoPorRevisarResponse rechazar(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id,

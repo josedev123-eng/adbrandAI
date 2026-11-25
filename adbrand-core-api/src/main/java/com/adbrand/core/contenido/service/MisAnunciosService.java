@@ -20,6 +20,7 @@ public class MisAnunciosService {
     @Transactional(readOnly = true)
     public List<MiAnuncioResponse> listar(Long usuarioId) {
         return contenidos.findByUsuarioIdOrderByFechaCreacionDescIdDesc(usuarioId).stream()
+                .filter(contenido -> !contenido.isEliminado())
                 .map(MiAnuncioResponse::desde)
                 .toList();
     }

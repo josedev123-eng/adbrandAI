@@ -18,7 +18,11 @@ public record EstadoActualResponse(
         String estadoActual,
         String motivo,
         LocalDateTime fechaCreacion,
-        LocalDateTime fechaActualizacion) {
+        LocalDateTime fechaActualizacion,
+        // El titular del anuncio (la primera frase de la IA), para mostrarlo en vez del pedido del dueño.
+        String titular,
+        // El texto del anuncio, para buscar en el celular por lo que dice.
+        String texto) {
 
     public static EstadoActualResponse desde(Contenido contenido) {
         String estadoActual;
@@ -46,6 +50,8 @@ public record EstadoActualResponse(
                 estadoActual,
                 motivo,
                 contenido.getFechaCreacion(),
-                contenido.getFechaActualizacion());
+                contenido.getFechaActualizacion(),
+                com.adbrand.core.contenido.service.VideoAnuncioService.titularDe(contenido),
+                contenido.getTexto());
     }
 }

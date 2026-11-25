@@ -93,6 +93,7 @@ public class PrevisualizacionService {
         List<AnuncioPrevisualizacion> anuncios = contenidos
                 .findByUsuarioIdOrderByFechaCreacionDescIdDesc(usuarioId)
                 .stream()
+                .filter(contenido -> !contenido.isEliminado())
                 .limit(MAX_ANUNCIOS)
                 .map(contenido -> AnuncioPrevisualizacion.desde(contenido, formato))
                 .toList();

@@ -68,6 +68,10 @@ public class Contenido {
     @Column(name = "motivo_dueno", length = 300)
     private String motivoDueno;
 
+    // HU 63: el dueño lo eliminó de "Mis anuncios" (V74). Sigue en la base para informes e historial.
+    @Column(nullable = false)
+    private boolean eliminado;
+
     // HU 15: quién moderó el contenido (lo escribe Django) y si el dueño todavía no vio esa decisión (V44).
     @Column(name = "moderador_id")
     private Long moderadorId;
@@ -134,7 +138,16 @@ public class Contenido {
 
     public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
     public void setFechaDecision(LocalDateTime fechaDecision) { this.fechaDecision = fechaDecision; }
+    public boolean isEliminado() { return eliminado; }
+    public void setEliminado(boolean eliminado) { this.eliminado = eliminado; }
     public String getMotivoDueno() { return motivoDueno; }
+
+    // HU 67: titular corto del anuncio (de la opción elegida); null en los anuncios anteriores.
+    @Column(length = 80)
+    private String titular;
+
+    public String getTitular() { return titular; }
+    public void setTitular(String titular) { this.titular = titular; }
     public void setMotivoDueno(String motivoDueno) { this.motivoDueno = motivoDueno; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }

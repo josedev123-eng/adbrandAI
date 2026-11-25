@@ -26,6 +26,7 @@ public class EstadoActualService {
     public List<EstadoActualResponse> estados(Long usuarioId) {
         return contenidos.findByUsuarioIdOrderByFechaCreacionDescIdDesc(usuarioId)
                 .stream()
+                .filter(contenido -> !contenido.isEliminado())
                 .sorted(Comparator.comparing(Contenido::getFechaActualizacion)
                         .thenComparing(Contenido::getId)
                         .reversed())
