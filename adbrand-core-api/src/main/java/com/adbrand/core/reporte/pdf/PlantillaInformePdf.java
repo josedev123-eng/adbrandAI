@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class PlantillaInformePdf {
 
     static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    static final Map<String, String> NOMBRES_RED = Map.of("INSTAGRAM", "Instagram", "FACEBOOK", "Facebook");
+    static final Map<String, String> NOMBRES_RED = Map.of("INSTAGRAM", "Instagram", "FACEBOOK", "Facebook", "WHATSAPP", "WhatsApp");
     static final Map<String, String> NOMBRES_ESTADO =
             Map.of("APROBADO", "Aprobado", "DUDOSO", "En revisión", "RECHAZADO", "Rechazado");
 

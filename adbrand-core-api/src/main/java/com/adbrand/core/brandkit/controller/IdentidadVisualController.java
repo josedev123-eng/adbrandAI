@@ -3,6 +3,8 @@ package com.adbrand.core.brandkit.controller;
 import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.ElegirEsloganRequest;
 import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.GuardarLogoRequest;
 import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.OpcionesLogoResponse;
+import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.RetocarLogoRequest;
+import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.RetoqueLogoResponse;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
 import com.adbrand.core.brandkit.entity.KitMarca;
 import com.adbrand.core.brandkit.service.IdentidadVisualService;
@@ -40,6 +42,13 @@ public class IdentidadVisualController {
     @PostMapping("/logo/opciones")
     public OpcionesLogoResponse opcionesLogo(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
         return identidad.opcionesLogo(usuarioId, id);
+    }
+
+    // Editar el logo con una instrucción corta. Devuelve la versión nueva sin guardarla.
+    @PostMapping("/logo/retocar")
+    public RetoqueLogoResponse retocarLogo(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id,
+                                           @Valid @RequestBody RetocarLogoRequest datos) {
+        return identidad.retocarLogo(usuarioId, id, datos.instruccion());
     }
 
     // Guarda el logo: el que ya tenía la empresa (SUBIDO) o el elegido de la IA (IA). 400 si no es PNG/JPG o pesa más de 2 MB.

@@ -49,6 +49,10 @@ public class FiltroJwt extends OncePerRequestFilter {
         if (ruta.startsWith("/api/auth/") && !ruta.equals("/api/auth/sesion")) {
             return true;
         }
+        // El formulario de Contacto se puede enviar sin sesión (el controlador lee el token si viene).
+        if ("POST".equals(metodo) && ruta.equals("/api/contacto")) {
+            return true;
+        }
         return "GET".equals(metodo) && (ruta.equals("/api/planes") || ruta.equals("/api/estado"));
     }
 

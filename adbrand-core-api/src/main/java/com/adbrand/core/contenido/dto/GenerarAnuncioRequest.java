@@ -11,5 +11,18 @@ public record GenerarAnuncioRequest(
         String oferta,
 
         @NotNull(message = "Selecciona la red social.")
-        RedSocial redSocial) {
+        RedSocial redSocial,
+
+        // Festividad elegida en el calendario ("Halloween", "Navidad"…): el texto y la imagen se ambientan en ella.
+        // Llega vacía cuando el anuncio se crea desde "Crear anuncio" directamente.
+        @Size(max = 80, message = "Máximo 80 caracteres.")
+        String ocasion) {
+
+    public GenerarAnuncioRequest(String oferta, RedSocial redSocial) {
+        this(oferta, redSocial, null);
+    }
+
+    public boolean tieneOcasion() {
+        return ocasion != null && !ocasion.isBlank();
+    }
 }

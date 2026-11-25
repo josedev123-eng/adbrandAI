@@ -33,7 +33,12 @@ public class PlantillaPromptAnuncio {
 
     public PromptAnuncio construirOpciones(PerfilNegocioResponse perfil, String oferta, RedSocial red,
                                            IdentidadMarca identidad, int cantidad) {
-        PromptAnuncio uno = construir(perfil, oferta, red, identidad);
+        return construirOpciones(perfil, oferta, red, identidad, cantidad, null);
+    }
+
+    public PromptAnuncio construirOpciones(PerfilNegocioResponse perfil, String oferta, RedSocial red,
+                                           IdentidadMarca identidad, int cantidad, String ocasion) {
+        PromptAnuncio uno = construir(perfil, oferta, red, identidad, ocasion);
         return new PromptAnuncio(SISTEMA_OPCIONES.formatted(cantidad), uno.usuario());
     }
 
@@ -45,6 +50,13 @@ public class PlantillaPromptAnuncio {
     // identidad puede ser null (el negocio aún no tiene kit) y entonces solo manda el tono del perfil.
     public PromptAnuncio construir(PerfilNegocioResponse perfil, String oferta, RedSocial red,
                                    IdentidadMarca identidad) {
+        return construir(perfil, oferta, red, identidad, null);
+    }
+
+    // "ocasion": la festividad elegida en el calendario (Halloween, Navidad…). El texto y la escena se ambientan en ella.
+    public PromptAnuncio construir(PerfilNegocioResponse perfil, String oferta, RedSocial red,
+                                   IdentidadMarca identidad, String ocasion) {
+        boolean conOcasion = ocasion != null && !ocasion.isBlank();
         boolean conVoz = identidad != null && identidad.tieneVoz();
         String usuario = """
                 Escribe un anuncio para %s.
@@ -54,14 +66,14 @@ public class PlantillaPromptAnuncio {
                 Qué vende: %s
                 Público objetivo: %s
                 Tono: %s%s
-                Oferta a anunciar: %s
+                Oferta a anunciar: %s%s
 
                 Reglas:
                 - Máximo %d palabras.
                 - Empieza con una frase que llame la atención de ese público.
                 - Incluye la oferta tal como está escrita, sin cambiar precios ni fechas.
                 - Termina invitando a comprar o a visitar el negocio.
-                - Agrega %d hashtags al final.%s"""
+                - Agrega %d hashtags al final.%s%s"""
                 .formatted(
                         nombreDeRed(red),
                         perfil.nombreComercial(),
@@ -71,9 +83,12 @@ public class PlantillaPromptAnuncio {
                         instruccionDeTono(perfil.tono()),
                         conVoz ? "\nVoz de la marca: " + identidad.vozMarca().trim() : "",
                         oferta.trim(),
+                        conOcasion ? "\nOcasión: " + ocasion.trim() : "",
                         red.getMaximoPalabras(),
                         red.getHashtags(),
-                        conVoz ? "\n- Escribe con la voz de la marca; si choca con el tono, manda la voz." : "");
+                        conVoz ? "\n- Escribe con la voz de la marca; si choca con el tono, manda la voz." : "",
+                        conOcasion ? "\n- Ambienta el anuncio en " + ocasion.trim() + ": menciónala y usa su ambiente"
+                                + " (decoración, colores y símbolos típicos), también en la escena de la imagen." : "");
         return new PromptAnuncio(SISTEMA, usuario);
     }
 
@@ -91,6 +106,7 @@ public class PlantillaPromptAnuncio {
         return switch (red) {
             case INSTAGRAM -> "Instagram";
             case FACEBOOK -> "Facebook";
+            case WHATSAPP -> "los Estados de WhatsApp";
         };
     }
 }

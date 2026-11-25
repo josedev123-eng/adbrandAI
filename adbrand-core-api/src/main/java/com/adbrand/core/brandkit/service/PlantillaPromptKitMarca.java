@@ -39,6 +39,12 @@ public class PlantillaPromptKitMarca {
                 - "voz_marca": descripción del tono de comunicación (ej: "Cercana, empática, usa tú, evita tecnicismos").
                 - "eslogan_opciones": lista JSON con 3 eslóganes distintos, cortos (máximo 8 palabras), en español
                   peruano, fáciles de recordar y fieles a lo que la empresa quiere transmitir. Sin comillas dentro.
+                  Que llamen la atención, con un poco de chispa: usa un juego de palabras, una rima suave, un
+                  contraste o una imagen concreta del producto o del barrio, y verbos con energía. Cada uno con un
+                  enfoque distinto (uno con humor ligero, uno emotivo y uno directo al beneficio). Evita frases de
+                  relleno que sirven para cualquier negocio, como "calidad y confianza", "lo mejor para ti",
+                  "tu mejor opción" o "pasión por…"; si el eslogan funcionaría igual para otro rubro, cámbialo.
+                  Sin exagerar: que suene natural, como lo diría un vecino orgulloso de su negocio.
                   Si el cliente ya tiene eslogan, devuelve una lista con solo ese eslogan, sin cambiarlo.
                 - No uses markdown, no añadas explicaciones extra.
                 """.formatted(

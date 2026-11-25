@@ -47,6 +47,8 @@ class IdentidadVisualTest {
     @Autowired private ServicioJwt jwt;
 
     @MockitoBean private ServicioImagenes imagenes;
+    // Anotar el retoque usa su propia transacción y no ve la empresa de la prueba (que no se confirma).
+    @MockitoBean private com.adbrand.core.imagen.service.ControlGastoImagenes gasto;
 
     private Usuario usuario;
     private KitMarca kit;
@@ -149,5 +151,29 @@ class IdentidadVisualTest {
         assertThat(conIa.getEslogan()).isEqualTo("Uno");
         assertThat(conIa.getEsloganOpciones()).isEqualTo("Uno\nDos\nTres");
         assertThat(conIa.getSentimiento()).isEqualTo("Alegría");
+    }
+
+    @Test
+    void editarElLogoDevuelveUnaVersionNuevaSinGuardarla() throws Exception {
+        kit.setLogoImagen(PNG);
+        kit.setLogoImagenTipo("image/png");
+        kits.saveAndFlush(kit);
+        when(imagenes.finalORetoque(org.mockito.ArgumentMatchers.contains("taza más grande"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new ImagenGenerada("image/png", "TlVFVk8=", "openrouter", false));
+
+        mvc.perform(post("/api/kit-marca/%d/logo/retocar".formatted(kit.getId())).header("Authorization", token())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"instruccion\": \"pon la taza más grande\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagen").value("data:image/png;base64,TlVFVk8="));
+
+        assertThat(kits.findById(kit.getId()).orElseThrow().getLogoImagen()).isEqualTo(PNG);
+    }
+
+    @Test
+    void sinLogoNoSePuedeEditar() throws Exception {
+        mvc.perform(post("/api/kit-marca/%d/logo/retocar".formatted(kit.getId())).header("Authorization", token())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"instruccion\": \"más grande\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIN_LOGO"));
     }
 }

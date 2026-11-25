@@ -98,6 +98,16 @@ public final class FechasPeruanas {
         fechas.add(fecha(LocalDate.of(anio, 10, 31), "Día de la Canción Criolla", "Celebra lo criollo: promo con sabor peruano.",
                 Map.of("restaurante", "Noche criolla: anticuchos y picarones.",
                         "panader", "Picarones y turrón para la jarana criolla.")));
+        fechas.add(fecha(LocalDate.of(anio, 10, 31), "Halloween", "Halloween: promo terrorífica solo por hoy.",
+                Map.of("panader", "Galletas y cupcakes de calabaza para Halloween.",
+                        "restaurante", "Menú de Halloween: postres de calabaza y bebidas \"embrujadas\".",
+                        "bodega", "Dulces y caramelos para el \"dulce o truco\".",
+                        "ropa", "Disfraces y accesorios de Halloween con descuento.",
+                        "belleza", "Maquillaje de Halloween: reserva tu cita.")));
+        fechas.add(fecha(LocalDate.of(anio, 11, 2), "Día de los Muertos", "Recordamos a los que ya no están: promo en su honor.",
+                Map.of("panader", "Tantawawas y pan de muerto para compartir en familia.",
+                        "restaurante", "Platos de la abuela para recordar a los que ya no están.",
+                        "bodega", "Flores y velas para visitar a los seres queridos.")));
         fechas.add(fecha(nesimoDia(anio, Month.NOVEMBER, DayOfWeek.THURSDAY, 4).plusDays(1), "Black Friday",
                 "Los mejores descuentos del año: solo por hoy.", Map.of()));
         fechas.add(fecha(LocalDate.of(anio, 12, 25), "Navidad", "Navidad en familia: regalos y combos navideños.",

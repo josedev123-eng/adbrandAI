@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class PlantillaInformeWord {
 
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final Map<String, String> REDES = Map.of("INSTAGRAM", "Instagram", "FACEBOOK", "Facebook");
+    private static final Map<String, String> REDES = Map.of("INSTAGRAM", "Instagram", "FACEBOOK", "Facebook", "WHATSAPP", "WhatsApp");
     private static final Map<String, String> ESTADOS = Map.of(
             "APROBADO", "Aprobado", "DUDOSO", "En revisión", "RECHAZADO", "Rechazado");
 

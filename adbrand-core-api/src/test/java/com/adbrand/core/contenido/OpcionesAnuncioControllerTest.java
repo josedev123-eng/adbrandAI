@@ -46,6 +46,16 @@ class OpcionesAnuncioControllerTest {
     @MockitoBean
     private RetoqueAnuncioService retoques;
 
+    // El diseño de las opciones se prueba aparte (DisenoAnuncioTest); aquí deja pasar la respuesta tal cual.
+    @MockitoBean
+    private com.adbrand.core.contenido.service.DisenadorOpciones disenos;
+
+    @org.junit.jupiter.api.BeforeEach
+    void sinDiseno() {
+        when(disenos.conDisenos(any(), any())).thenAnswer(i -> i.getArgument(1));
+        when(disenos.conDiseno(any(), any())).thenAnswer(i -> i.getArgument(1));
+    }
+
     private static OpcionAnuncioResponse opcion(long id, int numero, boolean elegida) {
         return new OpcionAnuncioResponse(id, numero, "Foto realista", "Texto " + numero,
                 "data:image/jpeg;base64,QUJD", "cloudflare", false, false, elegida);

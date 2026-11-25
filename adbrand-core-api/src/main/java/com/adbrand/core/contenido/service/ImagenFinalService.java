@@ -1,7 +1,9 @@
 package com.adbrand.core.contenido.service;
 
 import com.adbrand.core.contenido.entity.Contenido;
+import com.adbrand.core.auth.repository.UsuarioRepository;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
+import com.adbrand.core.contenido.repository.OpcionAnuncioRepository;
 import com.adbrand.core.contenido.service.MarcaDelNegocio.Marca;
 import com.adbrand.core.previsualizacion.dto.FormatoAnuncio;
 import com.adbrand.core.previsualizacion.service.PrevisualizacionService;
@@ -37,12 +39,16 @@ public class ImagenFinalService {
     private final ContenidoRepository contenidos;
     private final PrevisualizacionService previsualizacion;
     private final MarcaDelNegocio marcas;
+    private final OpcionAnuncioRepository opciones;
+    private final UsuarioRepository usuarios;
 
     public ImagenFinalService(ContenidoRepository contenidos, PrevisualizacionService previsualizacion,
-                              MarcaDelNegocio marcas) {
+                              MarcaDelNegocio marcas, OpcionAnuncioRepository opciones, UsuarioRepository usuarios) {
         this.contenidos = contenidos;
         this.previsualizacion = previsualizacion;
         this.marcas = marcas;
+        this.opciones = opciones;
+        this.usuarios = usuarios;
     }
 
     @Transactional(readOnly = true)
@@ -51,8 +57,18 @@ public class ImagenFinalService {
                 .filter(c -> c.getUsuarioId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException("ANUNCIO_NO_ENCONTRADO", "Ese anuncio no existe."));
         BufferedImage foto = MarcaDelNegocio.leerDataUrl(previsualizacion.imagen(usuarioId, contenidoId).imagen());
+        MarcaDelNegocio.Marca marca = marcas.de(usuarioId);
+        // Ajuste 14: si el anuncio salió de las 4 opciones, se dibuja con el mismo diseño de la opción elegida.
+        var elegida = opciones.findFirstByContenidoIdAndElegidaTrue(contenidoId);
+        if (elegida.isPresent()) {
+            boolean conWhatsapp = usuarios.findById(usuarioId)
+                    .map(u -> PublicacionService.celularWhatsapp(u.getTelefono()) != null).orElse(false);
+            return jpg(DisenoAnuncio.dibujar(foto,
+                    DisenoAnuncio.textosDe(contenido.getOferta(), contenido.getTexto(), conWhatsapp), marca,
+                    DisenoAnuncio.Plantilla.deOpcion(elegida.get().getNumero()), formato.ancho(), formato.alto()));
+        }
         String frase = VideoAnuncioService.frasePrincipal(contenido.getOferta(), contenido.getTexto());
-        return jpg(dibujar(foto, frase, marcas.de(usuarioId), formato.ancho(), formato.alto()));
+        return jpg(dibujar(foto, frase, marca, formato.ancho(), formato.alto()));
     }
 
     // La imagen con la marca. Separado para poder probar el diseño sin base de datos.

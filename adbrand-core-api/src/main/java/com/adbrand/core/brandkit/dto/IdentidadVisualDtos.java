@@ -30,4 +30,16 @@ public final class IdentidadVisualDtos {
     // Las propuestas de logo de la IA, como data URL, para que la empresa elija una. No se guardan hasta elegir.
     public record OpcionesLogoResponse(List<String> opciones, boolean simulado) {
     }
+
+    // Editar el logo con una instrucción corta ("pon la taza más grande"), como los retoques de anuncios.
+    public record RetocarLogoRequest(
+            @NotBlank(message = "Escribe qué quieres cambiar del logo.")
+            @Size(max = 300, message = "Máximo 300 caracteres.")
+            String instruccion) {
+    }
+
+    // La versión nueva (data URL). No se guarda hasta que la empresa diga "Usar esta versión" (PUT /logo-imagen).
+    // retoquesRestantes: null en modo de prueba.
+    public record RetoqueLogoResponse(String imagen, boolean simulado, Integer retoquesRestantes) {
+    }
 }

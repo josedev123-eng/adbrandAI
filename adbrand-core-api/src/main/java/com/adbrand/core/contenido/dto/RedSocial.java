@@ -3,7 +3,9 @@ package com.adbrand.core.contenido.dto;
 // Redes para las que se puede generar un anuncio. Cada una tiene su propio largo y hashtags.
 public enum RedSocial {
     INSTAGRAM(80, 4),
-    FACEBOOK(120, 2);
+    FACEBOOK(120, 2),
+    // Estados de WhatsApp: texto corto que se lee en segundos, casi sin hashtags.
+    WHATSAPP(45, 1);
 
     private final int maximoPalabras;
     private final int hashtags;

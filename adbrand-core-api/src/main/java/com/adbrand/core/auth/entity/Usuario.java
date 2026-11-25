@@ -72,6 +72,10 @@ public class Usuario {
     @Column(name = "color_avatar", length = 20)
     private String colorAvatar;
 
+    // Avatar con imagen (V73): data URL PNG de 256 px (el logo del kit o una foto). null = iniciales.
+    @Column(name = "avatar_imagen", columnDefinition = "TEXT")
+    private String avatarImagen;
+
     // App móvil: id de la cuenta en Firebase Authentication (V49). null si nunca entró con Firebase.
     @Column(name = "firebase_uid", length = 128, unique = true)
     private String firebaseUid;
@@ -144,6 +148,8 @@ public class Usuario {
 
     public String getColorAvatar() { return colorAvatar; }
     public void setColorAvatar(String colorAvatar) { this.colorAvatar = colorAvatar; }
+    public String getAvatarImagen() { return avatarImagen; }
+    public void setAvatarImagen(String avatarImagen) { this.avatarImagen = avatarImagen; }
     public String getFirebaseUid() { return firebaseUid; }
     public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
     public int getIntentosFallidos() { return intentosFallidos; }

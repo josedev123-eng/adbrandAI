@@ -150,13 +150,13 @@ public class OpcionesAnuncioService {
     private List<JsonDeIa.TextoConExtra> pedirTextos(Long usuarioId, PerfilNegocioResponse perfil, GenerarAnuncioRequest datos,
                                      IdentidadMarca identidad) {
         PromptAnuncio promptOpciones = plantilla.construirOpciones(perfil, datos.oferta(), datos.redSocial(),
-                identidad, CANTIDAD);
+                identidad, CANTIDAD, datos.ocasion());
         String respuesta = ia.generarTexto(promptOpciones.sistema(), promptOpciones.usuario(), usuarioId,
                 OrigenConsumo.ANUNCIO);
         List<JsonDeIa.TextoConExtra> textos = new ArrayList<>(
                 JsonDeIa.listaDeObjetos(respuesta, "opciones", "texto", "escena"));
 
-        PromptAnuncio promptUno = plantilla.construir(perfil, datos.oferta(), datos.redSocial(), identidad);
+        PromptAnuncio promptUno = plantilla.construir(perfil, datos.oferta(), datos.redSocial(), identidad, datos.ocasion());
         while (textos.size() < CANTIDAD) {
             String texto = ia.generarTexto(promptUno.sistema(), promptUno.usuario(), usuarioId, OrigenConsumo.ANUNCIO);
             textos.add(new JsonDeIa.TextoConExtra(texto, null));

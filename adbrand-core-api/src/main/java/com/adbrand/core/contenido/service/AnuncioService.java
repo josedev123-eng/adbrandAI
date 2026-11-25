@@ -50,7 +50,7 @@ public class AnuncioService {
         // HU 10, criterio 1: sin perfil registrado no se puede generar (responde 404 PERFIL_NO_ENCONTRADO).
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
         PromptAnuncio prompt = plantilla.construir(perfil, datos.oferta(), datos.redSocial(),
-                identidadActual(usuarioId));
+                identidadActual(usuarioId), datos.ocasion());
         // HU 17: los tokens usados se suman a la empresa que pidió el anuncio.
         String texto = ia.generarTexto(prompt.sistema(), prompt.usuario(), usuarioId, OrigenConsumo.ANUNCIO);
         return guardar(usuarioId, perfil, datos.oferta(), datos.redSocial(), texto, prompt, ia.esSimulado());

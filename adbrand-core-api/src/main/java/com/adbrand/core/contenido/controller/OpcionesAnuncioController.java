@@ -5,6 +5,7 @@ import com.adbrand.core.contenido.dto.OpcionElegidaResponse;
 import com.adbrand.core.contenido.dto.OpcionesAnuncioResponse;
 import com.adbrand.core.contenido.dto.RetocarImagenRequest;
 import com.adbrand.core.contenido.dto.VersionesAnuncioResponse;
+import com.adbrand.core.contenido.service.DisenadorOpciones;
 import com.adbrand.core.contenido.service.OpcionesAnuncioService;
 import com.adbrand.core.contenido.service.RetoqueAnuncioService;
 import jakarta.validation.Valid;
@@ -23,21 +24,25 @@ public class OpcionesAnuncioController {
 
     private final OpcionesAnuncioService servicio;
     private final RetoqueAnuncioService retoques;
+    private final DisenadorOpciones disenos;
 
-    public OpcionesAnuncioController(OpcionesAnuncioService servicio, RetoqueAnuncioService retoques) {
+    public OpcionesAnuncioController(OpcionesAnuncioService servicio, RetoqueAnuncioService retoques,
+                                     DisenadorOpciones disenos) {
         this.servicio = servicio;
         this.retoques = retoques;
+        this.disenos = disenos;
     }
 
     @PostMapping
     public OpcionesAnuncioResponse generar(@RequestAttribute("usuarioId") Long usuarioId,
                                            @Valid @RequestBody GenerarAnuncioRequest datos) {
-        return servicio.generar(usuarioId, datos);
+        // Ajuste 14: cada opción llega con su diseño de anuncio (una plantilla distinta por opción).
+        return disenos.conDisenos(usuarioId, servicio.generar(usuarioId, datos));
     }
 
     @PostMapping("/{id}/elegir")
     public OpcionElegidaResponse elegir(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id) {
-        return servicio.elegir(usuarioId, id);
+        return disenos.conDiseno(usuarioId, servicio.elegir(usuarioId, id));
     }
 
     // "Retocar con prompts cortos": edita la imagen de la opción elegida y guarda una versión nueva.
