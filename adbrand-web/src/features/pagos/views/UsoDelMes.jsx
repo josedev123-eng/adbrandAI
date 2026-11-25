@@ -1,6 +1,7 @@
 // View: "Tu plan y tu uso este mes" en Mi Cuenta. Barras de progreso como en ChatGPT o Claude, en cosas que el dueño entiende:
 // la IA del plan (y cuántos anuncios más le alcanzan), los anuncios que creó y los retoques de imagen.
 import { anunciosAprox, NUMERO } from '../models/formatoPlanes'
+import Cargando from '../../../shared/components/Cargando'
 import { useUsoDelMes } from '../viewmodels/useUsoDelMes'
 import './UsoDelMes.css'
 
@@ -36,7 +37,14 @@ function nombrePlan(consumo) {
 
 // "alVerPlanes": lleva a Planes para mejorar o cambiar el plan.
 export default function UsoDelMes({ alVerPlanes }) {
-  const uso = useUsoDelMes()
+  const { uso, cargando } = useUsoDelMes()
+  if (cargando) {
+    return (
+      <section className="tarjeta uso-mes" aria-label="Tu plan y tu uso este mes">
+        <Cargando texto="Revisando tu plan y tu uso…" filas={3} />
+      </section>
+    )
+  }
   if (!uso) return null
   const { consumo, anunciosCreados, retoquesUsados, limiteRetoques } = uso
   const restantes = Math.max(0, consumo.limite - consumo.tokensUsados)

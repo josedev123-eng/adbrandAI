@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { elegirOpcion, generarOpciones, retocarImagen, usarVersion } from '../models/anunciosApi'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 import GenerarAnuncioView from './GenerarAnuncioView'
+import { olvidarGeneracion } from '../models/generacionEnCurso'
 
 vi.mock('../models/anunciosApi', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -47,6 +48,7 @@ async function pedirOpciones() {
 describe('GenerarAnuncioView (Generar → Elegir)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    olvidarGeneracion()
     generarOpciones.mockResolvedValue({
       generacionId: 7,
       oferta: '2x1 en pan de yema',
@@ -237,5 +239,33 @@ describe('GenerarAnuncioView: límite de tokens del plan', () => {
 
     const tarjetas = await screen.findAllByRole('article', { name: /Opción \d/ })
     expect(within(tarjetas[0]).getByRole('img')).toHaveAttribute('src', 'data:image/jpeg;base64,DISENO1')
+  })
+
+  it('si sale de la pantalla mientras se crean las opciones, al volver las ve', async () => {
+    let terminar
+    generarOpciones.mockReturnValue(new Promise((resolver) => (terminar = resolver)))
+    const { unmount } = render(<GenerarAnuncioView />)
+    await pedirOpciones()
+    unmount()
+
+    terminar({ generacionId: 7, oferta: '2x1 en pan de yema', redSocial: 'INSTAGRAM', opciones: [1, 2, 3, 4].map((n) => opcion(n)) })
+    await Promise.resolve()
+    render(<GenerarAnuncioView />)
+
+    expect(await screen.findAllByRole('article', { name: /Opción \d/ })).toHaveLength(4)
+    expect(screen.getByDisplayValue('2x1 en pan de yema')).toBeInTheDocument()
+  })
+
+  it('si vuelve mientras todavía se crean, sigue esperando y luego las muestra', async () => {
+    let terminar
+    generarOpciones.mockReturnValue(new Promise((resolver) => (terminar = resolver)))
+    const { unmount } = render(<GenerarAnuncioView />)
+    await pedirOpciones()
+    unmount()
+    render(<GenerarAnuncioView />)
+
+    expect(screen.getByRole('button', { name: 'Creando 4 opciones...' })).toBeDisabled()
+    terminar({ generacionId: 7, oferta: '2x1 en pan de yema', redSocial: 'INSTAGRAM', opciones: [1, 2, 3, 4].map((n) => opcion(n)) })
+    expect(await screen.findAllByRole('article', { name: /Opción \d/ })).toHaveLength(4)
   })
 })

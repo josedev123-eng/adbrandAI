@@ -9,7 +9,7 @@ import './MisAnunciosView.css'
 const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook', WHATSAPP: 'WhatsApp', TIKTOK: 'TikTok' }
 const FECHA = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
 
-function TarjetaAnuncio({ anuncio }) {
+function TarjetaAnuncio({ anuncio, irAPlanes }) {
   const estado = ESTADOS[anuncio.estado] ?? { nombre: anuncio.estado, clase: '' }
   return (
     <article
@@ -41,12 +41,12 @@ function TarjetaAnuncio({ anuncio }) {
       {anuncio.estado === 'APROBADO' && anuncio.moderado && (
         <p className="mi-anuncio-motivo mi-anuncio-motivo-aprobado">Un moderador lo revisó y lo aprobó: ya puedes publicarlo.</p>
       )}
-      {anuncio.estado === 'APROBADO' && <ListoParaPublicar anuncioId={anuncio.id} />}
+      {anuncio.estado === 'APROBADO' && <ListoParaPublicar anuncioId={anuncio.id} irAPlanes={irAPlanes} />}
     </article>
   )
 }
 
-export default function MisAnunciosView({ alVerAvisos, irACrear }) {
+export default function MisAnunciosView({ alVerAvisos, irACrear, irAPlanes }) {
   const { anuncios, cantidades, cargando, error, filtro, setFiltro } = useMisAnuncios(alVerAvisos)
 
   return (
@@ -91,7 +91,7 @@ export default function MisAnunciosView({ alVerAvisos, irACrear }) {
           ) : (
             <div className="mis-anuncios-lista">
               {anuncios.map((anuncio) => (
-                <TarjetaAnuncio key={anuncio.id} anuncio={anuncio} />
+                <TarjetaAnuncio key={anuncio.id} anuncio={anuncio} irAPlanes={irAPlanes} />
               ))}
             </div>
           )}

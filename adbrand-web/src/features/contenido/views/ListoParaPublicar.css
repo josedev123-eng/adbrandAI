@@ -15,8 +15,11 @@
 .boton-whatsapp:hover { background: #18834a; }
 
 /* HU 64: "Tu oferta, sin multas". */
-.publicar-legal { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; background: var(--warn-soft); color: var(--fg); }
-.publicar-legal strong { color: var(--warn); }
+/* Discreto: una línea que se abre si el dueño quiere ver el detalle o completar la fecha y el stock. */
+.publicar-legal { display: flex; flex-direction: column; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--fg); font-size: 0.88rem; }
+.publicar-legal summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+.publicar-legal summary:hover { color: var(--fg); }
+.publicar-legal[open] summary { margin-bottom: 4px; }
 .publicar-legal ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
 .publicar-legal small { color: var(--muted); }
 .publicar-legal-campos { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -33,3 +36,8 @@
 .imagen-marca-marco img { display: block; width: 100%; height: auto; }
 .imagen-marca-vertical img { width: auto; max-width: 100%; max-height: 520px; }
 .imagen-marca-cargando { color: var(--muted); font-size: 0.9rem; padding: 16px; }
+
+/* Función de los planes de pago (con el plan gratis): se ve, pero con candado y lleva a Planes. */
+.boton-bloqueado { color: var(--muted); border-style: dashed; }
+.boton-bloqueado span { color: var(--ia); font-weight: 700; }
+.imagen-marca-esqueleto { max-height: 520px; width: auto; max-width: 100%; min-width: 200px; border-radius: 0; }

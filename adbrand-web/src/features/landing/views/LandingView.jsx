@@ -1,5 +1,6 @@
 // View: página de presentación de AdBrand.AI, lo primero que ve quien entra sin sesión.
 // Explica qué es, cómo funciona y cuánto cuesta, y lleva a crear la cuenta o a iniciar sesión.
+import Cargando from '../../../shared/components/Cargando'
 import MarcaAdbrand from '../../../shared/components/MarcaAdbrand'
 import PiePagina from '../../../shared/components/PiePagina'
 import { formatearPrecio, formatearTokens, LIMITE_GRATUITO, usePlanesPublicos } from '../viewmodels/usePlanesPublicos'
@@ -127,7 +128,7 @@ export default function LandingView({ irARegistro, irALogin, abrir }) {
               </li>
             ))}
           </ul>
-          {cargando && <p className="landing-nota">Cargando planes…</p>}
+          {cargando && <Cargando texto="Cargando planes…" filas={3} />}
           {error && <p className="landing-nota">Los planes de pago se ven al crear tu cuenta.</p>}
         </section>
 

@@ -58,6 +58,10 @@ export function descargarVideoAnuncio(id) {
 
 // HU 61: la imagen final del anuncio (JPG) con el logo, los colores y el eslogan del kit.
 // formato: CUADRADO (publicación), VERTICAL (historia o estado) u HORIZONTAL.
-export function descargarImagenFinal(id, formato = 'CUADRADO') {
-  return apiDescargar(`/contenido/anuncios/${id}/imagen-final?formato=${encodeURIComponent(formato.toLowerCase())}`)
+// HU 64: "condiciones" ({ hasta: 'AAAA-MM-DD', stock: '50' }) agrega la letra chica de la promoción abajo del diseño.
+export function descargarImagenFinal(id, formato = 'CUADRADO', condiciones = {}) {
+  const parametros = new URLSearchParams({ formato: formato.toLowerCase() })
+  if (condiciones.hasta) parametros.set('hasta', condiciones.hasta)
+  if (condiciones.stock) parametros.set('stock', condiciones.stock)
+  return apiDescargar(`/contenido/anuncios/${id}/imagen-final?${parametros}`)
 }

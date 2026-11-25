@@ -7,6 +7,7 @@ import { navegar, pantallaDeRuta, useRuta } from './shared/navegacion/navegacion
 import { marcarTutorialVisto } from './features/tutorial/models/tutorialApi'
 import MenuUsuario from './shared/components/MenuUsuario'
 import { usePlanDelMenu } from './features/pagos/viewmodels/usePlanDelMenu'
+import { useGeneracionEnCurso } from './features/contenido/viewmodels/useGeneracionEnCurso'
 import AvisoConexion from './shared/components/AvisoConexion'
 import LimiteDeErrores from './shared/components/LimiteDeErrores'
 import PantallaArranque from './shared/components/PantallaArranque'
@@ -118,6 +119,8 @@ function App() {
   const { avisos, limpiarAvisos } = useAvisosModeracion(Boolean(usuario), pantalla)
   // El plan debajo del nombre en el menú ("Plan Gratis", "Plan Pro"…).
   const planDelMenu = usePlanDelMenu(Boolean(usuario), pantalla)
+  // Opciones de anuncio que terminaron de crearse mientras el dueño estaba en otra pantalla.
+  const generacion = useGeneracionEnCurso()
   // Si la sesión se cerró sola (venció o la cuenta fue suspendida), se muestra el inicio de sesión con el aviso.
   useEffect(() => {
     if (avisoSalida) navegar(RUTAS_PUBLICAS.login, { reemplazar: true })
@@ -305,7 +308,7 @@ function App() {
         imagenAvatar={usuario.avatarImagen}
         plan={planDelMenu}
         alSalir={cerrarSesion}
-        contadores={{ misAnuncios: avisos }}
+        contadores={{ misAnuncios: avisos, anuncio: generacion === 'lista' && pantalla !== 'anuncio' ? 1 : 0 }}
         forzarAbierto={tutorialAbierto}
       />
       <div className="layout-contenido">
@@ -335,7 +338,11 @@ function App() {
             {pantalla === 'perfil' && <PerfilNegocioView />}
             {pantalla === 'anuncio' && <GenerarAnuncioView irAPerfil={() => setPantalla('perfil')} irAPlanes={() => setPantalla('planes')} irAMiCuenta={() => setPantalla('cuenta')} />}
             {pantalla === 'misAnuncios' && (
-              <MisAnunciosView alVerAvisos={limpiarAvisos} irACrear={() => setPantalla('anuncio')} />
+              <MisAnunciosView
+                alVerAvisos={limpiarAvisos}
+                irACrear={() => setPantalla('anuncio')}
+                irAPlanes={() => setPantalla('planes')}
+              />
             )}
             {pantalla === 'kit' && <SolicitarKitMarcaView />}
             {pantalla === 'planes' && <PlanesView irAMiCuenta={() => setPantalla('cuenta')} />}

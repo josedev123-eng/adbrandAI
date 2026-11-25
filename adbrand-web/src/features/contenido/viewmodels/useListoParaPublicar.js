@@ -46,10 +46,18 @@ export function useListoParaPublicar(anuncioId) {
     }
   }
 
-  // Abre WhatsApp (web o app) con el texto listo para enviar a un contacto o a un grupo.
+  // Abre WhatsApp con el texto listo para enviar a un contacto o a un grupo. En la computadora va directo a
+  // WhatsApp Web (wa.me pasaba por una página que intentaba abrir la app de escritorio y dejaba la web trabada);
+  // en el celular abre la app. Se usa un enlace en vez de window.open para no bloquear la pestaña.
   function compartirWhatsapp() {
     if (!publicacion) return
-    window.open(`https://wa.me/?text=${encodeURIComponent(textoFinal)}`, '_blank', 'noopener')
+    const texto = encodeURIComponent(textoFinal)
+    const enCelular = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const enlace = document.createElement('a')
+    enlace.href = enCelular ? `https://wa.me/?text=${texto}` : `https://web.whatsapp.com/send?text=${texto}`
+    enlace.target = '_blank'
+    enlace.rel = 'noopener noreferrer'
+    enlace.click()
   }
 
   // Afiche A4 para pegar en la puerta o el mostrador: imagen, texto y un QR que abre el WhatsApp del negocio.
@@ -64,7 +72,7 @@ export function useListoParaPublicar(anuncioId) {
     }
     ventana.document.write('<p style="font-family:sans-serif">Preparando tu afiche…</p>')
     const qr = await QRCode.toDataURL(publicacion.enlaceWhatsapp, { width: 360, margin: 1 })
-    const imagen = await descargarImagenFinal(anuncioId, 'CUADRADO').then(comoDataUrl).catch(() => null)
+    const imagen = await descargarImagenFinal(anuncioId, 'CUADRADO', condiciones).then(comoDataUrl).catch(() => null)
     ventana.document.open()
     ventana.document.write(htmlAfiche({ marca: publicacion.marca ?? {}, imagen, texto: textoSinEnlace(textoFinal), qr }))
     ventana.document.close()
@@ -97,7 +105,7 @@ export function useListoParaPublicar(anuncioId) {
     setAvisoEstado(null)
     setSubiendoEstado(true)
     try {
-      const blob = await descargarImagenFinal(anuncioId, 'VERTICAL')
+      const blob = await descargarImagenFinal(anuncioId, 'VERTICAL', condiciones)
       const archivo = new File([blob], `estado-${anuncioId}.jpg`, { type: 'image/jpeg' })
       if (navigator.canShare?.({ files: [archivo] })) {
         try {

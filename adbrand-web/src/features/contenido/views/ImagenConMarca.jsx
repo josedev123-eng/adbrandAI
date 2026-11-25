@@ -1,9 +1,15 @@
 // View (HU 61): vista previa de la imagen final con la marca, en el formato elegido, para descargarla o compartirla.
 import { FORMATOS_IMAGEN, useImagenConMarca } from '../viewmodels/useImagenConMarca'
 import './ListoParaPublicar.css'
+import '../../../shared/components/EstadosLista.css'
 
-export default function ImagenConMarca({ anuncioId, texto }) {
-  const { formato, elegirFormato, url, cargando, error, aviso, descargar, compartir } = useImagenConMarca(anuncioId)
+const PROPORCION = { CUADRADO: '1 / 1', VERTICAL: '9 / 16', HORIZONTAL: '1200 / 628' }
+
+export default function ImagenConMarca({ anuncioId, texto, condiciones }) {
+  const { formato, elegirFormato, url, cargando, error, aviso, descargar, compartir } = useImagenConMarca(
+    anuncioId,
+    condiciones,
+  )
 
   return (
     <div className="imagen-marca">
@@ -22,7 +28,14 @@ export default function ImagenConMarca({ anuncioId, texto }) {
       </div>
       <div className={`imagen-marca-marco imagen-marca-${formato.toLowerCase()}`}>
         {url && <img src={url} alt="Vista previa del anuncio con tu logo, tus colores y tu eslogan" />}
-        {cargando && <span className="imagen-marca-cargando">Poniendo tu marca en la imagen…</span>}
+        {cargando && !url && (
+          <span
+            className="esqueleto-bloque imagen-marca-esqueleto"
+            style={{ aspectRatio: PROPORCION[formato] }}
+            role="status"
+            aria-label="Poniendo tu marca en la imagen…"
+          />
+        )}
         {error && <span className="campo-error">{error}</span>}
       </div>
       <div className="publicar-acciones">

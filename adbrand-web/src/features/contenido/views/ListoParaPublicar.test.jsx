@@ -30,7 +30,10 @@ describe('ListoParaPublicar', () => {
 
   it('muestra el texto con hashtags y deja enviarlo por WhatsApp', async () => {
     prepararPublicacion.mockResolvedValue(CON_WHATSAPP)
-    const abrir = vi.spyOn(window, 'open').mockReturnValue(null)
+    const clics = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
+      clics.enlaces.push(this.href)
+    })
+    clics.enlaces = []
     render(<ListoParaPublicar anuncioId={5} />)
 
     await userEvent.click(screen.getByRole('button', { name: '📣 Listo para publicar' }))
@@ -40,8 +43,9 @@ describe('ListoParaPublicar', () => {
     expect(screen.getByRole('button', { name: '🖨 Afiche con QR para tu local' })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Enviar por WhatsApp' }))
-    expect(abrir).toHaveBeenCalledWith(expect.stringMatching(/^https:\/\/wa\.me\/\?text=/), '_blank', 'noopener')
-    abrir.mockRestore()
+    // En la computadora abre WhatsApp Web directo (wa.me dejaba la web trabada).
+    expect(clics.enlaces.some((href) => href.startsWith('https://web.whatsapp.com/send?text='))).toBe(true)
+    clics.mockRestore()
   })
 
   it('sin celular no ofrece el afiche y explica cómo activarlo', async () => {
@@ -97,8 +101,20 @@ describe('ListoParaPublicar', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Subir a mi estado' }))
 
-    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'VERTICAL')
+    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'VERTICAL', { hasta: '', stock: '' })
     expect(await screen.findByText(/Añadir estado/)).toBeInTheDocument()
+  })
+
+  it('con el plan gratis el video sale con candado y lleva a Planes', async () => {
+    prepararPublicacion.mockResolvedValue({ ...CON_WHATSAPP, observaciones: [], videoDisponible: false })
+    const irAPlanes = vi.fn()
+    render(<ListoParaPublicar anuncioId={5} irAPlanes={irAPlanes} />)
+    await userEvent.click(screen.getByRole('button', { name: '📣 Listo para publicar' }))
+
+    await userEvent.click(await screen.findByRole('button', { name: /🔒 Video para Reels y Estados/ }))
+
+    expect(irAPlanes).toHaveBeenCalled()
+    expect(descargarVideoAnuncio).not.toHaveBeenCalled()
   })
 
   it('HU 65: descarga el video del anuncio para Reels y Estados', async () => {
@@ -119,10 +135,10 @@ describe('ListoParaPublicar', () => {
     await userEvent.click(screen.getByRole('button', { name: '📣 Listo para publicar' }))
 
     expect(await screen.findByAltText(/con tu logo, tus colores y tu eslogan/)).toHaveAttribute('src', 'blob:imagen')
-    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'CUADRADO')
+    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'CUADRADO', { hasta: '', stock: '' })
 
     await userEvent.click(screen.getByRole('button', { name: /Historia o estado/ }))
-    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'VERTICAL')
+    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'VERTICAL', { hasta: '', stock: '' })
     expect(await screen.findByRole('button', { name: 'Descargar imagen' })).toBeEnabled()
   })
 

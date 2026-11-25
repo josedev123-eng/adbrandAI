@@ -1,6 +1,6 @@
 // ViewModel: "Generar → Elegir". Pide 4 opciones de anuncio (texto + imagen), deja elegir una
 // y la guarda como anuncio. Después se puede copiar o regenerar (HU-10, HU-12).
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
 import { leerOcasionSugerida, leerOfertaSugerida, olvidarOfertaSugerida } from '../models/ofertaSugerida'
 import {
@@ -12,6 +12,7 @@ import {
   usarVersion,
 } from '../models/anunciosApi'
 import { comoDataUrl } from './useImagenConMarca'
+import { generacionActual, iniciarGeneracion, olvidarGeneracion } from '../models/generacionEnCurso'
 
 export const MAXIMO_OFERTA = 300
 export const MAXIMO_INSTRUCCION = 300
@@ -27,21 +28,27 @@ function validar(solicitud) {
 export function useGenerarAnuncio() {
   // HU 63: si viene de "Tu mes de contenido", la idea de la fecha llega ya escrita y con su festividad ("ocasion"),
   // para que el texto y la imagen se ambienten en ella. Desde "Crear anuncio" directo no hay ocasión.
-  const [solicitud, setSolicitud] = useState(() => ({
-    oferta: leerOfertaSugerida().slice(0, MAXIMO_OFERTA),
-    redSocial: 'INSTAGRAM',
-    ocasion: leerOcasionSugerida() || undefined,
-  }))
+  // Si el dueño salió mientras se creaban las opciones, al volver se retoma ese pedido (sigue o ya terminó).
+  const [alAbrir] = useState(generacionActual)
+  const [solicitud, setSolicitud] = useState(
+    () =>
+      alAbrir?.solicitud ?? {
+        oferta: leerOfertaSugerida().slice(0, MAXIMO_OFERTA),
+        redSocial: 'INSTAGRAM',
+        ocasion: leerOcasionSugerida() || undefined,
+      },
+  )
   useEffect(() => olvidarOfertaSugerida(), [])
   const [errores, setErrores] = useState({})
-  const [opciones, setOpciones] = useState([])
+  const [opciones, setOpciones] = useState(() => (alAbrir?.estado === 'lista' ? (alAbrir.respuesta?.opciones ?? []) : []))
   const [anuncio, setAnuncio] = useState(null)
   const [opcionElegida, setOpcionElegida] = useState(null)
   const [aviso, setAviso] = useState(null)
   const [faltaPerfil, setFaltaPerfil] = useState(false)
   // Ya usó los tokens de IA de su plan este mes: se muestra el aviso con el botón para ver los planes.
   const [sinCupo, setSinCupo] = useState(null)
-  const [generando, setGenerando] = useState(false)
+  const [generando, setGenerando] = useState(alAbrir?.estado === 'creando')
+  const montado = useRef(true)
   const [eligiendoId, setEligiendoId] = useState(null)
   const [regenerando, setRegenerando] = useState(false)
   const [copiado, setCopiado] = useState(false)
@@ -60,6 +67,36 @@ export function useGenerarAnuncio() {
     return () => {
       activo = false
     }
+  }, [])
+
+  // Espera el pedido de las 4 opciones. Si el dueño salió de la pantalla, el resultado queda guardado
+  // en generacionEnCurso para mostrarlo cuando vuelva.
+  async function esperar(promesa) {
+    try {
+      const respuesta = await promesa
+      if (!montado.current) return
+      setOpciones(respuesta.opciones ?? [])
+      olvidarGeneracion()
+    } catch (error) {
+      if (!montado.current) return
+      mostrarError(error, error?.message || 'No se pudo conectar con el servidor.')
+      olvidarGeneracion()
+    } finally {
+      if (montado.current) setGenerando(false)
+    }
+  }
+
+  useEffect(() => {
+    montado.current = true
+    if (alAbrir?.estado === 'lista') olvidarGeneracion()
+    // esperar() solo cambia el estado cuando la promesa termina (después del await), no de inmediato.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    else if (alAbrir) esperar(alAbrir.promesa)
+    return () => {
+      montado.current = false
+    }
+    // Solo al abrir la pantalla: alAbrir no cambia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // El dueño puede quitar la festividad y crear un anuncio normal.
@@ -105,14 +142,7 @@ export function useGenerarAnuncio() {
     setOpcionElegida(null)
     setHistorial(null)
     setInstruccion('')
-    try {
-      const respuesta = await generarOpciones(solicitud)
-      setOpciones(respuesta.opciones ?? [])
-    } catch (error) {
-      mostrarError(error, error?.message || 'No se pudo conectar con el servidor.')
-    } finally {
-      setGenerando(false)
-    }
+    await esperar(iniciarGeneracion(solicitud, generarOpciones))
   }
 
   // Paso 2: elegir una opción; se guarda como anuncio y pasa por el filtro (HU 13).

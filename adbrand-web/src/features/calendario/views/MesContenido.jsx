@@ -1,16 +1,36 @@
 // View: HU 63 "Tu mes de contenido". Fechas peruanas que venden, con una idea según tu rubro,
 // y un plan de 3 publicaciones por semana. "Crear anuncio" lleva a Crear con la idea ya escrita.
+import Cargando from '../../../shared/components/Cargando'
 import { useMesContenido } from '../viewmodels/useMesContenido'
 import './MesContenido.css'
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const DIA = new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+// Qué es cada tipo de publicación del plan (se explica en la leyenda y al pasar el mouse).
 const TIPOS = {
-  OFERTA: { nombre: 'Oferta', clase: 'mes-tipo-oferta' },
-  PRODUCTO_ESTRELLA: { nombre: 'Producto estrella', clase: 'mes-tipo-producto' },
-  DETRAS_DE_CAMARAS: { nombre: 'Detrás de cámaras', clase: 'mes-tipo-detras' },
-  FECHA_ESPECIAL: { nombre: 'Fecha especial', clase: 'mes-tipo-fecha' },
+  OFERTA: {
+    nombre: 'Oferta',
+    clase: 'mes-tipo-oferta',
+    explicacion: 'Una promoción para vender ya: descuento, 2x1 o combo, con precio y hasta cuándo vale.',
+  },
+  PRODUCTO_ESTRELLA: {
+    nombre: 'Producto estrella',
+    clase: 'mes-tipo-producto',
+    explicacion: 'Presume lo que más te piden o te hace único, sin descuento.',
+  },
+  DETRAS_DE_CAMARAS: {
+    nombre: 'Detrás de cámaras',
+    clase: 'mes-tipo-detras',
+    explicacion: 'Muestra tu día a día (cómo preparas, tu equipo, tu local). Genera confianza y la gente compra más a quien conoce.',
+  },
+  FECHA_ESPECIAL: {
+    nombre: 'Fecha especial',
+    clase: 'mes-tipo-fecha',
+    explicacion: 'Una fecha que vende en el Perú: la publicación se ambienta en esa festividad.',
+  },
 }
+
+const HOY = new Date().toISOString().slice(0, 10)
 
 function dia(fecha) {
   return DIA.format(new Date(`${fecha}T00:00:00Z`))
@@ -47,7 +67,7 @@ export default function MesContenido({ alCrearAnuncio }) {
       </header>
 
       {error && <p className="aviso aviso-error">{error}</p>}
-      {cargando && !datos && <p className="kit-vacio">Cargando tu mes…</p>}
+      {cargando && !datos && <Cargando texto="Armando tu mes de contenido…" filas={4} />}
 
       {datos && (
         <div className="mes-columnas">
@@ -78,16 +98,40 @@ export default function MesContenido({ alCrearAnuncio }) {
 
           <div>
             <h3>Plan sugerido: 3 publicaciones por semana</h3>
+            {/* Leyenda: qué significa cada tipo, para que el dueño sepa qué publicar. */}
+            <ul className="mes-leyenda" aria-label="Qué es cada tipo de publicación">
+              {['OFERTA', 'PRODUCTO_ESTRELLA', 'DETRAS_DE_CAMARAS'].map((clave) => (
+                <li key={clave}>
+                  <span className={`mes-tipo ${TIPOS[clave].clase}`}>{TIPOS[clave].nombre}</span>
+                  <span>{TIPOS[clave].explicacion}</span>
+                </li>
+              ))}
+            </ul>
             <ol className="mes-plan">
               {datos.plan.map((p) => {
                 const tipo = TIPOS[p.tipo] ?? { nombre: p.tipo, clase: '' }
                 return (
                   <li key={`${p.fecha}-${p.tipo}`}>
                     <span className="mes-plan-dia">{dia(p.fecha)}</span>
-                    <span className={`mes-tipo ${tipo.clase}`}>{tipo.nombre}</span>
+                    <span className={`mes-tipo ${tipo.clase}`} title={tipo.explicacion}>
+                      {tipo.nombre}
+                    </span>
                     <span className="mes-plan-idea" title={p.idea}>
                       {p.tipo === 'FECHA_ESPECIAL' ? p.titulo : p.idea}
                     </span>
+                    {/* Crear el anuncio de ese día con la idea ya escrita (solo hoy o fechas por venir). */}
+                    {alCrearAnuncio && p.fecha >= HOY ? (
+                      <button
+                        type="button"
+                        className="boton-enlace mes-plan-crear"
+                        onClick={() => alCrearAnuncio(p.idea, p.tipo === 'FECHA_ESPECIAL' ? p.titulo : undefined)}
+                        aria-label={`Crear anuncio: ${p.idea}`}
+                      >
+                        ✦ Crear
+                      </button>
+                    ) : (
+                      <span />
+                    )}
                   </li>
                 )
               })}

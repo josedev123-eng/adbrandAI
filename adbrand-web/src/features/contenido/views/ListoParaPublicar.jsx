@@ -11,9 +11,15 @@ function RevisionLegal({ observaciones, condiciones, alCambiar }) {
   }
   const pideFecha = observaciones.some((o) => o.codigo === 'FALTA_VIGENCIA')
   const pideStock = observaciones.some((o) => o.codigo === 'FALTA_STOCK')
+  const completo = (!pideFecha || condiciones.hasta) && (!pideStock || condiciones.stock)
   return (
-    <div className="publicar-legal" role="note">
-      <strong>Tu oferta, sin multas (reglas de INDECOPI)</strong>
+    <details className="publicar-legal" role="note">
+      <summary>
+        {completo ? '✓' : 'ⓘ'} Tu oferta, sin multas:{' '}
+        {completo
+          ? 'listo, las condiciones van en el texto y en la imagen.'
+          : `${observaciones.length} ${observaciones.length === 1 ? 'sugerencia' : 'sugerencias'} de INDECOPI`}
+      </summary>
       <ul>
         {observaciones.map((o) => (
           <li key={o.codigo}>
@@ -44,13 +50,14 @@ function RevisionLegal({ observaciones, condiciones, alCambiar }) {
           )}
         </div>
       )}
-      <small>Son recomendaciones para evitar problemas, no una asesoría legal.</small>
-    </div>
+      <small>Se agregan solas al texto y, en letra chica, abajo de la imagen. Son recomendaciones, no una asesoría legal.</small>
+    </details>
   )
 }
 
 // "irAMiCuenta" lleva a poner el celular si falta. El afiche y la imagen usan el logo, los colores y el eslogan del kit.
-export default function ListoParaPublicar({ anuncioId, irAMiCuenta }) {
+// "irAPlanes": con el plan gratis el video sale con candado y lleva a Planes.
+export default function ListoParaPublicar({ anuncioId, irAMiCuenta, irAPlanes }) {
   const {
     publicacion,
     textoFinal,
@@ -86,7 +93,7 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta }) {
       <h3>Listo para publicar</h3>
       <p className="publicar-ayuda">Copia el texto y pégalo en Instagram o Facebook, o envíalo directo por WhatsApp.</p>
       {/* HU 61: la imagen final con el logo, los colores y el eslogan del kit de marca. */}
-      <ImagenConMarca anuncioId={anuncioId} texto={textoFinal} />
+      <ImagenConMarca anuncioId={anuncioId} texto={textoFinal} condiciones={condiciones} />
       <RevisionLegal observaciones={publicacion.observaciones ?? []} condiciones={condiciones} alCambiar={cambiarCondicion} />
       <pre className="publicar-texto">{textoFinal}</pre>
       <ul className="publicar-hashtags" aria-label="Hashtags">
@@ -104,9 +111,21 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta }) {
         <button type="button" className="boton-whatsapp" onClick={subirAEstado} disabled={subiendoEstado}>
           {subiendoEstado ? 'Preparando tu estado…' : 'Subir a mi estado'}
         </button>
-        <button type="button" className="boton-ia" onClick={descargarVideo} disabled={creandoVideo}>
-          {creandoVideo ? '🎬 Creando tu video…' : '🎬 Video para Reels y Estados'}
-        </button>
+        {publicacion.videoDisponible === false ? (
+          <button
+            type="button"
+            className="boton-secundario boton-bloqueado"
+            onClick={irAPlanes}
+            disabled={!irAPlanes}
+            title="El video para Reels y Estados está en los planes de pago"
+          >
+            🔒 Video para Reels y Estados · <span>planes de pago</span>
+          </button>
+        ) : (
+          <button type="button" className="boton-ia" onClick={descargarVideo} disabled={creandoVideo}>
+            {creandoVideo ? '🎬 Creando tu video…' : '🎬 Video para Reels y Estados'}
+          </button>
+        )}
         {publicacion.tieneWhatsapp && (
           <button type="button" className="boton-secundario" onClick={imprimirAfiche}>
             🖨 Afiche con QR para tu local

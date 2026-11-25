@@ -31,7 +31,10 @@ describe('MesContenido', () => {
     expect(await screen.findByText('Navidad', { selector: 'strong' })).toBeInTheDocument()
     expect(screen.getByText('Panetones y chocolate caliente para la Nochebuena.')).toBeInTheDocument()
     expect(screen.getByText('Faltan 24 días')).toBeInTheDocument()
-    expect(screen.getByText('Oferta')).toBeInTheDocument()
+    expect(screen.getAllByText('Oferta').length).toBeGreaterThan(0)
+    // La leyenda explica qué es cada tipo de publicación.
+    expect(screen.getByRole('list', { name: 'Qué es cada tipo de publicación' })).toHaveTextContent('Detrás de cámaras')
+    expect(screen.getByText(/Genera confianza/)).toBeInTheDocument()
   })
 
   it('crear anuncio para una fecha manda su idea; las fechas pasadas no tienen el botón', async () => {

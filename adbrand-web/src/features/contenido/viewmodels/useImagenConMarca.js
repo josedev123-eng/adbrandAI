@@ -9,31 +9,43 @@ export const FORMATOS_IMAGEN = [
   { valor: 'HORIZONTAL', nombre: 'Portada', detalle: 'horizontal' },
 ]
 
-export function useImagenConMarca(anuncioId) {
+// "condiciones": vigencia y stock (INDECOPI) que el dueño completó; van en letra chica dentro del diseño.
+export function useImagenConMarca(anuncioId, condiciones = {}) {
+  const hasta = condiciones.hasta ?? ''
+  const stock = condiciones.stock ?? ''
   const [formato, setFormato] = useState('CUADRADO')
   // { formato, blob, url } de la última imagen que llegó, o { formato, error }.
   const [resultado, setResultado] = useState(null)
   const [aviso, setAviso] = useState(null)
 
+  // Mientras escribe la fecha o el stock se espera un momento antes de volver a pedir la imagen.
+  const clave = `${formato}|${hasta}|${stock}`
   useEffect(() => {
     let vigente = true
-    let url = null
-    descargarImagenFinal(anuncioId, formato)
-      .then((blob) => {
-        if (!vigente) return
-        url = URL.createObjectURL(blob)
-        setResultado({ formato, blob, url })
-      })
-      .catch((e) => {
-        if (vigente) setResultado({ formato, error: e?.message || 'No se pudo crear la imagen con tu marca.' })
-      })
+    const espera = setTimeout(
+      () => {
+        descargarImagenFinal(anuncioId, formato, { hasta, stock })
+          .then((blob) => {
+            if (!vigente) return
+            setResultado({ clave, formato, blob, url: URL.createObjectURL(blob) })
+          })
+          .catch((e) => {
+            if (vigente) setResultado({ clave, formato, error: e?.message || 'No se pudo crear la imagen con tu marca.' })
+          })
+      },
+      hasta || stock ? 500 : 0,
+    )
     return () => {
       vigente = false
-      if (url) URL.revokeObjectURL(url)
+      clearTimeout(espera)
     }
-  }, [anuncioId, formato])
+  }, [anuncioId, formato, hasta, stock, clave])
 
-  const actual = resultado?.formato === formato ? resultado : null
+  // La imagen anterior se libera recién cuando llega la nueva (o al salir), así nunca se ve rota.
+  useEffect(() => () => resultado?.url && URL.revokeObjectURL(resultado.url), [resultado])
+
+  // Mientras llega la versión nueva (por ejemplo, con el stock recién escrito) se sigue viendo la anterior.
+  const actual = resultado?.clave === clave ? resultado : resultado?.formato === formato && resultado?.url ? resultado : null
   const nombreArchivo = `anuncio-${anuncioId}-${formato.toLowerCase()}.jpg`
 
   function elegirFormato(valor) {

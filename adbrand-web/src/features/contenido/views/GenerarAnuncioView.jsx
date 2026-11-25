@@ -285,6 +285,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
                   key={anuncio.id}
                   anuncioId={anuncio.id}
                   irAMiCuenta={irAMiCuenta}
+                  irAPlanes={irAPlanes}
                 />
               )}
             </>
