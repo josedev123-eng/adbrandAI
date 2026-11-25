@@ -53,6 +53,12 @@ public class ImagenFinalService {
 
     @Transactional(readOnly = true)
     public byte[] generar(Long usuarioId, Long contenidoId, FormatoAnuncio formato) {
+        return generar(usuarioId, contenidoId, formato, null);
+    }
+
+    // "condiciones": la letra chica de INDECOPI que el dueño completó (vigencia y stock). null si no hay.
+    @Transactional(readOnly = true)
+    public byte[] generar(Long usuarioId, Long contenidoId, FormatoAnuncio formato, String condiciones) {
         Contenido contenido = contenidos.findById(contenidoId)
                 .filter(c -> c.getUsuarioId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException("ANUNCIO_NO_ENCONTRADO", "Ese anuncio no existe."));
@@ -64,7 +70,7 @@ public class ImagenFinalService {
             boolean conWhatsapp = usuarios.findById(usuarioId)
                     .map(u -> PublicacionService.celularWhatsapp(u.getTelefono()) != null).orElse(false);
             return jpg(DisenoAnuncio.dibujar(foto,
-                    DisenoAnuncio.textosDe(contenido.getOferta(), contenido.getTexto(), conWhatsapp), marca,
+                    DisenoAnuncio.textosDe(contenido.getOferta(), contenido.getTexto(), conWhatsapp).conCondiciones(condiciones), marca,
                     DisenoAnuncio.Plantilla.deOpcion(elegida.get().getNumero()), formato.ancho(), formato.alto()));
         }
         String frase = VideoAnuncioService.frasePrincipal(contenido.getOferta(), contenido.getTexto());

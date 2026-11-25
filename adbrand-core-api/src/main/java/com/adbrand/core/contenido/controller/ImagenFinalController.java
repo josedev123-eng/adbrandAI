@@ -1,5 +1,6 @@
 package com.adbrand.core.contenido.controller;
 
+import com.adbrand.core.contenido.service.DisenoAnuncio;
 import com.adbrand.core.contenido.service.ImagenFinalService;
 import com.adbrand.core.previsualizacion.dto.FormatoAnuncio;
 import org.springframework.http.HttpHeaders;
@@ -13,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // HU 61: la imagen final del anuncio (JPG) con el logo, los colores y el eslogan del kit de marca.
-// ?formato=cuadrado|vertical|horizontal (cuadrado si no se manda).
+// ?formato=cuadrado|vertical|horizontal (cuadrado si no se manda). HU 64: ?hasta=AAAA-MM-DD&stock=50 agregan
+// la letra chica de la promoción (vigencia y stock) abajo del diseño.
 @RestController
 @RequestMapping("/api/contenido/anuncios")
 public class ImagenFinalController {
@@ -26,12 +28,14 @@ public class ImagenFinalController {
 
     @GetMapping("/{id}/imagen-final")
     public ResponseEntity<byte[]> imagenFinal(@RequestAttribute("usuarioId") Long usuarioId, @PathVariable Long id,
-                                              @RequestParam(required = false) String formato) {
+                                              @RequestParam(required = false) String formato,
+                                              @RequestParam(required = false) String hasta,
+                                              @RequestParam(required = false) String stock) {
         FormatoAnuncio elegido = FormatoAnuncio.desde(formato);
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_JPEG)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "inline; filename=\"anuncio-" + id + "-" + elegido.name().toLowerCase() + ".jpg\"")
-                .body(imagenes.generar(usuarioId, id, elegido));
+                .body(imagenes.generar(usuarioId, id, elegido, DisenoAnuncio.condicionesDe(hasta, stock)));
     }
 }

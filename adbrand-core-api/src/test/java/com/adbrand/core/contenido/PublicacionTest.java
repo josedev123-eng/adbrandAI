@@ -14,7 +14,8 @@ class PublicacionTest {
         List<String> hashtags = PublicacionService.hashtags(
                 "¡2x1 en panetones! #Navidad #panaderia", "Panadería Doña Rosa", "Panadería y pastelería");
 
-        assertThat(hashtags).startsWith("#PanaderiaDonaRosa", "#Navidad", "#panaderia");
+        // La marca primero; "Navidad" en el texto suma los de la festividad.
+        assertThat(hashtags).startsWith("#PanaderiaDonaRosa", "#Navidad", "#NavidadPeruana", "#panaderia");
         assertThat(hashtags).contains("#PanCaliente", "#ComproLocal", "#HechoEnPeru");
         // "#Panaderia" del rubro no se repite porque ya vino "#panaderia" en el texto.
         assertThat(hashtags.stream().filter(h -> h.equalsIgnoreCase("#panaderia"))).hasSize(1);
@@ -38,5 +39,31 @@ class PublicacionTest {
         assertThat(PublicacionService.celularWhatsapp("+51 987654321")).isEqualTo("51987654321");
         assertThat(PublicacionService.celularWhatsapp("4251234")).isNull();
         assertThat(PublicacionService.celularWhatsapp(null)).isNull();
+    }
+
+    @Test
+    void losHashtagsSeAjustanALaFestividadYAlProducto() {
+        List<String> hashtags = PublicacionService.hashtags("Cupcakes de calabaza para esta noche #Postres",
+                "Cafetería Don Pepe", "Cafetería", "2x1 en cupcakes por Halloween");
+
+        assertThat(hashtags).startsWith("#CafeteriaDonPepe", "#Halloween", "#HalloweenPeru");
+        assertThat(hashtags).contains("#Postres", "#ComproLocal");
+        assertThat(hashtags).hasSizeLessThanOrEqualTo(8);
+    }
+
+    @Test
+    void comproLocalSiempreTieneSuLugarAunqueHayaMuchos() {
+        List<String> hashtags = PublicacionService.hashtags("#Uno #Dos #Tres #Cuatro #Cinco #Seis #Siete",
+                "Panadería Rosa", "Panadería", "Panetones por Navidad");
+
+        assertThat(hashtags).hasSize(8).contains("#ComproLocal", "#HechoEnPeru", "#Navidad");
+    }
+
+    @Test
+    void lasCondicionesDeIndecopiSeEscribenParaElDiseno() {
+        assertThat(com.adbrand.core.contenido.service.DisenoAnuncio.condicionesDe("2026-12-24", "50"))
+                .isEqualTo("Válido hasta el 24/12/2026 o hasta agotar stock (50 unidades).");
+        assertThat(com.adbrand.core.contenido.service.DisenoAnuncio.condicionesDe(null, "")).isNull();
+        assertThat(com.adbrand.core.contenido.service.DisenoAnuncio.condicionesDe("mañana", "x")).isNull();
     }
 }

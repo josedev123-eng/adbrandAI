@@ -6,6 +6,7 @@ import com.adbrand.core.contenido.dto.MarcaPublicacion;
 import com.adbrand.core.contenido.dto.PublicacionResponse;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
+import com.adbrand.core.ia.service.LimiteConsumoIa;
 import com.adbrand.core.negocio.repository.PerfilNegocioRepository;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import java.net.URLEncoder;
@@ -49,13 +50,15 @@ public class PublicacionService {
     private final PerfilNegocioRepository perfiles;
     private final UsuarioRepository usuarios;
     private final MarcaDelNegocio marcas;
+    private final LimiteConsumoIa limites;
 
     public PublicacionService(ContenidoRepository contenidos, PerfilNegocioRepository perfiles, UsuarioRepository usuarios,
-                              MarcaDelNegocio marcas) {
+                              MarcaDelNegocio marcas, LimiteConsumoIa limites) {
         this.contenidos = contenidos;
         this.perfiles = perfiles;
         this.usuarios = usuarios;
         this.marcas = marcas;
+        this.limites = limites;
     }
 
     @Transactional(readOnly = true)
@@ -70,7 +73,7 @@ public class PublicacionService {
                 : usuario != null ? usuario.getNombreEmpresa() : "";
         String rubro = perfil != null ? perfil.getRubro() : null;
 
-        List<String> hashtags = hashtags(contenido.getTexto(), nombre, rubro);
+        List<String> hashtags = hashtags(contenido.getTexto(), nombre, rubro, contenido.getOferta());
         String cuerpo = sinHashtags(contenido.getTexto());
 
         String telefono = usuario == null ? null : celularWhatsapp(usuario.getTelefono());
@@ -93,7 +96,8 @@ public class PublicacionService {
             texto.append("\n\n").append(String.join(" ", hashtags));
         }
         return new PublicacionResponse(contenido.getId(), texto.toString(), hashtags, enlace, mensajePedido, telefono != null,
-                RevisionLegalOferta.revisar(contenido.getOferta(), contenido.getTexto()), MarcaPublicacion.desde(marca));
+                RevisionLegalOferta.revisar(contenido.getOferta(), contenido.getTexto()), MarcaPublicacion.desde(marca),
+                !LimiteConsumoIa.GRATUITO.equals(limites.consumoDelMes(usuarioId).origen()));
     }
 
     // HU 61: "— Panadería Rosa: “El sabor de tu barrio”". Sin eslogan no se agrega nada (el nombre ya va en los hashtags).
@@ -105,28 +109,93 @@ public class PublicacionService {
         return nombre == null || nombre.isBlank() ? "— “" + limpio + "”" : "— " + nombre.trim() + ": “" + limpio + "”";
     }
 
-    // Los del texto de la IA + el de la marca + los del rubro + los de Perú, sin repetir, hasta 8.
+    // Hashtags de festividades: si el anuncio habla de una fecha (o se creó desde el calendario con esa ocasión),
+    // van los que la gente busca esos días. Las palabras van sin tildes y en minúsculas.
+    private static final Map<Pattern, List<String>> POR_FESTIVIDAD = festividades();
+
+    private static Map<Pattern, List<String>> festividades() {
+        Map<Pattern, List<String>> mapa = new LinkedHashMap<>();
+        mapa.put(Pattern.compile("navidad|navideñ|naviden|nochebuena|panet[oó]n|panetones"), List.of("#Navidad", "#NavidadPeruana"));
+        mapa.put(Pattern.compile("halloween|dulce o truco"), List.of("#Halloween", "#HalloweenPeru"));
+        mapa.put(Pattern.compile("cancion criolla|criollo|criolla"), List.of("#DiaDeLaCancionCriolla", "#MusicaCriolla"));
+        mapa.put(Pattern.compile("dia de los muertos|todos los santos|difuntos|tantawawa"), List.of("#DiaDeLosMuertos", "#TodosLosSantos"));
+        mapa.put(Pattern.compile("dia de la madre|para mama|las mamas"), List.of("#DiaDeLaMadre", "#FelizDiaMama"));
+        mapa.put(Pattern.compile("dia del padre|para papa|los papas"), List.of("#DiaDelPadre", "#FelizDiaPapa"));
+        mapa.put(Pattern.compile("fiestas patrias|28 de julio|independencia"), List.of("#FiestasPatrias", "#OrgulloPeruano"));
+        mapa.put(Pattern.compile("san valentin|amor y la amistad|14 de febrero"), List.of("#SanValentin", "#AmorYAmistad"));
+        mapa.put(Pattern.compile("ano nuevo|fin de ano"), List.of("#AnoNuevo", "#FinDeAno"));
+        mapa.put(Pattern.compile("black friday"), List.of("#BlackFriday", "#BlackFridayPeru"));
+        mapa.put(Pattern.compile("cyber ?wow|cyber days"), List.of("#CyberWow"));
+        mapa.put(Pattern.compile("dia (mundial )?del pan"), List.of("#DiaDelPan"));
+        mapa.put(Pattern.compile("gastronomia peruana|dia de la gastronomia"), List.of("#GastronomiaPeruana"));
+        mapa.put(Pattern.compile("dia del cafe"), List.of("#DiaDelCafePeruano"));
+        mapa.put(Pattern.compile("santa rosa"), List.of("#SantaRosaDeLima"));
+        mapa.put(Pattern.compile("primavera"), List.of("#Primavera"));
+        mapa.put(Pattern.compile("regreso a clases|utiles escolares|vuelta al cole"), List.of("#RegresoAClases"));
+        mapa.put(Pattern.compile("carnaval"), List.of("#Carnavales"));
+        return mapa;
+    }
+
+    // Compatibilidad: sin la oferta (las pruebas y lugares que solo tienen el texto).
     public static List<String> hashtags(String texto, String nombre, String rubro) {
+        return hashtags(texto, nombre, rubro, null);
+    }
+
+    // Hasta 8, sin repetir y en este orden: la marca, la festividad (si la hay), el producto de la oferta,
+    // los que puso la IA (máximo 2), los del rubro y #ComproLocal / #HechoEnPeru al final.
+    public static List<String> hashtags(String texto, String nombre, String rubro, String oferta) {
         Map<String, String> unicos = new LinkedHashMap<>();
-        String marca = hashtagDe(nombre);
-        if (marca != null) {
-            unicos.put(marca.toLowerCase(Locale.ROOT), marca);
+        agregar(unicos, hashtagDe(nombre));
+
+        String buscar = sinTildes(((oferta == null ? "" : oferta) + " " + (texto == null ? "" : texto))).toLowerCase(Locale.ROOT);
+        POR_FESTIVIDAD.forEach((patron, etiquetas) -> {
+            if (patron.matcher(buscar).find()) {
+                etiquetas.forEach(e -> agregar(unicos, e));
+            }
+        });
+
+        if (oferta != null) {
+            String producto = OpcionesAnuncioService.temaSinCifras(oferta);
+            // Solo si es corto ("panetones", "cafe americano"); una frase larga no sirve como hashtag.
+            if (!producto.isBlank() && producto.split("\\s+").length <= 2) {
+                agregar(unicos, hashtagDe(producto));
+            }
         }
+
+        int deLaIa = 0;
         Matcher m = HASHTAG.matcher(texto == null ? "" : texto);
-        while (m.find()) {
+        while (m.find() && deLaIa < 2) {
             String limpio = "#" + sinTildes(m.group().substring(1));
-            unicos.putIfAbsent(limpio.toLowerCase(Locale.ROOT), limpio);
+            if (!unicos.containsKey(limpio.toLowerCase(Locale.ROOT))) {
+                agregar(unicos, limpio);
+                deLaIa++;
+            }
         }
         if (rubro != null) {
             String clave = sinTildes(rubro).toLowerCase(Locale.ROOT);
             POR_RUBRO.forEach((parte, etiquetas) -> {
                 if (clave.contains(parte)) {
-                    etiquetas.forEach(e -> unicos.putIfAbsent(e.toLowerCase(Locale.ROOT), e));
+                    etiquetas.forEach(e -> agregar(unicos, e));
                 }
             });
         }
-        SIEMPRE.forEach(e -> unicos.putIfAbsent(e.toLowerCase(Locale.ROOT), e));
-        return new ArrayList<>(unicos.values()).subList(0, Math.min(MAXIMO_HASHTAGS, unicos.size()));
+        // Los de comprar local se reservan un lugar aunque ya haya 8.
+        List<String> lista = new ArrayList<>(unicos.values());
+        List<String> locales = SIEMPRE.stream().filter(e -> !unicos.containsKey(e.toLowerCase(Locale.ROOT))).toList();
+        int espacio = Math.max(0, MAXIMO_HASHTAGS - Math.min(locales.size(), 2));
+        List<String> salida = new ArrayList<>(lista.subList(0, Math.min(espacio, lista.size())));
+        for (String local : locales) {
+            if (salida.size() < MAXIMO_HASHTAGS) {
+                salida.add(local);
+            }
+        }
+        return salida;
+    }
+
+    private static void agregar(Map<String, String> unicos, String etiqueta) {
+        if (etiqueta != null && etiqueta.length() > 1) {
+            unicos.putIfAbsent(etiqueta.toLowerCase(Locale.ROOT), etiqueta);
+        }
     }
 
     // "Panadería Doña Rosa" -> "#PanaderiaDonaRosa".

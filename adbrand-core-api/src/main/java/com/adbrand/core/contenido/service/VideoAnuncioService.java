@@ -5,6 +5,8 @@ import com.adbrand.core.auth.repository.UsuarioRepository;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
 import com.adbrand.core.previsualizacion.service.PrevisualizacionService;
+import com.adbrand.core.ia.service.LimiteConsumoIa;
+import com.adbrand.core.shared.error.AccesoDenegadoException;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -40,13 +42,20 @@ public class VideoAnuncioService {
     private final PrevisualizacionService previsualizacion;
     private final MarcaDelNegocio marcas;
     private final UsuarioRepository usuarios;
+    private final LimiteConsumoIa limites;
 
     public VideoAnuncioService(ContenidoRepository contenidos, PrevisualizacionService previsualizacion,
-                               MarcaDelNegocio marcas, UsuarioRepository usuarios) {
+                               MarcaDelNegocio marcas, UsuarioRepository usuarios, LimiteConsumoIa limites) {
         this.contenidos = contenidos;
         this.previsualizacion = previsualizacion;
         this.marcas = marcas;
         this.usuarios = usuarios;
+        this.limites = limites;
+    }
+
+    // El video para Reels y Estados es de los planes de pago: con el plan gratis responde 403 PLAN_REQUERIDO.
+    public boolean disponiblePara(Long usuarioId) {
+        return !LimiteConsumoIa.GRATUITO.equals(limites.consumoDelMes(usuarioId).origen());
     }
 
     // Lo que se dibuja en el video. Separado para poder probar la plantilla sin base de datos.
@@ -56,6 +65,10 @@ public class VideoAnuncioService {
 
     @Transactional(readOnly = true)
     public byte[] generar(Long usuarioId, Long contenidoId) {
+        if (!disponiblePara(usuarioId)) {
+            throw new AccesoDenegadoException("PLAN_REQUERIDO",
+                    "El video para Reels y Estados está en los planes de pago. Elige un plan para usarlo.");
+        }
         Contenido contenido = contenidos.findById(contenidoId)
                 .filter(c -> c.getUsuarioId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException("ANUNCIO_NO_ENCONTRADO", "Ese anuncio no existe."));

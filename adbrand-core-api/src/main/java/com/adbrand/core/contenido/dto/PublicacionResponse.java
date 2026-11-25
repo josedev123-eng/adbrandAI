@@ -14,5 +14,7 @@ public record PublicacionResponse(
         // HU 64: lo que conviene corregir para cumplir las reglas de publicidad (vacío si está todo bien).
         List<ObservacionLegal> observaciones,
         // HU 61: logo, colores y eslogan del kit para el afiche y lo que se comparte.
-        MarcaPublicacion marca) {
+        MarcaPublicacion marca,
+        // El video para Reels y Estados es de los planes de pago: false con el plan gratis (la web muestra el candado).
+        boolean videoDisponible) {
 }

@@ -42,8 +42,31 @@ public final class DisenoAnuncio {
         }
     }
 
-    // Lo que se escribe en el anuncio. etiqueta (precio o promo) y llamado pueden ser null.
-    public record Textos(String titular, String etiqueta, String llamado) {
+    // Lo que se escribe en el anuncio. etiqueta (precio o promo), llamado y condiciones pueden ser null.
+    // condiciones: la letra chica de INDECOPI ("Válido hasta el 24/12/2026 o hasta agotar stock (50 unidades).").
+    public record Textos(String titular, String etiqueta, String llamado, String condiciones) {
+
+        public Textos(String titular, String etiqueta, String llamado) {
+            this(titular, etiqueta, llamado, null);
+        }
+
+        public Textos conCondiciones(String nuevas) {
+            return new Textos(titular, etiqueta, llamado, nuevas == null || nuevas.isBlank() ? null : nuevas.trim());
+        }
+    }
+
+    // "2026-12-24" y "50" → "Válido hasta el 24/12/2026 o hasta agotar stock (50 unidades)." (null si no hay nada).
+    public static String condicionesDe(String hasta, String stock) {
+        StringBuilder texto = new StringBuilder();
+        if (hasta != null && hasta.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            String[] partes = hasta.split("-");
+            texto.append("Válido hasta el ").append(partes[2]).append('/').append(partes[1]).append('/').append(partes[0]);
+        }
+        if (stock != null && stock.matches("\\d{1,6}") && Integer.parseInt(stock) > 0) {
+            texto.append(texto.isEmpty() ? "Hasta agotar stock" : " o hasta agotar stock")
+                    .append(" (").append(Integer.parseInt(stock)).append(" unidades)");
+        }
+        return texto.isEmpty() ? null : texto + ".";
     }
 
     private static final Pattern PRECIO = Pattern.compile("(?i)s/\\.?\\s*(\\d+(?:[.,]\\d{1,2})?)");
@@ -91,6 +114,7 @@ public final class DisenoAnuncio {
             case MINIMAL -> minimal(g, foto, textos, marca, ancho, alto);
             case DIVIDIDO -> dividido(g, foto, textos, marca, ancho, alto);
         }
+        letraChica(g, textos.condiciones(), ancho, alto);
         g.dispose();
         return lienzo;
     }
@@ -224,6 +248,27 @@ public final class DisenoAnuncio {
     }
 
     // ---------------------------------------------------------------- piezas
+
+    // HU 64: las condiciones de la promoción (INDECOPI) en una franja fina abajo, en el margen inferior que dejan
+    // todas las plantillas: se leen bien pero no compiten con el titular.
+    private static void letraChica(Graphics2D g, String texto, int w, int h) {
+        if (texto == null || texto.isBlank()) {
+            return;
+        }
+        int u = Math.min(w, h);
+        int alto = (int) (u * 0.045);
+        g.setColor(new Color(0, 0, 0, 150));
+        g.fillRect(0, h - alto, w, alto);
+        int tamano = (int) (u * 0.024);
+        g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, tamano));
+        while (g.getFontMetrics().stringWidth(texto) > w * 0.92 && tamano > 10) {
+            tamano--;
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, tamano));
+        }
+        FontMetrics fm = g.getFontMetrics();
+        g.setColor(new Color(255, 255, 255, 235));
+        g.drawString(texto, (w - fm.stringWidth(texto)) / 2, h - alto + (alto + fm.getAscent() - fm.getDescent()) / 2);
+    }
 
     // La foto llenando el rectángulo sin deformarse; sin foto, un degradado con los colores de la marca.
     private static void foto(Graphics2D g, BufferedImage foto, Marca m, int x, int y, int w, int h) {
