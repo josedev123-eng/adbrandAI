@@ -31,6 +31,7 @@ const CalendarioView = lazy(() => import('./features/calendario/views/Calendario
 const InformeCampanasView = lazy(() => import('./features/reportes/views/InformeCampanasView'))
 const MisAnunciosView = lazy(() => import('./features/misAnuncios/views/MisAnunciosView'))
 const DocumentoLegalView = lazy(() => import('./features/legal/views/DocumentoLegalView'))
+const AyudaView = lazy(() => import('./features/ayuda/views/AyudaView'))
 const TutorialGuiado = lazy(() => import('./features/tutorial/views/TutorialGuiado'))
 
 const CARGANDO_PANTALLA = (
@@ -52,6 +53,7 @@ const RUTAS_PRIVADAS = {
   cuenta: '/mi-cuenta',
   terminos: '/terminos',
   privacidad: '/privacidad',
+  ayuda: '/ayuda',
 }
 const RUTAS_PUBLICAS = {
   inicio: '/',
@@ -60,13 +62,15 @@ const RUTAS_PUBLICAS = {
   recuperar: '/recuperar-contrasena',
   terminos: '/terminos',
   privacidad: '/privacidad',
+  ayuda: '/ayuda',
 }
 const SOLO_SIN_SESION = ['/', '/iniciar-sesion', '/crear-cuenta', '/recuperar-contrasena']
 
 // Si alguien abre /calendario sin sesión, se le pide entrar y luego se le lleva ahí.
 let rutaPendiente = null
 
-const NOMBRES_LEGALES = { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad' }
+// Páginas de información que se abren desde el pie (y se cierran volviendo a donde se estaba).
+const NOMBRES_LEGALES = { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad', ayuda: 'Ayuda' }
 const TEXTO_VOLVER = {
   inicio: 'Volver al inicio',
   login: 'Volver a iniciar sesión',
@@ -156,7 +160,8 @@ function App() {
   if (!usuario) {
     const enLegal = pantallaPublica === 'terminos' || pantallaPublica === 'privacidad'
     // Si se abren los Términos desde el registro, el formulario se oculta (no se desmonta) para no perder lo escrito.
-    const registroVisible = pantallaPublica === 'registro' || (enLegal && volverDeLegal === 'registro')
+    const enAyuda = pantallaPublica === 'ayuda'
+    const registroVisible = pantallaPublica === 'registro' || ((enLegal || enAyuda) && volverDeLegal === 'registro')
 
     if (pantallaPublica === 'inicio') {
       return (
@@ -185,7 +190,7 @@ function App() {
             />
           )}
           {registroVisible && (
-            <div hidden={enLegal}>
+            <div hidden={enLegal || enAyuda}>
               <RegistroView irALogin={() => irALogin()} abrir={abrirLegal} irAInicio={() => setPantallaPublica('inicio')} />
             </div>
           )}
@@ -194,6 +199,11 @@ function App() {
           )}
         </Suspense>
         {pantallaPublica === 'noEncontrada' && <PaginaNoEncontrada alVolver={() => setPantallaPublica('inicio')} />}
+        {enAyuda && (
+          <Suspense fallback={CARGANDO_PANTALLA}>
+            <AyudaView alVolver={cerrarLegal} />
+          </Suspense>
+        )}
         {enLegal && (
           <Suspense fallback={CARGANDO_PANTALLA}>
             <DocumentoLegalView
@@ -223,7 +233,8 @@ function App() {
   function cerrarSesion() {
     setVerTutorial(false)
     // Primero se va a la landing y después se cierra la sesión, así no se "recuerda" la pantalla actual para volver.
-    navegar(RUTAS_PUBLICAS.inicio)
+    // Si hay cambios sin guardar y el usuario decide quedarse, no se cierra la sesión.
+    if (!navegar(RUTAS_PUBLICAS.inicio)) return
     salir()
   }
 
@@ -284,6 +295,7 @@ function App() {
             {(pantalla === 'terminos' || pantalla === 'privacidad') && (
               <DocumentoLegalView tipo={pantalla} alVolver={cerrarLegal} />
             )}
+            {pantalla === 'ayuda' && <AyudaView />}
             {pantalla === 'noEncontrada' && <PaginaNoEncontrada alVolver={() => setPantalla('inicio')} />}
           </Suspense>
         </LimiteDeErrores>

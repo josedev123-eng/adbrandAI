@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- HU 59: carpetas que el FileProvider puede entregar a otras apps (el lector de PDF, WhatsApp, correo). -->
-<!-- Solo la carpeta de documentos de la app, donde se guardan los reportes descargados. -->
-<paths>
-    <external-files-path name="reportes" path="Documents/" />
-    <files-path name="reportes_internos" path="." />
-</paths>

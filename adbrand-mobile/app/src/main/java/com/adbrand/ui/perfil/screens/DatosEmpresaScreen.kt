@@ -1,49 +1,76 @@
 package com.adbrand.ui.perfil.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import com.adbrand.core.theme.CoralAdbrand
-import com.adbrand.core.theme.IndigoAdbrand
+import com.adbrand.core.theme.Blanco
+import com.adbrand.core.theme.DegradadoMarca
+import com.adbrand.core.theme.FondoClaro
+import com.adbrand.core.theme.SuperficieBlanca
+import com.adbrand.core.theme.TextoPrincipal
+import com.adbrand.core.theme.TextoSecundario
 import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.BotonPrincipal
+import com.adbrand.ui.components.BotonSecundario
+import com.adbrand.ui.components.CampoAdbrand
+import com.adbrand.ui.components.ChipSuave
+import com.adbrand.ui.components.EncabezadoPantalla
+import com.adbrand.ui.components.EntradaAnimada
 import com.adbrand.ui.components.LogoApp
+import com.adbrand.ui.components.PantallaScroll
+import com.adbrand.ui.components.TarjetaHero
 import com.adbrand.ui.components.TarjetaSeccion
+import com.adbrand.ui.components.TipoAviso
 import com.adbrand.ui.perfil.viewmodel.DatosEmpresaViewModel
+import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
+// HU 41: datos fiscales y de contacto de la empresa, con cierre de sesión.
 @Composable
 fun DatosEmpresaScreen(
     alCerrarSesion: () -> Unit = {},
@@ -56,89 +83,101 @@ fun DatosEmpresaScreen(
         if (estado.sesionCerrada) alCerrarSesion()
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text("Mi espacio") },
-                actions = {
-                    TextButton(onClick = viewModel::cerrarSesion) { Text("Salir") }
-                }
+    PantallaScroll(espaciado = 16.dp) {
+        Spacer(modifier = Modifier.height(14.dp))
+
+        EntradaAnimada(indice = 0) {
+            EncabezadoPantalla(
+                titulo = "Mi empresa",
+                subtitulo = "Tus datos fiscales y de contacto, siempre a mano."
             )
         }
-    ) { relleno ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(relleno).verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp))
-                    .background(Brush.linearGradient(listOf(IndigoAdbrand, Color(0xFF8B5CF6), CoralAdbrand)))
-                    .padding(20.dp)
+
+        EntradaAnimada(indice = 1) {
+            TarjetaHero(
+                etiqueta = "ESPACIO DE MARCA",
+                titulo = estado.nombreEmpresa.ifBlank { "Tu empresa" },
+                subtitulo = estado.correo.ifBlank { "Cuenta sin correo registrado" },
+                iniciales = inicialesDe(estado.nombreEmpresa)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
-                        LogoApp(tamano = 54.dp, sombra = false)
-                        Column {
-                            Text("ESPACIO DE MARCA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f), fontWeight = FontWeight.Bold)
-                            Text(estado.nombreEmpresa.ifBlank { "Tu empresa" }, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ChipSuave(
+                        texto = "CUENTA ACTIVA",
+                        colorTexto = Blanco,
+                        colorFondo = Color.White.copy(alpha = 0.18f)
+                    )
+                    if (estado.cargando) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = Blanco
+                            )
+                            Text(
+                                text = "Actualizando…",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Blanco.copy(alpha = 0.85f)
+                            )
                         }
-                    }
-                    Text(estado.correo, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .86f))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.onPrimary.copy(alpha = .18f)).padding(horizontal = 11.dp, vertical = 6.dp)) {
-                            Text("CUENTA ACTIVA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-                        }
-                        if (estado.cargando) Text("Actualizando…", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .78f), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
+        }
 
+        EntradaAnimada(indice = 2) {
             TarjetaSeccion(
                 titulo = "Datos de la empresa",
-                subtitulo = "Completa esta información para personalizar tus herramientas."
+                subtitulo = "Completa esta información para tus comprobantes.",
+                icono = Icons.Filled.Business
             ) {
-                OutlinedTextField(
-                    value = estado.ruc,
-                    onValueChange = viewModel::actualizarRuc,
-                    label = { Text("RUC") },
-                    isError = estado.errorRuc != null,
-                    supportingText = { estado.errorRuc?.let { Text(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                CampoAdbrand(
+                    valor = estado.ruc,
+                    alCambiar = viewModel::actualizarRuc,
+                    etiqueta = "RUC",
+                    icono = Icons.Filled.Numbers,
+                    marcador = "20123456789",
+                    error = estado.errorRuc,
+                    ayuda = "11 dígitos que empiezan en 10 o 20.",
+                    tipoTeclado = KeyboardType.Number
                 )
-                OutlinedTextField(
-                    value = estado.razonSocial,
-                    onValueChange = viewModel::actualizarRazonSocial,
-                    label = { Text("Razón social") },
-                    isError = estado.errorRazonSocial != null,
-                    supportingText = { estado.errorRazonSocial?.let { Text(it) } },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+
+                CampoAdbrand(
+                    valor = estado.razonSocial,
+                    alCambiar = viewModel::actualizarRazonSocial,
+                    etiqueta = "Razón social",
+                    icono = Icons.Filled.Business,
+                    error = estado.errorRazonSocial
                 )
-                OutlinedTextField(
-                    value = estado.telefono,
-                    onValueChange = viewModel::actualizarTelefono,
-                    label = { Text("Teléfono") },
-                    isError = estado.errorTelefono != null,
-                    supportingText = { estado.errorTelefono?.let { Text(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+
+                CampoAdbrand(
+                    valor = estado.telefono,
+                    alCambiar = viewModel::actualizarTelefono,
+                    etiqueta = "Teléfono",
+                    icono = Icons.Filled.Phone,
+                    marcador = "987654321",
+                    error = estado.errorTelefono,
+                    tipoTeclado = KeyboardType.Phone
                 )
-                OutlinedTextField(
-                    value = estado.direccion,
-                    onValueChange = viewModel::actualizarDireccion,
-                    label = { Text("Dirección") },
-                    isError = estado.errorDireccion != null,
-                    supportingText = { estado.errorDireccion?.let { Text(it) } },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+
+                CampoAdbrand(
+                    valor = estado.direccion,
+                    alCambiar = viewModel::actualizarDireccion,
+                    etiqueta = "Dirección",
+                    icono = Icons.Filled.Place,
+                    marcador = "Av. Siempre Viva 123, Lima",
+                    error = estado.errorDireccion,
+                    accionIme = ImeAction.Done
                 )
-                estado.error?.let { AvisoEstado(it, tipo = com.adbrand.ui.components.TipoAviso.ERROR) }
-                estado.mensaje?.let { AvisoEstado(it, tipo = com.adbrand.ui.components.TipoAviso.EXITO) }
+
+                estado.error?.let { AvisoEstado(texto = it, tipo = TipoAviso.ERROR) }
+                estado.mensaje?.let { AvisoEstado(texto = it, tipo = TipoAviso.EXITO) }
+
                 BotonPrincipal(
                     texto = "Guardar datos",
                     onClick = viewModel::guardar,
@@ -147,5 +186,30 @@ fun DatosEmpresaScreen(
                 )
             }
         }
+
+        EntradaAnimada(indice = 3) {
+            TarjetaSeccion(
+                titulo = "Sesión",
+                subtitulo = "Cierra sesión en este dispositivo cuando termines.",
+                icono = Icons.AutoMirrored.Filled.Logout
+            ) {
+                BotonSecundario(
+                    texto = "Cerrar sesión",
+                    onClick = viewModel::cerrarSesion,
+                    icono = Icons.AutoMirrored.Filled.Logout
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(26.dp))
+    }
+}
+
+private fun inicialesDe(nombre: String): String {
+    val palabras = nombre.trim().split(" ").filter { it.isNotBlank() }
+    return when {
+        palabras.isEmpty() -> "AB"
+        palabras.size == 1 -> palabras.first().take(2).uppercase()
+        else -> (palabras[0].take(1) + palabras[1].take(1)).uppercase()
     }
 }

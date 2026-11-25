@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta del arranque nativo: debe coincidir con FondoClaro de Compose. -->
+    <color name="papel_fondo">#F4F0E6</color>
+    <color name="tinta_verde">#1F3D33</color>
+    <color name="papel_hueso">#FAF6EC</color>
+    <color name="terracota">#B4512E</color>
+    <color name="ic_launcher_background">#1F3D33</color>
+</resources>

@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.adbrand.core.network.Resultado
 import com.adbrand.data.repository.AuthRepository
-import com.adbrand.data.repository.AuthRepositoryRemoto
+import com.adbrand.data.repository.AuthRepositoryFirebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +23,7 @@ data class LoginEstado(
 )
 
 class LoginViewModel(
-    private val repositorio: AuthRepository = AuthRepositoryRemoto()
+    private val repositorio: AuthRepository = AuthRepositoryFirebase()
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(LoginEstado())

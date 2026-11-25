@@ -22,6 +22,7 @@ import com.adbrand.core.imagen.service.ServicioImagenes;
 import com.adbrand.core.negocio.dto.PerfilNegocioResponse;
 import com.adbrand.core.negocio.service.PerfilNegocioService;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
+import com.adbrand.core.shared.error.SolicitudInvalidaException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -123,6 +124,23 @@ public class OpcionesAnuncioService {
             otra.setElegida(otra.getId().equals(opcion.getId()));
         }
         opcion.setElegida(true);
+        opcion.setContenidoId(anuncio.id());
+        return new OpcionElegidaResponse(anuncio, OpcionAnuncioResponse.desde(opciones.save(opcion)));
+    }
+
+    // HU 55: una nueva versión de la opción elegida se guarda sobre el contenido que
+    // ya existía (con su redacción anterior, lista para comparar) y se actualiza la
+    // relación opción → anuncio. La imagen elegida no cambia.
+    @Transactional
+    public OpcionElegidaResponse regenerarTexto(Long usuarioId, Long opcionId) {
+        OpcionAnuncio opcion = opciones.findByIdAndGeneracionUsuarioId(opcionId, usuarioId)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "OPCION_NO_ENCONTRADA", "La opción de anuncio no existe."));
+        if (opcion.getContenidoId() == null) {
+            throw new SolicitudInvalidaException(
+                    "OPCION_NO_ELEGADA", "Primero elige esta opción para pedir una nueva versión.");
+        }
+        AnuncioGeneradoResponse anuncio = anuncios.regenerar(usuarioId, opcion.getContenidoId());
         opcion.setContenidoId(anuncio.id());
         return new OpcionElegidaResponse(anuncio, OpcionAnuncioResponse.desde(opciones.save(opcion)));
     }

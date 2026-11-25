@@ -229,6 +229,16 @@ class AnuncioServiceTest {
         return captor.getValue();
     }
 
+    // HU 55: regenerar de otra empresa responde 404 en vez de un error interno.
+    @Test
+    void regenerarDeOtraEmpresaRespondeNoEncontrado() {
+        Contenido original = contenidoDe(10L, "2x1 en pan de yema", RedSocial.INSTAGRAM);
+        when(contenidos.findById(10L)).thenReturn(Optional.of(original));
+
+        assertThatThrownBy(() -> servicio.regenerar(2L, 10L))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+    }
+
     // HU 17: los tokens de generar y de regenerar se anotan a la empresa que los pidió.
     @Test
     void losTokensDelAnuncioYDeLaRegeneracionSeAnotanALaEmpresa() {

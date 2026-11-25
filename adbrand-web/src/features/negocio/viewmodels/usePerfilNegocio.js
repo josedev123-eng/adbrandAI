@@ -2,6 +2,7 @@
 // Con perfil guardado se muestra el resumen; "Editar" abre el formulario y al guardar vuelve al resumen.
 import { useEffect, useState } from 'react'
 import { guardarPerfil, obtenerPerfil } from '../models/perfilNegocioApi'
+import { useCambiosSinGuardar } from '../../../shared/hooks/useCambiosSinGuardar'
 
 const PERFIL_VACIO = { nombreComercial: '', rubro: '', publicoObjetivo: '', tono: '', descripcion: '' }
 export const MAXIMO_DESCRIPCION = 500
@@ -27,6 +28,11 @@ export function usePerfilNegocio() {
   const [guardado, setGuardado] = useState(null)
   // Sin perfil guardado se empieza directo en el formulario.
   const [editando, setEditando] = useState(false)
+  // Aviso de cambios sin guardar: lo escrito en el formulario frente a lo guardado.
+  useCambiosSinGuardar(perfil, {
+    original: guardado ? { ...guardado, descripcion: guardado.descripcion ?? '' } : PERFIL_VACIO,
+    activo: editando && !cargando,
+  })
 
   // Criterio 2: al entrar, si ya hay un perfil guardado se carga en el formulario.
   useEffect(() => {

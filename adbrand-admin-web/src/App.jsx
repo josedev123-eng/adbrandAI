@@ -10,6 +10,7 @@ import LimiteDeErrores from './shared/components/LimiteDeErrores'
 import PantallaArranque from './shared/components/PantallaArranque'
 import Cargando from './shared/components/Cargando'
 import PaginaNoEncontrada from './shared/components/PaginaNoEncontrada'
+import PieAdmin from './shared/components/PieAdmin'
 import { navegar, useRuta } from './shared/navegacion/navegacion'
 import { usePendientesRevision } from './shared/hooks/usePendientesRevision'
 import { useTituloPagina } from './shared/hooks/useTituloPagina'
@@ -165,6 +166,7 @@ function App() {
             )}
           </Suspense>
         </LimiteDeErrores>
+        <PieAdmin />
       </div>
     </div>
   )

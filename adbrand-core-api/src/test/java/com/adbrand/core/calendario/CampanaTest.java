@@ -196,6 +196,29 @@ class CampanaTest {
     }
 
     @Test
+    void elDetalleDeUnaCampanaSeAbreDesdeElAvisoYLaAjenaDa404() throws Exception {
+        Long navidad = idDe(crearCampana(duenio, NAVIDAD));
+
+        mvc.perform(get("/api/campanas/" + navidad).header("Authorization", bearer(duenio)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(navidad))
+                .andExpect(jsonPath("$.nombre").value("Navidad 2026"))
+                .andExpect(jsonPath("$.color").value("#C62828"))
+                .andExpect(jsonPath("$.tipo").value("CAMPANA"))
+                .andExpect(jsonPath("$.fechaInicio").value("2026-12-01"))
+                .andExpect(jsonPath("$.fechaFin").value("2026-12-25"));
+
+        Long ajena = idDe(crearCampana(otraEmpresa, NAVIDAD.replace("Navidad 2026", "De otra empresa")));
+        mvc.perform(get("/api/campanas/" + ajena).header("Authorization", bearer(duenio)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("CAMPANA_NO_ENCONTRADA"));
+
+        mvc.perform(get("/api/campanas/999999").header("Authorization", bearer(duenio)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("CAMPANA_NO_ENCONTRADA"));
+    }
+
+    @Test
     void sinTokenDa401() throws Exception {
         mvc.perform(get("/api/campanas"))
                 .andExpect(status().isUnauthorized())

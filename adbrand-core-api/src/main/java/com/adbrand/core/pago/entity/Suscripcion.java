@@ -45,6 +45,11 @@ public class Suscripcion {
     @Column(name = "fecha_vencimiento", nullable = false)
     private LocalDate fechaVencimiento;
 
+    // HU 52: true si la suscripción se renueva sola; false si la PYME debe pagar
+    // antes del vencimiento. El aviso de 3 días cambia su texto según este valor.
+    @Column(name = "renovacion_automatica", nullable = false)
+    private boolean renovacionAutomatica = true;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -75,4 +80,9 @@ public class Suscripcion {
 
     public LocalDate getFechaVencimiento() { return fechaVencimiento; }
     public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
+
+    public boolean isRenovacionAutomatica() { return renovacionAutomatica; }
+    public void setRenovacionAutomatica(boolean renovacionAutomatica) {
+        this.renovacionAutomatica = renovacionAutomatica;
+    }
 }

@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Adbrand" parent="android:style/Theme.Material.Light.NoActionBar">
+    <!-- Ventana nativa en papel: el arranque no parpadea en blanco ni en morado. -->
+    <style name="Theme.Adbrand.Base" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:statusBarColor">#4F46E5</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/papel_fondo</item>
+        <item name="android:statusBarColor">@color/papel_fondo</item>
+        <!-- Antes de API 27 no hay iconos oscuros en la barra de navegación,
+             así que ahí la barra va en tinta para que los iconos se vean. -->
+        <item name="android:navigationBarColor">@color/tinta_verde</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
     </style>
+
+    <style name="Theme.Adbrand" parent="Theme.Adbrand.Base" />
 </resources>

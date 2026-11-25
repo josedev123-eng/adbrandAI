@@ -14,14 +14,14 @@ import com.adbrand.core.contenido.dto.OpcionAnuncioResponse;
 import com.adbrand.core.contenido.dto.OpcionElegidaResponse;
 import com.adbrand.core.contenido.dto.OpcionesAnuncioResponse;
 import com.adbrand.core.contenido.dto.RedSocial;
+import com.adbrand.core.contenido.dto.VersionAnuncioResponse;
+import com.adbrand.core.contenido.dto.VersionesAnuncioResponse;
 import com.adbrand.core.contenido.entity.EstadoContenido;
 import com.adbrand.core.contenido.service.OpcionesAnuncioService;
 import com.adbrand.core.contenido.service.RetoqueAnuncioService;
-import com.adbrand.core.contenido.dto.VersionAnuncioResponse;
-import com.adbrand.core.contenido.dto.VersionesAnuncioResponse;
-import com.adbrand.core.shared.error.SolicitudInvalidaException;
 import com.adbrand.core.negocio.entity.Tono;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
+import com.adbrand.core.shared.error.SolicitudInvalidaException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-// POST /api/contenido/anuncios/opciones y POST /api/contenido/anuncios/opciones/{id}/elegir.
+// HU 55: la app móvil pide una nueva versión del anuncio elegido desde el botón
+// "Nueva versión" y compara la redacción anterior con la nueva.
 @WebMvcTest(OpcionesAnuncioController.class)
 class OpcionesAnuncioControllerTest {
 
@@ -127,12 +128,49 @@ class OpcionesAnuncioControllerTest {
     @Test
     void retocarUnaOpcionNoElegidaResponde400() throws Exception {
         when(retoques.retocar(1L, 101L, "fondo")).thenThrow(
-                new SolicitudInvalidaException("OPCION_NO_ELEGIDA", "Primero elige esta opción para poder retocarla."));
+                new SolicitudInvalidaException("OPCION_NO_ELEIDA", "Primero elige esta opción para poder retocarla."));
 
         mvc.perform(post(URL + "/101/retocar").requestAttr("usuarioId", 1L).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"instruccion\": \"fondo\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("OPCION_NO_ELEGIDA"));
+                .andExpect(jsonPath("$.codigo").value("OPCION_NO_ELEIDA"));
+    }
+
+    // HU 55: "Nueva versión" sobre la opción elegida genera una redacción nueva del texto.
+    @Test
+    void regenerarDevuelveLaNuevaRedaccionDeLaOpcionElegida() throws Exception {
+        when(servicio.regenerarTexto(1L, 102L)).thenReturn(new OpcionElegidaResponse(
+                new AnuncioGeneradoResponse(50L, "Texto nuevo", RedSocial.INSTAGRAM, Tono.CERCANO, false,
+                        EstadoContenido.APROBADO, null),
+                new OpcionAnuncioResponse(102L, 2, "Ilustración", "Texto nuevo", "data:image/jpeg;base64,QUJD",
+                        "cloudflare", false, false, true)));
+
+        mvc.perform(post(URL + "/102/regenerar").requestAttr("usuarioId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.anuncio.id").value(50))
+                .andExpect(jsonPath("$.anuncio.texto").value("Texto nuevo"))
+                .andExpect(jsonPath("$.opcion.id").value(102))
+                .andExpect(jsonPath("$.opcion.elegida").value(true));
+    }
+
+    @Test
+    void regenerarUnaOpcionQueNoElegioResponde400() throws Exception {
+        when(servicio.regenerarTexto(1L, 101L)).thenThrow(
+                new SolicitudInvalidaException("OPCION_NO_ELEIDA", "Primero elige esta opción para pedir una nueva versión."));
+
+        mvc.perform(post(URL + "/101/regenerar").requestAttr("usuarioId", 1L))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("OPCION_NO_ELEIDA"));
+    }
+
+    @Test
+    void regenerarUnaOpcionAjenaResponde404() throws Exception {
+        when(servicio.regenerarTexto(1L, 999L)).thenThrow(
+                new RecursoNoEncontradoException("OPCION_NO_ENCONTRADA", "La opción de anuncio no existe."));
+
+        mvc.perform(post(URL + "/999/regenerar").requestAttr("usuarioId", 1L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("OPCION_NO_ENCONTRADA"));
     }
 
     @Test

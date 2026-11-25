@@ -4,6 +4,7 @@ import com.adbrand.core.calendario.dto.CampanaResponse;
 import com.adbrand.core.calendario.dto.CrearCampanaRequest;
 import com.adbrand.core.calendario.entity.Campana;
 import com.adbrand.core.calendario.repository.CampanaRepository;
+import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import com.adbrand.core.shared.error.SolicitudInvalidaException;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +27,16 @@ public class CampanaService {
                 .stream()
                 .map(CampanaResponse::desde)
                 .toList();
+    }
+
+    // HU 49: detalle de una campaña para abrirla desde el aviso de recordatorio.
+    // Solo se devuelve si pertenece a la empresa que inició sesión.
+    @Transactional(readOnly = true)
+    public CampanaResponse obtener(Long id, Long usuarioId) {
+        return repositorio.findByIdAndUsuarioId(id, usuarioId)
+                .map(CampanaResponse::desde)
+                .orElseThrow(() -> new RecursoNoEncontradoException("CAMPANA_NO_ENCONTRADA",
+                        "La campaña ya no existe o no es de tu empresa."));
     }
 
     @Transactional

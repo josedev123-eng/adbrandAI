@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 27+: barra de navegación en papel con iconos oscuros. -->
+    <style name="Theme.Adbrand" parent="Theme.Adbrand.Base">
+        <item name="android:navigationBarColor">@color/papel_fondo</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

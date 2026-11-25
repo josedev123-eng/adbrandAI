@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { guardarColoresKitMarca, leerPaleta } from '../models/brandkitApi'
 import { MAXIMO_COLORES } from './useEditarKitMarca'
+import { useCambiosSinGuardar } from '../../../shared/hooks/useCambiosSinGuardar'
 
 const COLOR_VALIDO = /^#[0-9A-Fa-f]{6}$/
 
@@ -24,6 +25,8 @@ export function useEditarColores(kit, alGuardar) {
     return paleta.length > 0 ? paleta : [{ hex: '#4F46E5', nombre: '' }]
   })
   const [errores, setErrores] = useState({})
+  // Aviso si sale del editor con cambios sin guardar.
+  useCambiosSinGuardar(colores)
   const [mensaje, setMensaje] = useState(null)
   const [guardando, setGuardando] = useState(false)
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carpetas que el FileProvider puede entregar a otras apps (lector de PDF, WhatsApp, correo):
+     - HU 59: los reportes PDF descargados (documentos de la app).
+     - HU 47 y 48: la imagen del anuncio que se comparte (caché de la app). -->
+<paths>
+    <external-files-path name="reportes" path="Documents/" />
+    <files-path name="reportes_internos" path="." />
+    <cache-path name="compartidas" path="compartidas/" />
+</paths>

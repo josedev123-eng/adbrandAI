@@ -72,6 +72,10 @@ public class Usuario {
     @Column(name = "color_avatar", length = 20)
     private String colorAvatar;
 
+    // App móvil: id de la cuenta en Firebase Authentication (V49). null si nunca entró con Firebase.
+    @Column(name = "firebase_uid", length = 128, unique = true)
+    private String firebaseUid;
+
     // Si ya vio o saltó el tutorial guiado de la web (V46).
     @Column(name = "tutorial_visto", nullable = false)
     private boolean tutorialVisto;
@@ -129,6 +133,8 @@ public class Usuario {
 
     public String getColorAvatar() { return colorAvatar; }
     public void setColorAvatar(String colorAvatar) { this.colorAvatar = colorAvatar; }
+    public String getFirebaseUid() { return firebaseUid; }
+    public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
     public boolean isTutorialVisto() { return tutorialVisto; }
     public void setTutorialVisto(boolean tutorialVisto) { this.tutorialVisto = tutorialVisto; }
 }

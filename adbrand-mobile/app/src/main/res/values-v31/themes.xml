@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash del sistema (Android 12+): papel, sello AB y empalme con Compose. -->
+    <style name="Theme.Adbrand" parent="Theme.Adbrand.Base">
+        <item name="android:navigationBarColor">@color/papel_fondo</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <!-- Android 15+ fuerza un velo oscuro en la barra de navegación; aquí
+             pintamos nosotros el papel, así que lo desactivamos. -->
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:windowSplashScreenBackground">@color/papel_fondo</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/tinta_verde</item>
+        <item name="android:windowSplashScreenAnimationDuration">300</item>
+    </style>
+</resources>
