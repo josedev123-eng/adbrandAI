@@ -78,10 +78,10 @@ object ClienteApi {
 
     // HU 59: descarga un archivo (por ejemplo el PDF del informe) con la sesión, y lo devuelve como bytes.
     // Si responde con error, el cuerpo es el JSON de Spring en texto para mostrar su mensaje.
-    suspend fun descargarAsync(ruta: String): Result<RespuestaArchivo> = withContext(Dispatchers.IO) {
+    suspend fun descargarAsync(ruta: String, clienteHttp: OkHttpClient = cliente): Result<RespuestaArchivo> = withContext(Dispatchers.IO) {
         try {
             val peticion = Request.Builder().url(url(ruta)).get().build()
-            cliente.newCall(peticion).execute().use { respuesta ->
+            clienteHttp.newCall(peticion).execute().use { respuesta ->
                 Result.success(RespuestaArchivo(respuesta.code, respuesta.body?.bytes() ?: ByteArray(0)))
             }
         } catch (error: IOException) {

@@ -80,7 +80,10 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
             tipografiaSecundaria = texto(json, "tipografiaSecundaria"),
             paletaColores = texto(json, "paletaColores"),
             vozMarca = texto(json, "vozMarca"),
-            logoDiseno = logo
+            logoDiseno = logo,
+            // HU 61: el eslogan y el logo (subido o con IA) también van en los anuncios.
+            eslogan = texto(json, "eslogan"),
+            logoImagen = texto(json, "logoImagen").ifBlank { null }
         )
     }
 
@@ -112,11 +115,27 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
         }
     }
 
-    override suspend fun textoParaPublicar(contenidoId: Long): Resultado<String> {
+    override suspend fun listoParaPublicar(contenidoId: Long): Resultado<com.adbrand.domain.model.ListoParaPublicar> {
         val respuesta = com.adbrand.core.network.ClienteApi.ejecutarAsync("GET", "contenido/anuncios/$contenidoId/publicar")
             .getOrElse { return errorDeRed(it) }
         if (!respuesta.esExitosa) return Resultado.Error("No se pudo preparar el texto para publicar.", respuesta.codigo)
-        return runCatching { Resultado.Exito(JSONObject(respuesta.cuerpo).getString("textoParaPublicar")) }
+        return runCatching {
+            val json = JSONObject(respuesta.cuerpo)
+            val lista = json.optJSONArray("observaciones")
+            val observaciones = if (lista == null) emptyList() else (0 until lista.length()).map { i ->
+                val o = lista.getJSONObject(i)
+                o.optString("titulo") to o.optString("detalle")
+            }
+            Resultado.Exito(com.adbrand.domain.model.ListoParaPublicar(json.getString("textoParaPublicar"), observaciones))
+        }
             .getOrElse { Resultado.Error("La respuesta del servidor no tiene el formato esperado.") }
+    }
+
+    override suspend fun video(contenidoId: Long): Resultado<ByteArray> {
+        val archivo = com.adbrand.core.network.ClienteApi
+            .descargarAsync("contenido/anuncios/$contenidoId/video", com.adbrand.core.network.ClienteApi.clienteIa)
+            .getOrElse { return errorDeRed(it) }
+        if (!archivo.esExitosa) return Resultado.Error("No se pudo crear el video del anuncio.", archivo.codigo)
+        return Resultado.Exito(archivo.bytes)
     }
 }

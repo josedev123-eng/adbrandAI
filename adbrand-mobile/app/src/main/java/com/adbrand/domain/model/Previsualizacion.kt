@@ -9,6 +9,10 @@ data class LogoMarca(
     val tipografia: String = ""
 )
 
+// HU 62 y 64: el anuncio listo para publicar (texto con hashtags y WhatsApp) y lo que conviene corregir
+// según las reglas de publicidad de INDECOPI (titulo + detalle; vacío si está todo bien).
+data class ListoParaPublicar(val texto: String, val observaciones: List<Pair<String, String>> = emptyList())
+
 data class KitMarca(
     val id: Long? = null,
     val nombreNegocio: String = "",

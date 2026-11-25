@@ -33,7 +33,11 @@ data class PrevisualizacionEstado(
     val ajuste: AjusteRecorte = AjusteRecorte(),
     val mensajeCompartir: String? = null,
     // Listo para publicar: el texto con hashtags y el enlace de WhatsApp (null mientras llega o si falla).
-    val textoPublicar: String? = null
+    val textoPublicar: String? = null,
+    // HU 64: lo que conviene corregir según INDECOPI (titulo, detalle).
+    val observacionesLegales: List<Pair<String, String>> = emptyList(),
+    // HU 65: el video se arma en el servidor (unos segundos).
+    val creandoVideo: Boolean = false
 )
 
 class PrevisualizacionViewModel(
@@ -88,14 +92,15 @@ class PrevisualizacionViewModel(
                 mensajeCompartir = null,
                 errorImagen = null,
                 cargandoImagen = anuncio.id != null,
-                textoPublicar = null
+                textoPublicar = null,
+                observacionesLegales = emptyList()
             )
         }
         val id = anuncio.id ?: return
         viewModelScope.launch {
-            val texto = repositorio.textoParaPublicar(id)
-            if (texto is Resultado.Exito && _estado.value.publicacion?.id == id) {
-                _estado.update { it.copy(textoPublicar = texto.dato) }
+            val listo = repositorio.listoParaPublicar(id)
+            if (listo is Resultado.Exito && _estado.value.publicacion?.id == id) {
+                _estado.update { it.copy(textoPublicar = listo.dato.texto, observacionesLegales = listo.dato.observaciones) }
             }
         }
         viewModelScope.launch {
@@ -135,6 +140,22 @@ class PrevisualizacionViewModel(
     }
 
     fun avisar(mensaje: String) = _estado.update { it.copy(mensajeCompartir = mensaje) }
+
+    // HU 65: pide el video del anuncio abierto y, cuando llega, la pantalla lo comparte ("alListo").
+    fun crearVideo(alListo: (ByteArray) -> Unit) {
+        val id = _estado.value.publicacion?.id ?: return
+        if (_estado.value.creandoVideo) return
+        viewModelScope.launch {
+            _estado.update { it.copy(creandoVideo = true, mensajeCompartir = null) }
+            when (val resultado = repositorio.video(id)) {
+                is Resultado.Exito -> {
+                    _estado.update { it.copy(creandoVideo = false) }
+                    alListo(resultado.dato)
+                }
+                is Resultado.Error -> _estado.update { it.copy(creandoVideo = false, mensajeCompartir = resultado.mensaje) }
+            }
+        }
+    }
 
     // HU 48: guarda la imagen recortada en la galería (la pantalla hace el guardado y avisa si funcionó).
     fun guardar(guardarEnGaleria: () -> Boolean) {

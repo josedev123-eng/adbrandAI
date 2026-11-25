@@ -287,6 +287,16 @@ class PrevisualizacionViewModelTest {
         assertEquals("2x1 en pan de yema\n\n— Panadería Doña Rosa", mensaje.cuerpo)
         assertEquals("Anuncio de mi negocio", com.adbrand.ui.previsualizacion.recorte.MensajeCompartir.para("", "Hola").asunto)
     }
+
+    // HU 61: lo que se comparte lleva el eslogan del kit en la firma.
+    @Test
+    fun elMensajeCompartidoLlevaElEsloganDelKit() {
+        val mensaje = com.adbrand.ui.previsualizacion.recorte.MensajeCompartir.para(
+            "Panadería Rosa", "2x1 en pan", "“El sabor de tu barrio”"
+        )
+
+        assertEquals("2x1 en pan\n\n— Panadería Rosa: “El sabor de tu barrio”", mensaje.cuerpo)
+    }
 }
 
 private fun formatoDe(codigo: String) = when (codigo) {

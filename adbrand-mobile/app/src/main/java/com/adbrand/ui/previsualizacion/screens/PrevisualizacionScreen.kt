@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -284,7 +285,10 @@ fun PrevisualizacionScreen(
             alGuardar = { guardar -> viewModel.guardar(guardar) },
             alCompartir = { generar, abrirMenu -> viewModel.compartir(generar, abrirMenu) },
             textoPublicar = estado.textoPublicar,
-            alAvisar = viewModel::avisar
+            alAvisar = viewModel::avisar,
+            observacionesLegales = estado.observacionesLegales,
+            creandoVideo = estado.creandoVideo,
+            alCrearVideo = viewModel::crearVideo
         )
     }
 }
@@ -436,7 +440,7 @@ private fun EncabezadoKit(kit: KitMarca) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LogoMarca(kit.logoDiseno, kit.nombreNegocio, principal)
+                LogoMarca(kit.logoDiseno, kit.nombreNegocio, principal, imagen = kit.logoImagen)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = kit.nombreNegocio.ifBlank { "Tu negocio" },
@@ -604,7 +608,21 @@ private fun TarjetaAnuncio(anuncio: Anuncio, kit: KitMarca?, formato: FormatoVis
 // ---------------------------------------------------------------------------
 
 @Composable
-internal fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color, tamano: Dp = 60.dp) {
+internal fun LogoMarca(logo: LogoMarca?, nombre: String, colorPrincipal: Color, tamano: Dp = 60.dp, imagen: String? = null) {
+    // HU 61: el logo como imagen (subido o hecho con IA) tiene prioridad sobre el logo de texto del editor.
+    val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap)?.asImageBitmap() }
+    if (bitmap != null) {
+        androidx.compose.foundation.Image(
+            bitmap = bitmap,
+            contentDescription = "Logo de $nombre",
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier
+                .size(tamano)
+                .clip(CircleShape)
+                .background(Color.White)
+        )
+        return
+    }
     val texto = logo?.texto?.ifBlank { null } ?: nombre.take(2).uppercase().ifBlank { "AB" }
     val fondo = colorDesde(logo?.colorFondo, colorPrincipal)
     val colorTexto = colorDesde(logo?.colorTexto, Color.White)

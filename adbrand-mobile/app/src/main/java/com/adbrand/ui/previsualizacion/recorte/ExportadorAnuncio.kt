@@ -28,7 +28,10 @@ data class MarcaImagen(
     val colorFondoLogo: Int,
     val colorTextoLogo: Int,
     val colorPrincipal: Int,
-    val colorAcento: Int
+    val colorAcento: Int,
+    // HU 61: el logo del kit como imagen (subido o con IA) y el eslogan. Sin logo se dibujan las iniciales.
+    val logo: Bitmap? = null,
+    val eslogan: String = ""
 )
 
 // HU 47 y 48: arma la imagen del anuncio con la marca (tamaño del formato) para guardarla (HU 48) o compartirla (HU 47).
@@ -70,24 +73,48 @@ object ExportadorAnuncio {
             shader = LinearGradient(0f, alto * 0.55f, 0f, alto.toFloat(), 0x00000000, 0xB3000000.toInt(), Shader.TileMode.CLAMP)
         })
 
-        // Logo (cuadro redondeado con las iniciales del kit) y nombre del negocio.
+        // Logo del kit (imagen en un círculo blanco, o cuadro redondeado con las iniciales) y nombre del negocio.
         val ladoLogo = corto * 0.11f
         val logo = RectF(margen, margen, margen + ladoLogo, margen + ladoLogo)
-        lienzo.drawRoundRect(logo, ladoLogo * 0.25f, ladoLogo * 0.25f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = marca.colorFondoLogo })
-        val pinturaLogo = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = marca.colorTextoLogo
-            typeface = Typeface.DEFAULT_BOLD
-            textSize = ladoLogo * 0.42f
-            textAlign = Paint.Align.CENTER
+        if (marca.logo != null) {
+            val borde = ladoLogo * 0.06f
+            lienzo.drawOval(RectF(logo.left - borde, logo.top - borde, logo.right + borde, logo.bottom + borde),
+                Paint(Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.WHITE })
+            lienzo.save()
+            lienzo.clipPath(android.graphics.Path().apply { addOval(logo, android.graphics.Path.Direction.CW) })
+            lienzo.drawBitmap(marca.logo, recorteCuadrado(marca.logo), logo, Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG))
+            lienzo.restore()
+        } else {
+            lienzo.drawRoundRect(logo, ladoLogo * 0.25f, ladoLogo * 0.25f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = marca.colorFondoLogo })
+            val pinturaLogo = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = marca.colorTextoLogo
+                typeface = Typeface.DEFAULT_BOLD
+                textSize = ladoLogo * 0.42f
+                textAlign = Paint.Align.CENTER
+            }
+            lienzo.drawText(marca.textoLogo.take(3), logo.centerX(), logo.centerY() - (pinturaLogo.descent() + pinturaLogo.ascent()) / 2, pinturaLogo)
         }
-        lienzo.drawText(marca.textoLogo.take(3), logo.centerX(), logo.centerY() - (pinturaLogo.descent() + pinturaLogo.ascent()) / 2, pinturaLogo)
         val pinturaNombre = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.WHITE
             typeface = Typeface.DEFAULT_BOLD
             textSize = corto * 0.042f
         }
-        val nombre = TextUtils.ellipsize(marca.nombreNegocio, pinturaNombre, ancho - logo.right - margen * 2, TextUtils.TruncateAt.END)
-        lienzo.drawText(nombre.toString(), logo.right + margen * 0.5f, logo.centerY() - (pinturaNombre.descent() + pinturaNombre.ascent()) / 2, pinturaNombre)
+        val anchoNombre = ancho - logo.right - margen * 2
+        val nombre = TextUtils.ellipsize(marca.nombreNegocio, pinturaNombre, anchoNombre, TextUtils.TruncateAt.END)
+        val eslogan = marca.eslogan.trim().trim('"', '“', '”')
+        if (eslogan.isEmpty()) {
+            lienzo.drawText(nombre.toString(), logo.right + margen * 0.5f, logo.centerY() - (pinturaNombre.descent() + pinturaNombre.ascent()) / 2, pinturaNombre)
+        } else {
+            // HU 61: el nombre arriba y el eslogan en cursiva debajo, a la altura del logo.
+            lienzo.drawText(nombre.toString(), logo.right + margen * 0.5f, logo.centerY() - pinturaNombre.descent(), pinturaNombre)
+            val pinturaEslogan = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = android.graphics.Color.WHITE
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+                textSize = corto * 0.03f
+            }
+            val lema = TextUtils.ellipsize("“$eslogan”", pinturaEslogan, anchoNombre, TextUtils.TruncateAt.END)
+            lienzo.drawText(lema.toString(), logo.right + margen * 0.5f, logo.centerY() - pinturaEslogan.ascent() + ladoLogo * 0.04f, pinturaEslogan)
+        }
 
         // Texto del anuncio abajo.
         val pintura = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -108,6 +135,14 @@ object ExportadorAnuncio {
         lienzo.restore()
         lienzo.drawRect(margen, alto - margen - barra, margen + pintura.textSize * 2.2f, alto - margen, Paint().apply { color = marca.colorAcento })
         return salida
+    }
+
+    // El cuadrado central de la imagen, para que el logo llene el círculo sin deformarse.
+    private fun recorteCuadrado(imagen: Bitmap): Rect {
+        val lado = minOf(imagen.width, imagen.height)
+        val x = (imagen.width - lado) / 2
+        val y = (imagen.height - lado) / 2
+        return Rect(x, y, x + lado, y + lado)
     }
 
     // HU 48: guarda la imagen en la galería (Imágenes/AdBrand). Desde Android 10 no pide permisos.

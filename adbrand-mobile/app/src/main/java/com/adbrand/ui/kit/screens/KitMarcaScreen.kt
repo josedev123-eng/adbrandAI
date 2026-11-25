@@ -334,7 +334,7 @@ private fun TarjetaKit(kit: KitMarca) {
     val colores = coloresDe(kit.paletaColores)
     Tarjeta {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            LogoMarca(kit.logoDiseno, kit.nombreNegocio, colores.firstOrNull() ?: IndigoAdbrand)
+            LogoMarca(kit.logoDiseno, kit.nombreNegocio, colores.firstOrNull() ?: IndigoAdbrand, imagen = kit.logoImagen)
             Column {
                 Text(kit.nombreNegocio, style = MaterialTheme.typography.titleLarge, color = TextoPrincipal)
                 Text(kit.sector, style = MaterialTheme.typography.bodySmall, color = TextoSecundario)

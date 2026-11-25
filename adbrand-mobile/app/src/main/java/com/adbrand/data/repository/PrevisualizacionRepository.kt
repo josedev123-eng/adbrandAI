@@ -15,7 +15,11 @@ interface PrevisualizacionRepository {
     // HU 47: registrar en el backend que se compartió el anuncio.
     suspend fun registrarCompartido(contenidoId: Long, formato: String): Resultado<Unit>
 
-    // Listo para publicar: el texto con hashtags (marca + rubro + Perú) y el enlace "Pide por WhatsApp".
+    // HU 62 y 64: el texto con hashtags y "Pide por WhatsApp", y la revisión de reglas de publicidad.
     // Por defecto falla, así las pruebas con datos falsos no tienen que implementarlo.
-    suspend fun textoParaPublicar(contenidoId: Long): Resultado<String> = Resultado.Error("No disponible")
+    suspend fun listoParaPublicar(contenidoId: Long): Resultado<com.adbrand.domain.model.ListoParaPublicar> =
+        Resultado.Error("No disponible")
+
+    // HU 65: el video vertical del anuncio (MP4 de 8 s) para Reels, TikTok o Estados de WhatsApp.
+    suspend fun video(contenidoId: Long): Resultado<ByteArray> = Resultado.Error("No disponible")
 }

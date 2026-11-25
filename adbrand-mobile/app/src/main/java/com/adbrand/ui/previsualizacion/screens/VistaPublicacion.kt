@@ -122,13 +122,19 @@ fun VistaPublicacion(
     alCompartir: (generar: () -> Uri?, abrirMenu: (Uri) -> Unit) -> Unit = { _, _ -> },
     // Listo para publicar: texto con hashtags y "Pide por WhatsApp". Si no llegó, se comparte el texto del anuncio.
     textoPublicar: String? = null,
-    alAvisar: (String) -> Unit = {}
+    alAvisar: (String) -> Unit = {},
+    // HU 64: "Tu oferta, sin multas".
+    observacionesLegales: List<Pair<String, String>> = emptyList(),
+    // HU 65: video para Reels y Estados.
+    creandoVideo: Boolean = false,
+    alCrearVideo: (alListo: (ByteArray) -> Unit) -> Unit = {}
 ) {
     val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
     val contexto = LocalContext.current
     val acento = coloresDe(kit?.paletaColores.orEmpty()).getOrNull(1) ?: Color(0xFFF97316)
     val principal = colorPrincipal(kit)
     val nombreArchivo = "adbrand_${anuncio.id ?: 0}_${formato.codigo.lowercase()}"
+    val logoKit = remember(kit?.logoImagen) { kit?.logoImagen?.let(::decodificarBitmap) }
 
     // La imagen del anuncio con la marca, recortada como se ve en el marco (HU 46, 47 y 48).
     fun imagenFinal(): Bitmap {
@@ -141,7 +147,10 @@ fun VistaPublicacion(
             colorFondoLogo = colorDesde(logo?.colorFondo, principal).toArgb(),
             colorTextoLogo = colorDesde(logo?.colorTexto, Color.White).toArgb(),
             colorPrincipal = principal.toArgb(),
-            colorAcento = acento.toArgb()
+            colorAcento = acento.toArgb(),
+            // HU 61: el logo del kit (subido o con IA) y el eslogan elegido.
+            logo = logoKit,
+            eslogan = kit?.eslogan.orEmpty()
         )
         return ExportadorAnuncio.crearImagen(bitmap, recorte, formato.ancho, formato.alto, anuncio.textoAjustado, marca)
     }
@@ -203,7 +212,7 @@ fun VistaPublicacion(
                                 ExportadorAnuncio.abrirMenuCompartir(
                                     contexto, uri,
                                     textoPublicar?.let { MensajeCompartir("Anuncio de ${nombreDe(kit)}", it) }
-                                        ?: MensajeCompartir.para(nombreDe(kit), anuncio.textoAjustado)
+                                        ?: MensajeCompartir.para(nombreDe(kit), anuncio.textoAjustado, kit?.eslogan.orEmpty())
                                 )
                             }
                         )
@@ -211,6 +220,26 @@ fun VistaPublicacion(
                     enabled = !cargandoImagen,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Compartir (WhatsApp, Instagram…)") }
+                // HU 64: lo que falta según las reglas de publicidad de INDECOPI (fecha de vigencia, stock…).
+                if (observacionesLegales.isNotEmpty()) {
+                    Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                "Tu oferta, sin multas (reglas de INDECOPI)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            observacionesLegales.forEach { (titulo, detalle) ->
+                                Text("• $titulo. $detalle", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text(
+                                "Agrégalo al texto antes de publicar. Son recomendaciones, no una asesoría legal.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
                 if (textoPublicar != null) {
                     OutlinedButton(
                         onClick = {
@@ -221,6 +250,24 @@ fun VistaPublicacion(
                     ) { Text("Copiar texto con hashtags") }
                     Text(
                         "Al compartir, el texto con tus hashtags y tu WhatsApp se copia solo: pégalo en Instagram o Facebook.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                // HU 65: video vertical de 8 s con la imagen, el texto y la marca, listo para Reels o Estados.
+                OutlinedButton(
+                    onClick = {
+                        alCrearVideo { bytes ->
+                            textoPublicar?.let { copiarAlPortapapeles(contexto, it) }
+                            compartirVideo(contexto, bytes, "anuncio_${anuncio.id ?: 0}", textoPublicar ?: anuncio.textoAjustado)
+                        }
+                    },
+                    enabled = !creandoVideo,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (creandoVideo) "Creando tu video…" else "🎬 Video para Reels y Estados") }
+                if (creandoVideo) {
+                    Text(
+                        "Armando tu video de 8 segundos con tu marca… suele tardar menos de medio minuto.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -263,15 +310,29 @@ private fun AnuncioEnFormato(
             Box {
                 ImagenAnuncio(anuncio, kit, bitmap, cargando, proporcion(formato), ajuste, alAjustar)
                 Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    LogoMarca(kit?.logoDiseno, nombre, principal, tamano = if (vertical) 34.dp else 38.dp)
+                    LogoMarca(kit?.logoDiseno, nombre, principal, tamano = if (vertical) 34.dp else 38.dp, imagen = kit?.logoImagen)
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        nombre,
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontFamily = familiaDe(kit?.tipografiaPrimaria.orEmpty()),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            nombre,
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontFamily = familiaDe(kit?.tipografiaPrimaria.orEmpty()),
+                            fontWeight = FontWeight.Bold
+                        )
+                        // HU 61: el eslogan del kit.
+                        kit?.eslogan?.ifBlank { null }?.let { eslogan ->
+                            Text(
+                                "“$eslogan”",
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontFamily = familiaDe(kit.tipografiaSecundaria),
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
                 Column(
                     modifier = Modifier
@@ -380,7 +441,7 @@ internal fun proporcion(formato: FormatoVista): Float =
     if (formato.alto <= 0) 1f else formato.ancho.toFloat() / formato.alto.toFloat()
 
 // "data:image/jpeg;base64,..." → imagen. null si no es una imagen que Android pueda dibujar (por ejemplo, SVG).
-private fun decodificarBitmap(dataUrl: String): Bitmap? = runCatching {
+internal fun decodificarBitmap(dataUrl: String): Bitmap? = runCatching {
     val bytes = Base64.decode(dataUrl.substringAfter("base64,"), Base64.DEFAULT)
     BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 }.getOrNull()
@@ -389,4 +450,19 @@ private fun decodificarBitmap(dataUrl: String): Bitmap? = runCatching {
 private fun copiarAlPortapapeles(contexto: android.content.Context, texto: String) {
     val portapapeles = contexto.getSystemService(android.content.ClipboardManager::class.java) ?: return
     portapapeles.setPrimaryClip(android.content.ClipData.newPlainText("Anuncio", texto))
+}
+
+// HU 65: guarda el video en la caché de la app y abre el menú para compartirlo (WhatsApp, Instagram, TikTok…).
+private fun compartirVideo(contexto: android.content.Context, bytes: ByteArray, nombre: String, texto: String) {
+    val carpeta = java.io.File(contexto.cacheDir, "compartidas").apply { mkdirs() }
+    val archivo = java.io.File(carpeta, "$nombre.mp4").apply { writeBytes(bytes) }
+    val uri = androidx.core.content.FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+    val intento = android.content.Intent(android.content.Intent.ACTION_SEND)
+        .setType("video/mp4")
+        .putExtra(android.content.Intent.EXTRA_STREAM, uri)
+        .putExtra(android.content.Intent.EXTRA_TEXT, texto)
+        .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    contexto.startActivity(
+        android.content.Intent.createChooser(intento, "Compartir video").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
 }

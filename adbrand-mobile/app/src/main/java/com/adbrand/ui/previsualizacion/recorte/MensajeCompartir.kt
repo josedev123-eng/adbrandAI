@@ -4,7 +4,8 @@ package com.adbrand.ui.previsualizacion.recorte
 data class MensajeCompartir(val asunto: String, val cuerpo: String) {
 
     companion object {
-        fun para(nombreNegocio: String, textoAnuncio: String): MensajeCompartir {
+        // HU 61: si la marca tiene eslogan, la firma lo lleva ("— Panadería Rosa: “El sabor de tu barrio”").
+        fun para(nombreNegocio: String, textoAnuncio: String, eslogan: String = ""): MensajeCompartir {
             val negocio = nombreNegocio.ifBlank { "mi negocio" }
             return MensajeCompartir(
                 asunto = "Anuncio de $negocio",
@@ -12,6 +13,8 @@ data class MensajeCompartir(val asunto: String, val cuerpo: String) {
                     append(textoAnuncio.trim())
                     if (isNotEmpty()) append("\n\n")
                     append("— $negocio")
+                    val lema = eslogan.trim().trim('"', '“', '”')
+                    if (lema.isNotEmpty()) append(": “$lema”")
                 }
             )
         }
