@@ -45,6 +45,8 @@ import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.BotonPrincipal
 import com.adbrand.ui.components.TipoAviso
 import com.adbrand.ui.revision.viewmodel.MAXIMO_MOTIVO_RECHAZO
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.adbrand.ui.revision.viewmodel.EstadosContenidoViewModel
 import com.adbrand.ui.revision.viewmodel.RevisionViewModel
 
@@ -59,18 +61,36 @@ fun RevisionScreen(
     val estado by viewModel.estado.collectAsState()
     val estados by estadosViewModel.estado.collectAsState()
 
-    LaunchedEffect(Unit) {
+    // HU 56: se actualiza al abrir la pestaña y cada vez que se vuelve a ella o a la app.
+    LifecycleResumeEffect(Unit) {
         viewModel.cargar()
         estadosViewModel.cargar()
+        onPauseOrDispose { }
+    }
+
+    // HU 56, criterio 1: después de aprobar o rechazar, la sección muestra el estado nuevo
+    // sin cerrar la app (Jose muestra un aviso y saca el contenido de la lista por revisar).
+    LaunchedEffect(estado.aviso, estado.contenidos.size) {
+        if (estado.aviso != null) estadosViewModel.cargar()
     }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Por revisar") }) }
     ) { relleno ->
-        LazyColumn(
+        // HU 56, criterio 2: al deslizar la lista hacia abajo se actualizan las dos listas.
+        PullToRefreshBox(
+            isRefreshing = estados.cargando,
+            onRefresh = {
+                viewModel.cargar()
+                estadosViewModel.cargar()
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(relleno)
+        ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -125,6 +145,7 @@ fun RevisionScreen(
             }
 
             seccionEstados(estados, alReintentar = estadosViewModel::cargar)
+        }
         }
     }
 
