@@ -21,3 +21,21 @@
 .mi-anuncio-motivo { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--bad-soft); color: var(--bad); font-size: 0.88rem; }
 .mi-anuncio-motivo-revision { background: var(--warn-soft); color: var(--warn); }
 .mi-anuncio-motivo-aprobado { background: var(--ok-soft); color: var(--ok); }
+.mi-anuncio-pedido { margin: -4px 0 0; color: var(--muted); font-size: 0.82rem; }
+
+/* Cancelar publicación y anuncio cancelado. */
+.mi-anuncio-cancelar { align-self: flex-start; margin-top: 4px; padding: 8px 14px; font-size: 0.88rem; }
+.mi-anuncio-confirmar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bad-soft); font-size: 0.9rem; }
+.mi-anuncio-confirmar span { flex: 1 1 260px; }
+.mi-anuncio-cancelado { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.estado-cancelado { background: var(--surface-2); color: var(--muted); }
+.mis-anuncios-ver-mas { align-self: center; margin: 8px auto 0; display: block; }
+
+/* HU 63: buscador, acciones de la tarjeta y nota de cancelar. */
+.mis-anuncios-buscador { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; margin-bottom: 12px; }
+.mis-anuncios-buscador .campo { margin: 0; flex: 1 1 220px; }
+.mis-anuncios-buscador .campo:nth-child(2) { flex: 0 1 180px; }
+.mis-anuncios-buscador input { width: 100%; }
+.mi-anuncio-accion { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.mi-anuncio-nota { color: var(--muted); font-size: 0.8rem; }
+.mi-anuncio-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
