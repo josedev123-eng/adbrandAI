@@ -45,17 +45,24 @@ import com.adbrand.ui.components.AvisoEstado
 import com.adbrand.ui.components.BotonPrincipal
 import com.adbrand.ui.components.TipoAviso
 import com.adbrand.ui.revision.viewmodel.MAXIMO_MOTIVO_RECHAZO
+import com.adbrand.ui.revision.viewmodel.EstadosContenidoViewModel
 import com.adbrand.ui.revision.viewmodel.RevisionViewModel
 
 // HU 53 y 54: lista de contenidos por revisar con los botones Aprobar y Rechazar.
+// HU 56: debajo, el estado actual de cada contenido con una etiqueta de color.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RevisionScreen(
-    viewModel: RevisionViewModel = viewModel()
+    viewModel: RevisionViewModel = viewModel(),
+    estadosViewModel: EstadosContenidoViewModel = viewModel()
 ) {
     val estado by viewModel.estado.collectAsState()
+    val estados by estadosViewModel.estado.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.cargar() }
+    LaunchedEffect(Unit) {
+        viewModel.cargar()
+        estadosViewModel.cargar()
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Por revisar") }) }
@@ -116,6 +123,8 @@ fun RevisionScreen(
                     alRechazar = { viewModel.pedirRechazo(contenido.id) }
                 )
             }
+
+            seccionEstados(estados, alReintentar = estadosViewModel::cargar)
         }
     }
 
