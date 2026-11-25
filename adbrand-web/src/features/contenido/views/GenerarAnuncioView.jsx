@@ -3,7 +3,6 @@
 import { NOMBRES_TONO, REDES } from '../models/anunciosApi'
 import { MAXIMO_OFERTA, useGenerarAnuncio } from '../viewmodels/useGenerarAnuncio'
 import { useSegundosEsperando } from '../viewmodels/useSegundosEsperando'
-import { useSesion } from '../../../app/context/useSesion'
 import ListoParaPublicar from './ListoParaPublicar'
 import './GenerarAnuncioView.css'
 
@@ -63,7 +62,6 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
   // HU 13: si el filtro lo marcó como dudoso, no se puede copiar para publicarlo.
   const enRevision = anuncio?.estado === 'DUDOSO'
   const cargando = generando || regenerando
-  const { usuario } = useSesion()
   const segundosEsperando = useSegundosEsperando(generando)
 
   function alEnviar(evento) {
@@ -265,8 +263,6 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
                 <ListoParaPublicar
                   key={anuncio.id}
                   anuncioId={anuncio.id}
-                  imagen={opcionElegida?.imagen}
-                  nombre={usuario?.nombreEmpresa}
                   irAMiCuenta={irAMiCuenta}
                 />
               )}

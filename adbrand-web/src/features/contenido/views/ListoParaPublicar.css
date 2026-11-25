@@ -13,3 +13,23 @@
 /* Verde de WhatsApp: es el color que la gente reconoce para "enviar por WhatsApp". */
 .boton-whatsapp { padding: 10px 16px; border: 0; border-radius: 10px; background: #1f9d55; color: #fff; font-weight: 700; cursor: pointer; }
 .boton-whatsapp:hover { background: #18834a; }
+
+/* HU 64: "Tu oferta, sin multas". */
+.publicar-legal { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; background: var(--warn-soft); color: var(--fg); }
+.publicar-legal strong { color: var(--warn); }
+.publicar-legal ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.publicar-legal small { color: var(--muted); }
+.publicar-legal-campos { display: flex; flex-wrap: wrap; gap: 10px; }
+.publicar-legal-campos .campo { margin: 0; flex: 1 1 160px; }
+.publicar-legal-ok { margin: 0; color: var(--ok); font-weight: 600; font-size: 0.9rem; }
+
+/* HU 61: la imagen final con la marca y el selector de formato. */
+.imagen-marca { display: flex; flex-direction: column; gap: 10px; }
+.imagen-marca-formatos { display: flex; flex-wrap: wrap; gap: 6px; }
+.imagen-marca-formato { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); cursor: pointer; font-size: 0.85rem; }
+.imagen-marca-formato small { color: var(--muted); }
+.imagen-marca-formato-activo { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.imagen-marca-marco { position: relative; display: flex; align-items: center; justify-content: center; min-height: 180px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+.imagen-marca-marco img { display: block; width: 100%; height: auto; }
+.imagen-marca-vertical img { width: auto; max-width: 100%; max-height: 520px; }
+.imagen-marca-cargando { color: var(--muted); font-size: 0.9rem; padding: 16px; }

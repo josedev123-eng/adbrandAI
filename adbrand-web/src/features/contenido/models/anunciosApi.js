@@ -1,5 +1,5 @@
 // Model: llamadas a la API de contenido (HU-10, HU-12).
-import { apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
+import { apiDescargar, apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
 
 // Los mismos valores que el enum RedSocial de Spring.
 export const REDES = [
@@ -48,4 +48,15 @@ export function usarVersion(opcionId, numero) {
 // Listo para publicar: texto con hashtags (marca + rubro + Perú) y enlace "Pedir por WhatsApp" si hay celular.
 export function prepararPublicacion(id) {
   return apiRequest(`/contenido/anuncios/${id}/publicar`)
+}
+
+// HU 65: video corto del anuncio (MP4 vertical de 8 s) para Reels, TikTok o Estados de WhatsApp. Tarda unos segundos.
+export function descargarVideoAnuncio(id) {
+  return apiDescargar(`/contenido/anuncios/${id}/video`, { tiempoMaximo: TIEMPO_IA })
+}
+
+// HU 61: la imagen final del anuncio (JPG) con el logo, los colores y el eslogan del kit.
+// formato: CUADRADO (publicación), VERTICAL (historia o estado) u HORIZONTAL.
+export function descargarImagenFinal(id, formato = 'CUADRADO') {
+  return apiDescargar(`/contenido/anuncios/${id}/imagen-final?formato=${encodeURIComponent(formato.toLowerCase())}`)
 }
