@@ -15,3 +15,12 @@ export function guardarEmpresa(datos) {
 export function cambiarMiContrasena(actual, nueva) {
   return apiRequest('/cuenta/contrasena', { method: 'POST', body: { actual, nueva } })
 }
+
+// Avatar con imagen: una foto (data URL) o el logo del kit. Devuelve el usuario con "avatarImagen" ya reducida.
+export function cambiarAvatar({ imagen, usarLogoDelKit = false }) {
+  return apiRequest('/cuenta/avatar', { method: 'PUT', body: { imagen, usarLogoDelKit } })
+}
+
+export function quitarAvatar() {
+  return apiRequest('/cuenta/avatar', { method: 'DELETE' })
+}

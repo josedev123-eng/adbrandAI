@@ -12,6 +12,9 @@ export function useListoParaPublicar(anuncioId) {
   const [copiado, setCopiado] = useState(false)
   // HU 65: el video se arma en el servidor (unos segundos).
   const [creandoVideo, setCreandoVideo] = useState(false)
+  // "Subir a mi estado": se pide el anuncio en vertical y se abre el menú del celular (WhatsApp → Mi estado).
+  const [subiendoEstado, setSubiendoEstado] = useState(false)
+  const [avisoEstado, setAvisoEstado] = useState(null)
   // HU 64: lo que el dueño completa para cumplir las reglas (hasta cuándo vale y cuántas unidades hay).
   const [condiciones, setCondiciones] = useState({ hasta: '', stock: '' })
   const textoFinal = publicacion ? conCondiciones(publicacion.textoParaPublicar, condiciones) : ''
@@ -87,9 +90,51 @@ export function useListoParaPublicar(anuncioId) {
     }
   }
 
+  // WhatsApp no deja que una web publique el estado sola: en el celular se abre el menú para compartir con la
+  // imagen vertical (ahí eliges WhatsApp → "Mi estado"); en la computadora se descarga para subirla desde el celular.
+  async function subirAEstado() {
+    setError(null)
+    setAvisoEstado(null)
+    setSubiendoEstado(true)
+    try {
+      const blob = await descargarImagenFinal(anuncioId, 'VERTICAL')
+      const archivo = new File([blob], `estado-${anuncioId}.jpg`, { type: 'image/jpeg' })
+      if (navigator.canShare?.({ files: [archivo] })) {
+        try {
+          await navigator.clipboard?.writeText(textoFinal)
+        } catch {
+          // Si no se puede copiar el texto, igual se comparte la imagen.
+        }
+        try {
+          await navigator.share({ files: [archivo] })
+          setAvisoEstado('Elige WhatsApp y luego "Mi estado". El texto con tus hashtags ya está copiado.')
+        } catch {
+          // Cerró el menú de compartir: no es un error.
+        }
+        return
+      }
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = archivo.name
+      enlace.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setAvisoEstado(
+        'Descargamos tu anuncio en vertical. Pásalo a tu celular y en WhatsApp ve a Novedades → "Añadir estado". Desde el celular, este botón abre WhatsApp directo.',
+      )
+    } catch (e) {
+      setError(e?.message || 'No se pudo preparar tu estado.')
+    } finally {
+      setSubiendoEstado(false)
+    }
+  }
+
   return {
     publicacion,
     textoFinal,
+    subiendoEstado,
+    avisoEstado,
+    subirAEstado,
     creandoVideo,
     descargarVideo,
     condiciones,

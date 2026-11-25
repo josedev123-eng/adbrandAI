@@ -35,7 +35,18 @@ function IconoOpcion({ id }) {
 // HU-22: "empresa" es el nombre de la empresa que inició sesión y "alSalir" cierra la sesión.
 // "contadores": números junto a una opción, por ejemplo decisiones del moderador sin ver en "Mis anuncios".
 // En celular el menú se esconde detrás del botón ☰; "forzarAbierto" lo deja abierto (por ejemplo, durante el tutorial).
-export default function MenuUsuario({ actual, alCambiar, empresa, colorAvatar, alSalir, contadores = {}, forzarAbierto = false }) {
+// "plan": el plan de la empresa ("Plan Gratis", "Plan Pro"…) debajo del nombre; "imagenAvatar": su foto o logo (data URL).
+export default function MenuUsuario({
+  actual,
+  alCambiar,
+  empresa,
+  colorAvatar,
+  imagenAvatar,
+  plan,
+  alSalir,
+  contadores = {},
+  forzarAbierto = false,
+}) {
   const [abierto, setAbierto] = useState(false)
   const visible = abierto || forzarAbierto
   const totalAvisos = Object.values(contadores).reduce((suma, n) => suma + (n > 0 ? n : 0), 0)
@@ -99,10 +110,25 @@ export default function MenuUsuario({ actual, alCambiar, empresa, colorAvatar, a
         </nav>
         {alSalir && (
           <div className="menu-sesion">
-            <span className="menu-avatar" aria-hidden="true" style={{ background: colorDeAvatar(empresa, colorAvatar) }}>
-              {iniciales(empresa)}
-            </span>
-            {empresa && <span className="menu-empresa">{empresa}</span>}
+            {/* El avatar, el nombre y el plan llevan a "Mi Cuenta" (como en Claude o ChatGPT). */}
+            <button
+              type="button"
+              className={actual === 'cuenta' ? 'menu-perfil menu-perfil-activo' : 'menu-perfil'}
+              aria-label={`Mi Cuenta${empresa ? ` de ${empresa}` : ''}${plan ? `, ${plan}` : ''}`}
+              onClick={() => elegir('cuenta')}
+            >
+              {imagenAvatar ? (
+                <img className="menu-avatar menu-avatar-imagen" src={imagenAvatar} alt="" />
+              ) : (
+                <span className="menu-avatar" aria-hidden="true" style={{ background: colorDeAvatar(empresa, colorAvatar) }}>
+                  {iniciales(empresa)}
+                </span>
+              )}
+              <span className="menu-perfil-textos" aria-hidden="true">
+                {empresa && <span className="menu-empresa">{empresa}</span>}
+                {plan && <span className="menu-plan">{plan}</span>}
+              </span>
+            </button>
             <button type="button" className="menu-salir" onClick={alSalir}>
               Cerrar sesión
             </button>

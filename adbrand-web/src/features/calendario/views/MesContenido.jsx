@@ -66,7 +66,7 @@ export default function MesContenido({ alCrearAnuncio }) {
                     <strong>{f.nombre}</strong>
                     <p>{f.idea}</p>
                     {f.diasFaltan >= 0 && alCrearAnuncio && (
-                      <button type="button" className="boton-ia" onClick={() => alCrearAnuncio(f.idea)}>
+                      <button type="button" className="boton-ia" onClick={() => alCrearAnuncio(f.idea, f.nombre)}>
                         ✦ Crear anuncio para esta fecha
                       </button>
                     )}

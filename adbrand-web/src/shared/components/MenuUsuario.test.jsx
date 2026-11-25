@@ -58,4 +58,14 @@ describe('MenuUsuario (menú lateral)', () => {
 
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false')
   })
+
+  it('debajo del nombre muestra el plan y al tocar el avatar lleva a "Mi Cuenta"', async () => {
+    const alCambiar = vi.fn()
+    render(<MenuUsuario actual="inicio" alCambiar={alCambiar} empresa="Cafetería Don Pepe" plan="Plan Pro" alSalir={vi.fn()} />)
+
+    expect(screen.getByText('Plan Pro')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Mi Cuenta de Cafetería Don Pepe, Plan Pro' }))
+
+    expect(alCambiar).toHaveBeenCalledWith('cuenta')
+  })
 })

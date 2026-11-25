@@ -103,6 +103,7 @@ export function useIdentidadMarca(kit, alActualizar) {
     pedirPropuestas,
     elegirPropuesta: (imagen) => guardarLogo(imagen, 'IA'),
     descargarManual,
+    guardarLogo,
     descargarLogo,
   }
 }

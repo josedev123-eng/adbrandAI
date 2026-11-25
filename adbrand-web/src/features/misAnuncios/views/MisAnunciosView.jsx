@@ -6,7 +6,7 @@ import { FILTROS, useMisAnuncios } from '../viewmodels/useMisAnuncios'
 import ListoParaPublicar from '../../contenido/views/ListoParaPublicar'
 import './MisAnunciosView.css'
 
-const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook', TIKTOK: 'TikTok' }
+const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook', WHATSAPP: 'WhatsApp', TIKTOK: 'TikTok' }
 const FECHA = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
 
 function TarjetaAnuncio({ anuncio }) {

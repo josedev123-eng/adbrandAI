@@ -2,11 +2,12 @@
 // La lógica de carga está en usePlanes; la de cada formulario, en su viewmodel.
 import Cargando from '../../../shared/components/Cargando'
 import { useState } from 'react'
-import { conMiles, NUMERO } from '../models/formatoPlanes'
+import { conMiles, NUMERO, ventajasDe } from '../models/formatoPlanes'
 import { usePlanes } from '../viewmodels/usePlanes'
 import ConfirmacionPagoView from './ConfirmacionPagoView'
 import PagoConTarjetaView from './PagoConTarjetaView'
 import PagoConYapeView from './PagoConYapeView'
+import UsoDelMes from './UsoDelMes'
 import './pagoComun.css'
 import './PlanesView.css'
 
@@ -53,6 +54,8 @@ export default function PlanesView() {
 
       {error && <p className="aviso aviso-error">{error}</p>}
 
+      <UsoDelMes />
+
       {planActual && (
         <p className="aviso aviso-info plan-actual-aviso">
           Tu plan actual: <b>{planActual.gratuito ? 'Gratuito' : planActual.nombre}</b>
@@ -75,9 +78,12 @@ export default function PlanesView() {
               <span> / mes</span>
             </p>
             <p className="plan-descripcion">{conMiles(plan.descripcion)}</p>
-            <p className="plan-tokens">
-              {NUMERO.format(Number(plan.limiteTokens))} tokens de IA al mes
-            </p>
+            {/* Qué trae el plan, empezando por cuántos anuncios alcanzan. */}
+            <ul className="plan-ventajas" aria-label={`Ventajas del plan ${plan.nombre}`}>
+              {ventajasDe(plan).map((ventaja) => (
+                <li key={ventaja}>{ventaja}</li>
+              ))}
+            </ul>
             <div className="plan-acciones">
               <button
                 type="button"

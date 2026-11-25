@@ -2,6 +2,7 @@
 import Aviso from '../../../shared/components/Aviso'
 import Cargando from '../../../shared/components/Cargando'
 import { useIdentidadMarca } from '../viewmodels/useIdentidadMarca'
+import RetocarLogo from './RetocarLogo'
 import './IdentidadMarca.css'
 
 export default function IdentidadMarca({ kit, alActualizar }) {
@@ -18,6 +19,7 @@ export default function IdentidadMarca({ kit, alActualizar }) {
     elegirPropuesta,
     descargarManual,
     descargarLogo,
+    guardarLogo,
   } = useIdentidadMarca(kit, alActualizar)
 
   const opciones = kit.esloganOpciones ?? []
@@ -92,6 +94,10 @@ export default function IdentidadMarca({ kit, alActualizar }) {
             </div>
           ) : (
             <p className="kit-vacio">Sube el logo que ya tienes o deja que la IA te proponga 3.</p>
+          )}
+          {/* Mejorar el logo con instrucciones cortas, como los retoques de anuncios. */}
+          {kit.logoImagen && (
+            <RetocarLogo kit={kit} guardando={guardando} alUsar={(imagen) => guardarLogo(imagen, 'IA')} />
           )}
           <div className="identidad-logo-acciones">
             <label className="boton-secundario identidad-subir">

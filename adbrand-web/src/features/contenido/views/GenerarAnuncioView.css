@@ -79,3 +79,6 @@
   .anuncio-bienvenida { align-items: flex-start; padding: 16px; }
   .anuncio-bienvenida-etiqueta { display: none; }
 }
+
+/* Anuncio para una fecha del calendario (Halloween, Navidad…). */
+.anuncio-ocasion { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--ia-soft); color: var(--fg); font-size: 0.9rem; }

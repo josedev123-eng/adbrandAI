@@ -13,6 +13,7 @@ vi.mock('../models/anunciosApi', async (importOriginal) => ({
   regenerarAnuncio: vi.fn(),
   retocarImagen: vi.fn(),
   usarVersion: vi.fn(),
+  descargarImagenFinal: vi.fn(() => Promise.reject(new Error('sin diseño'))),
 }))
 
 vi.mock('../../../app/context/useSesion', () => ({ useSesion: () => ({ usuario: { nombreEmpresa: 'Panadería Rosa' } }) }))
@@ -87,7 +88,7 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
 
     expect(elegirOpcion).toHaveBeenCalledWith(103)
     expect(await screen.findByRole('button', { name: 'Copiar texto' })).toBeInTheDocument()
-    expect(screen.getByAltText('Imagen del anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/jpeg;base64,IMG3')
+    expect(screen.getByAltText('Tu anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/jpeg;base64,IMG3')
     expect(within(tercera).getByText('✓ Elegida')).toBeInTheDocument()
   })
 
@@ -135,7 +136,7 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
       await userEvent.click(screen.getByRole('button', { name: '✦ Retocar' }))
 
       expect(retocarImagen).toHaveBeenCalledWith(103, 'fondo más claro')
-      expect(await screen.findByAltText('Imagen del anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/png;base64,RETOQUE')
+      expect(await screen.findByAltText('Tu anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/png;base64,RETOQUE')
       expect(screen.getByRole('button', { name: 'Usar la versión 1 (original)' })).toBeEnabled()
       expect(screen.getByRole('button', { name: 'Usar la versión 2: fondo más claro' })).toBeDisabled()
     })
@@ -159,7 +160,7 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
       await userEvent.click(await screen.findByRole('button', { name: 'Usar la versión 1 (original)' }))
 
       expect(usarVersion).toHaveBeenCalledWith(103, 1)
-      expect(await screen.findByAltText('Imagen del anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/jpeg;base64,IMG3')
+      expect(await screen.findByAltText('Tu anuncio (Minimalista)')).toHaveAttribute('src', 'data:image/jpeg;base64,IMG3')
     })
     it('muestra cuántos retoques quedan y avisa al llegar al límite', async () => {
       retocarImagen.mockResolvedValueOnce({ ...historial(2), retoquesRestantes: 19 })
@@ -209,5 +210,32 @@ describe('GenerarAnuncioView: límite de tokens del plan', () => {
     expect(await screen.findByText(/Primero completa el perfil de tu negocio/)).toBeInTheDocument()
     expect(screen.getByText('Falta tu perfil')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '✦ Generar 4 opciones' })).toBeDisabled()
+  })
+
+  it('desde una fecha del calendario el anuncio se ambienta en la festividad, y se puede quitar', async () => {
+    sessionStorage.setItem('adbrand.ofertaSugerida', 'Cupcakes de calabaza 2x1')
+    sessionStorage.setItem('adbrand.ocasionSugerida', 'Halloween')
+    render(<GenerarAnuncioView />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Para Halloween')
+    await userEvent.click(screen.getByRole('button', { name: '✦ Generar 4 opciones' }))
+    expect(generarOpciones).toHaveBeenCalledWith({ oferta: 'Cupcakes de calabaza 2x1', redSocial: 'INSTAGRAM', ocasion: 'Halloween' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar' }))
+    expect(screen.queryByText(/Para/, { selector: 'span' })).toBeNull()
+  })
+
+  it('cada opción se ve como un anuncio diseñado cuando Spring manda el diseño', async () => {
+    generarOpciones.mockResolvedValue({
+      generacionId: 7,
+      oferta: '2x1 en pan de yema',
+      redSocial: 'INSTAGRAM',
+      opciones: [1, 2, 3, 4].map((numero) => ({ ...opcion(numero), diseno: `data:image/jpeg;base64,DISENO${numero}` })),
+    })
+    render(<GenerarAnuncioView />)
+    await pedirOpciones()
+
+    const tarjetas = await screen.findAllByRole('article', { name: /Opción \d/ })
+    expect(within(tarjetas[0]).getByRole('img')).toHaveAttribute('src', 'data:image/jpeg;base64,DISENO1')
   })
 })

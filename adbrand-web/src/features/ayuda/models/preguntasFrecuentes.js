@@ -8,7 +8,7 @@ export const TEMAS_AYUDA = [
       {
         pregunta: '¿Por dónde empiezo?',
         respuesta:
-          'Completa "Mi negocio" (rubro, productos, público y tono). Luego genera tu kit de marca y después crea tu primer anuncio. Si quieres un recorrido guiado, ve a Mi cuenta → "Ver el tutorial otra vez".',
+          'Completa "Mi negocio" (rubro, productos, público y tono). Luego genera tu kit de marca y después crea tu primer anuncio. Si quieres un recorrido guiado, ve a Mi Cuenta → "Ver el tutorial otra vez".',
       },
       {
         pregunta: '¿Necesito saber de diseño?',

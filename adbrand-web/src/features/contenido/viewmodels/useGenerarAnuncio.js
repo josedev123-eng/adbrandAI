@@ -2,8 +2,16 @@
 // y la guarda como anuncio. Después se puede copiar o regenerar (HU-10, HU-12).
 import { useEffect, useState } from 'react'
 import { obtenerPerfil } from '../../negocio/models/perfilNegocioApi'
-import { leerOfertaSugerida, olvidarOfertaSugerida } from '../models/ofertaSugerida'
-import { elegirOpcion, generarOpciones, regenerarAnuncio, retocarImagen, usarVersion } from '../models/anunciosApi'
+import { leerOcasionSugerida, leerOfertaSugerida, olvidarOfertaSugerida } from '../models/ofertaSugerida'
+import {
+  descargarImagenFinal,
+  elegirOpcion,
+  generarOpciones,
+  regenerarAnuncio,
+  retocarImagen,
+  usarVersion,
+} from '../models/anunciosApi'
+import { comoDataUrl } from './useImagenConMarca'
 
 export const MAXIMO_OFERTA = 300
 export const MAXIMO_INSTRUCCION = 300
@@ -17,8 +25,13 @@ function validar(solicitud) {
 }
 
 export function useGenerarAnuncio() {
-  // HU 63: si viene de "Tu mes de contenido", la idea de la fecha llega ya escrita.
-  const [solicitud, setSolicitud] = useState(() => ({ oferta: leerOfertaSugerida().slice(0, MAXIMO_OFERTA), redSocial: 'INSTAGRAM' }))
+  // HU 63: si viene de "Tu mes de contenido", la idea de la fecha llega ya escrita y con su festividad ("ocasion"),
+  // para que el texto y la imagen se ambienten en ella. Desde "Crear anuncio" directo no hay ocasión.
+  const [solicitud, setSolicitud] = useState(() => ({
+    oferta: leerOfertaSugerida().slice(0, MAXIMO_OFERTA),
+    redSocial: 'INSTAGRAM',
+    ocasion: leerOcasionSugerida() || undefined,
+  }))
   useEffect(() => olvidarOfertaSugerida(), [])
   const [errores, setErrores] = useState({})
   const [opciones, setOpciones] = useState([])
@@ -48,6 +61,11 @@ export function useGenerarAnuncio() {
       activo = false
     }
   }, [])
+
+  // El dueño puede quitar la festividad y crear un anuncio normal.
+  function quitarOcasion() {
+    setSolicitud((actual) => ({ ...actual, ocasion: undefined }))
+  }
 
   function cambiarCampo(campo, valor) {
     setSolicitud((actual) => ({ ...actual, [campo]: valor }))
@@ -164,11 +182,24 @@ export function useGenerarAnuncio() {
       setHistorial(respuesta)
       setOpcionElegida((actual) => ({ ...actual, imagen: respuesta.imagenActual }))
       setInstruccion('')
+      actualizarDiseno()
     } catch (error) {
       if (error.status === 400 && error.campos?.instruccion) setErrorInstruccion(error.campos.instruccion)
       else mostrarError(error, 'No se pudo retocar la imagen.')
     } finally {
       setRetocando(false)
+    }
+  }
+
+  // Ajuste 14: después de retocar la foto, el diseño del anuncio se vuelve a armar con la foto nueva.
+  async function actualizarDiseno() {
+    if (!anuncio?.id) return
+    try {
+      const diseno = await descargarImagenFinal(anuncio.id, 'CUADRADO').then(comoDataUrl)
+      setOpcionElegida((actual) => (actual ? { ...actual, diseno } : actual))
+    } catch {
+      // Sin diseño nuevo se sigue viendo la foto: no es un error para el dueño.
+      setOpcionElegida((actual) => (actual ? { ...actual, diseno: undefined } : actual))
     }
   }
 
@@ -181,6 +212,7 @@ export function useGenerarAnuncio() {
       const respuesta = await usarVersion(opcionElegida.id, numero)
       setHistorial(respuesta)
       setOpcionElegida((actual) => ({ ...actual, imagen: respuesta.imagenActual }))
+      actualizarDiseno()
     } catch (error) {
       mostrarError(error, 'No se pudo cambiar de versión.')
     } finally {
@@ -201,6 +233,7 @@ export function useGenerarAnuncio() {
 
   return {
     solicitud,
+    quitarOcasion,
     errores,
     opciones,
     anuncio,

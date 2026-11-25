@@ -2,7 +2,8 @@
 // Se arma con elementos SVG de React (no se inserta HTML), así un texto raro no puede ejecutar nada.
 const RADIO_ESQUINA = { CIRCULO: 50, CUADRADO: 0, REDONDEADO: 22 }
 
-export default function LogoMarca({ diseno, tamano = 160 }) {
+// "soloLetras": sin la forma de fondo; las letras van en el color de la marca (para mostrar el concepto, no un sello).
+export default function LogoMarca({ diseno, tamano = 160, soloLetras = false }) {
   if (!diseno) return null
   const { texto, forma, colorFondo, colorTexto, tipografia } = diseno
   // Cuanto más largo el texto, más chica la letra para que entre en el logo.
@@ -17,13 +18,13 @@ export default function LogoMarca({ diseno, tamano = 160 }) {
       role="img"
       aria-label={`Logo: ${texto}`}
     >
-      <rect x="0" y="0" width="100" height="100" rx={RADIO_ESQUINA[forma] ?? 0} fill={colorFondo} />
+      {!soloLetras && <rect x="0" y="0" width="100" height="100" rx={RADIO_ESQUINA[forma] ?? 0} fill={colorFondo} />}
       <text
         x="50"
         y="50"
         textAnchor="middle"
         dominantBaseline="central"
-        fill={colorTexto}
+        fill={soloLetras ? colorFondo : colorTexto}
         fontFamily={tipografia}
         fontSize={letra}
         fontWeight="700"

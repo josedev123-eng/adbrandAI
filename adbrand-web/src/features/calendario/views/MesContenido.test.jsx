@@ -43,7 +43,7 @@ describe('MesContenido', () => {
     expect(botones).toHaveLength(1)
     await userEvent.click(botones[0])
 
-    expect(alCrearAnuncio).toHaveBeenCalledWith('Panetones y chocolate caliente para la Nochebuena.')
+    expect(alCrearAnuncio).toHaveBeenCalledWith('Panetones y chocolate caliente para la Nochebuena.', 'Navidad')
   })
 
   it('cambia de mes con las flechas', async () => {

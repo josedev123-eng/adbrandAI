@@ -1,0 +1,16 @@
+/* Contacto (soporte): formulario corto. */
+.pagina.pagina-contacto { max-width: 680px; }
+.contacto-volver { align-self: flex-start; }
+.contacto-formulario { display: flex; flex-direction: column; gap: 14px; }
+.contacto-formulario input, .contacto-formulario select, .contacto-formulario textarea { width: 100%; }
+.contacto-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.contacto-fila .campo { margin: 0; }
+.contacto-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.contacto-acciones small { color: var(--muted); }
+.contacto-enviado { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.contacto-enviado h2 { margin: 0; color: var(--ok); font-size: 1.15rem; }
+.contacto-enviado p { margin: 0; }
+
+@media (max-width: 600px) {
+  .contacto-fila { grid-template-columns: 1fr; }
+}

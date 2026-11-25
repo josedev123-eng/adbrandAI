@@ -23,7 +23,7 @@ export const SECCIONES = [
     opciones: [
       { id: 'perfil', nombre: 'Mi negocio' },
       { id: 'planes', nombre: 'Planes' },
-      { id: 'cuenta', nombre: 'Mi cuenta' },
+      { id: 'cuenta', nombre: 'Mi Cuenta' },
       { id: 'ayuda', nombre: 'Ayuda' },
     ],
   },

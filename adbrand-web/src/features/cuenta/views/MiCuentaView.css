@@ -30,3 +30,13 @@
 /* Tarjeta para volver a ver el tutorial guiado. */
 .cuenta-tutorial { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
 .cuenta-tutorial p { margin: 4px 0 0; color: var(--muted); max-width: 40em; }
+
+/* Avatar con imagen (logo del kit o foto). */
+.cuenta-avatar-imagen { object-fit: cover; background: #ffffff; border: 1px solid var(--line); }
+.avatar-imagen { display: flex; flex-direction: column; gap: 8px; }
+.avatar-imagen h2 { margin: 0; font-size: 1.1rem; }
+.avatar-imagen-ayuda { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.avatar-imagen-fila { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.avatar-imagen-vista { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line); background: #ffffff; }
+.avatar-imagen-vacia { display: grid; place-items: center; color: var(--muted); font-size: 0.75rem; background: var(--surface-2); }
+.avatar-imagen-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

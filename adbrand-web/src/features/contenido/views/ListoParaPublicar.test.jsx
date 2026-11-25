@@ -53,7 +53,7 @@ describe('ListoParaPublicar', () => {
 
     expect(await screen.findByText(/Agrega tu celular en/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Afiche con QR/ })).toBeNull()
-    await userEvent.click(screen.getByRole('button', { name: 'Mi cuenta' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mi Cuenta' }))
     expect(irAMiCuenta).toHaveBeenCalled()
   })
 
@@ -88,6 +88,17 @@ describe('ListoParaPublicar', () => {
       'Promo 2x1\n\nVálido hasta el 24/12/2026 o hasta agotar stock (50 unidades).\n\n📲 Pide por WhatsApp: wa.me/51987654321\n\n#Promo',
     )
     expect(conCondiciones(texto, { hasta: '', stock: '' })).toBe(texto)
+  })
+
+  it('Subir a mi estado: pide el anuncio vertical y, en la computadora, lo descarga y explica qué hacer', async () => {
+    prepararPublicacion.mockResolvedValue({ ...CON_WHATSAPP, observaciones: [] })
+    render(<ListoParaPublicar anuncioId={5} />)
+    await userEvent.click(screen.getByRole('button', { name: '📣 Listo para publicar' }))
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Subir a mi estado' }))
+
+    expect(descargarImagenFinal).toHaveBeenCalledWith(5, 'VERTICAL')
+    expect(await screen.findByText(/Añadir estado/)).toBeInTheDocument()
   })
 
   it('HU 65: descarga el video del anuncio para Reels y Estados', async () => {

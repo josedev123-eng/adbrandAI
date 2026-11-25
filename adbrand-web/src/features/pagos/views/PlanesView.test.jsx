@@ -1,13 +1,14 @@
 // HU 25: la pantalla de planes muestra el nombre, el precio y el límite de tokens de cada plan.
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { obtenerConsumoMes, obtenerPlanes } from '../models/pagosApi'
+import { obtenerConsumoMes, obtenerPlanes, obtenerResumenUso } from '../models/pagosApi'
 import { conMiles } from '../models/formatoPlanes'
 import PlanesView from './PlanesView'
 
 vi.mock('../models/pagosApi', () => ({
   obtenerPlanes: vi.fn(),
   obtenerConsumoMes: vi.fn(() => Promise.resolve({ origen: 'GRATUITO', limite: 10000 })),
+  obtenerResumenUso: vi.fn(() => Promise.reject(new Error('sin datos'))),
 }))
 
 const PLANES = [
@@ -32,6 +33,35 @@ describe('PlanesView', () => {
     expect(screen.getByText(/29\.90/)).toBeInTheDocument()
     expect(screen.getByText(/99\.90/)).toBeInTheDocument()
     expect(screen.getByText(/400[.,]000 tokens/)).toBeInTheDocument()
+  })
+
+  it('cada plan dice cuántos anuncios alcanzan y qué trae', async () => {
+    obtenerPlanes.mockResolvedValue(PLANES)
+
+    render(<PlanesView />)
+
+    const pro = await screen.findByRole('list', { name: 'Ventajas del plan Pro' })
+    expect(pro).toHaveTextContent('≈ 30 anuncios con 4 opciones al mes')
+    expect(pro).toHaveTextContent('Video para Reels y Estados de WhatsApp')
+    expect(screen.getByRole('list', { name: 'Ventajas del plan Premium' })).toHaveTextContent('Atención preferente')
+  })
+
+  it('muestra el uso del mes con barras de progreso', async () => {
+    obtenerPlanes.mockResolvedValue(PLANES)
+    obtenerResumenUso.mockResolvedValueOnce({
+      consumo: { tokensUsados: 75000, limite: 150000, porcentaje: 50, origen: 'PLAN', plan: 'Pro', enAlerta: false, agotado: false },
+      anunciosCreados: 12,
+      retoquesUsados: 3,
+      limiteRetoques: 20,
+    })
+
+    render(<PlanesView />)
+
+    expect(await screen.findByText('Tu uso este mes')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'IA del plan' })).toHaveAttribute('aria-valuenow', '50')
+    expect(screen.getByText(/te alcanza para ≈ 15 anuncios más/)).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Retoques de imagen' })).toHaveAttribute('aria-valuenow', '15')
   })
 
   it('avisa cuando no se pudieron cargar los planes', async () => {

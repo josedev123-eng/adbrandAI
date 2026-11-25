@@ -14,7 +14,8 @@
   font-size: 0.85rem;
 }
 
-.pie-pagina b { color: var(--ia); }
+/* El ".AI" va en coral, el mismo punto del logo. */
+.pie-pagina b { color: var(--acento-texto); }
 .pie-pagina nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .pie-pagina-compacto { padding: 14px 24px; background: transparent; font-size: 0.8rem; }
 

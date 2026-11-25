@@ -11,7 +11,13 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
   return (
     <article className={opcion.elegida ? 'opcion opcion-elegida' : 'opcion'} aria-label={`Opción ${opcion.numero}`}>
       <div className="opcion-imagen">
-        <img src={opcion.imagen} loading="lazy" decoding="async" alt={`Imagen de la opción ${opcion.numero} (${opcion.estilo})`} />
+        {/* Ajuste 14: la opción se ve como el anuncio diseñado (con titular, precio, botón y tu marca). */}
+        <img
+          src={opcion.diseno ?? opcion.imagen}
+          loading="lazy"
+          decoding="async"
+          alt={`Anuncio de la opción ${opcion.numero} (${opcion.estilo})`}
+        />
         <span className="opcion-estilo">{opcion.estilo}</span>
         {opcion.elegida && <span className="opcion-marca">✓ Elegida</span>}
       </div>
@@ -34,6 +40,7 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
 export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }) {
   const {
     solicitud,
+    quitarOcasion,
     errores,
     opciones,
     anuncio,
@@ -106,6 +113,16 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
 
       <div className="anuncio-columnas">
         <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
+          {solicitud.ocasion && (
+            <p className="anuncio-ocasion" role="status">
+              <span>
+                ✦ Para <b>{solicitud.ocasion}</b>: el texto y la imagen se ambientarán en esta fecha.
+              </span>
+              <button type="button" className="boton-enlace" onClick={quitarOcasion}>
+                Quitar
+              </button>
+            </p>
+          )}
           <label className={errores.oferta ? 'campo campo-con-error' : 'campo'}>
             <span>¿Qué quieres anunciar?</span>
             <textarea
@@ -166,7 +183,11 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
             <>
               {opcionElegida && (
                 <div className={retocando ? 'resultado-imagen-marco resultado-imagen-cargando' : 'resultado-imagen-marco'}>
-                  <img className="resultado-imagen" src={opcionElegida.imagen} alt={`Imagen del anuncio (${opcionElegida.estilo})`} />
+                  <img
+                    className="resultado-imagen"
+                    src={opcionElegida.diseno ?? opcionElegida.imagen}
+                    alt={`Tu anuncio (${opcionElegida.estilo})`}
+                  />
                   {retocando && <span className="resultado-imagen-aviso">La IA está retocando tu imagen...</span>}
                 </div>
               )}
@@ -182,7 +203,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
                   noValidate
                 >
                   <label className={errorInstruccion ? 'campo campo-con-error' : 'campo'}>
-                    <span>¿Qué quieres cambiar de la imagen?</span>
+                    <span>¿Qué quieres cambiar de la foto? (el diseño con tu marca se arma solo)</span>
                     <div className="retoque-fila">
                       <input
                         type="text"

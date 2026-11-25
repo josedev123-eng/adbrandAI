@@ -61,7 +61,7 @@ export const PASOS_TUTORIAL = [
     emoji: '🎉',
     color: 'var(--primary-soft)',
     titulo: '¡Todo listo para despegar!',
-    texto: 'Si alguna vez quieres repasar, este recorrido te espera en Mi cuenta. Ahora sí: ¡a completar los datos de tu negocio!',
+    texto: 'Si alguna vez quieres repasar, este recorrido te espera en Mi Cuenta. Ahora sí: ¡a completar los datos de tu negocio!',
     final: true,
   },
 ]

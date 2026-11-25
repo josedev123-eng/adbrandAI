@@ -5,6 +5,7 @@ import { apiDescargar, apiRequest, TIEMPO_IA } from '../../../shared/services/ap
 export const REDES = [
   { valor: 'INSTAGRAM', nombre: 'Instagram' },
   { valor: 'FACEBOOK', nombre: 'Facebook' },
+  { valor: 'WHATSAPP', nombre: 'Estados de WhatsApp' },
 ]
 
 export const NOMBRES_TONO = {

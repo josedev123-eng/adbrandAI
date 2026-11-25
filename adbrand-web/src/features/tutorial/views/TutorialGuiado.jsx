@@ -148,7 +148,7 @@ export default function TutorialGuiado({ empresa, alTerminar, alSaltar }) {
           <div className="tutorial-confirmar" role="group" aria-labelledby="tutorial-confirmar-titulo">
             <p id="tutorial-confirmar-titulo">
               <strong>¿Terminar el recorrido aquí?</strong> 🤔 Te faltan {total - indice - 1} pasos. Puedes verlo
-              completo cuando quieras desde <strong>Mi cuenta</strong>.
+              completo cuando quieras desde <strong>Mi Cuenta</strong>.
             </p>
             <div className="tutorial-acciones">
               <button type="button" className="boton-secundario" onClick={terminar}>

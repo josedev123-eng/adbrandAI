@@ -47,3 +47,8 @@ export function obtenerComprobante(pagoId) {
 export function obtenerConsumoMes() {
   return apiRequest('/consumo/mes')
 }
+
+// "Tu uso este mes": consumo de IA + anuncios creados + retoques de imagen usados.
+export function obtenerResumenUso() {
+  return apiRequest('/consumo/resumen-mes')
+}

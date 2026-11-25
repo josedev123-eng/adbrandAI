@@ -2,7 +2,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { elegirEslogan, guardarLogoImagen, proponerLogos } from '../models/brandkitApi'
+import { elegirEslogan, guardarLogoImagen, proponerLogos, retocarLogo } from '../models/brandkitApi'
 import IdentidadMarca from './IdentidadMarca'
 
 vi.mock('../models/brandkitApi', () => ({
@@ -10,6 +10,7 @@ vi.mock('../models/brandkitApi', () => ({
   guardarLogoImagen: vi.fn(),
   proponerLogos: vi.fn(),
   descargarManualMarca: vi.fn(),
+  retocarLogo: vi.fn(),
 }))
 
 const KIT = {
@@ -65,5 +66,29 @@ describe('IdentidadMarca', () => {
 
     expect(await screen.findByText('Sube tu logo en PNG o JPG.')).toBeInTheDocument()
     expect(guardarLogoImagen).not.toHaveBeenCalled()
+  })
+
+  it('con logo se puede editar con IA y usar la versión nueva', async () => {
+    retocarLogo.mockResolvedValue({ imagen: 'data:image/png;base64,NUEVO', retoquesRestantes: 9 })
+    guardarLogoImagen.mockResolvedValue({ ...KIT, logoImagen: 'data:image/png;base64,NUEVO' })
+    const alActualizar = vi.fn()
+    render(<IdentidadMarca kit={{ ...KIT, logoImagen: 'data:image/png;base64,ACTUAL' }} alActualizar={alActualizar} />)
+
+    await userEvent.type(screen.getByPlaceholderText(/taza más grande/), 'pon la taza más grande')
+    await userEvent.click(screen.getByRole('button', { name: '✦ Editar con IA' }))
+
+    expect(retocarLogo).toHaveBeenCalledWith(7, 'pon la taza más grande')
+    expect(await screen.findByAltText('Versión nueva del logo')).toHaveAttribute('src', 'data:image/png;base64,NUEVO')
+    expect(screen.getByText('Te quedan 9 retoques este mes.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Usar esta versión' }))
+    expect(guardarLogoImagen).toHaveBeenCalledWith(7, 'data:image/png;base64,NUEVO', 'IA')
+    await waitFor(() => expect(alActualizar).toHaveBeenCalled())
+  })
+
+  it('sin logo no ofrece editarlo con IA', () => {
+    render(<IdentidadMarca kit={KIT} alActualizar={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: '✦ Editar con IA' })).toBeNull()
   })
 })

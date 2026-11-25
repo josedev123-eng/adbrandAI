@@ -30,7 +30,7 @@
 .pagina-auth .pagina-cabecera h1 { margin: 0; color: #26153e; font-size: clamp(1.8rem, 6vw, 2.35rem); letter-spacing: -.04em; }
 .pagina-auth .pagina-cabecera p { color: #746b82; line-height: 1.55; }
 .pagina-auth .auth-marca { color: #2f1c4a; font-size: 1.55rem; letter-spacing: -.04em; }
-.pagina-auth .auth-marca b { color: #8636bd; }
+.pagina-auth .auth-marca b { color: var(--acento-texto); }
 .pagina-auth .boton-primario { min-height: 48px; border-radius: 12px; box-shadow: 0 6px 16px rgba(79, 70, 229, .22); }
 .pagina-auth .campo input { min-height: 46px; border-radius: 12px; background: #fff; }
 .pagina-auth .auth-enlaces { justify-content: center; gap: 12px 24px; }
@@ -43,7 +43,7 @@
   margin: 0;
 }
 
-.auth-marca b { color: var(--ia); }
+.auth-marca b { color: var(--acento-texto); }
 
 .auth-enlaces {
   display: flex;

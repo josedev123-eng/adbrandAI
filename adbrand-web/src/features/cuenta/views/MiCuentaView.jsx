@@ -3,6 +3,7 @@
 import Aviso from '../../../shared/components/Aviso'
 import Cargando from '../../../shared/components/Cargando'
 import { COLORES_AVATAR, colorDeAvatar } from '../../../shared/components/avatar'
+import AvatarConImagen from './AvatarConImagen'
 import { iniciales } from '../../../shared/components/opcionesMenuUsuario'
 import { useMiCuenta } from '../viewmodels/useMiCuenta'
 import CambiarContrasena from './CambiarContrasena'
@@ -27,7 +28,8 @@ function Dato({ etiqueta, valor }) {
   )
 }
 
-export default function MiCuentaView({ alGuardar, alVerTutorial }) {
+// "avatarImagen" y "alCambiarAvatar": el avatar con imagen (logo del kit o foto) que también se ve en el menú.
+export default function MiCuentaView({ alGuardar, alVerTutorial, avatarImagen, alCambiarAvatar }) {
   const {
     datos,
     cuenta,
@@ -58,7 +60,7 @@ export default function MiCuentaView({ alGuardar, alVerTutorial }) {
   return (
     <main className="pagina">
       <header className="pagina-cabecera">
-        <h1>Mi cuenta</h1>
+        <h1>Mi Cuenta</h1>
         <p>Los datos de tu empresa. Solo tú puedes verlos y cambiarlos.</p>
       </header>
 
@@ -67,13 +69,17 @@ export default function MiCuentaView({ alGuardar, alVerTutorial }) {
       {cuenta && (
         <section className="tarjeta cuenta-fija" aria-label="Tu cuenta">
           <div className="cuenta-empresa">
-            <span
-              className="cuenta-avatar"
-              aria-hidden="true"
-              style={{ background: colorDeAvatar(cuenta.nombreEmpresa, editando ? datos.colorAvatar : cuenta.colorAvatar) }}
-            >
-              {iniciales(cuenta.nombreEmpresa)}
-            </span>
+            {avatarImagen ? (
+              <img className="cuenta-avatar cuenta-avatar-imagen" src={avatarImagen} alt="" />
+            ) : (
+              <span
+                className="cuenta-avatar"
+                aria-hidden="true"
+                style={{ background: colorDeAvatar(cuenta.nombreEmpresa, editando ? datos.colorAvatar : cuenta.colorAvatar) }}
+              >
+                {iniciales(cuenta.nombreEmpresa)}
+              </span>
+            )}
             <span className="cuenta-empresa-texto">
               <span>Empresa</span>
               <b>{cuenta.nombreEmpresa}</b>
@@ -85,6 +91,8 @@ export default function MiCuentaView({ alGuardar, alVerTutorial }) {
           </div>
         </section>
       )}
+
+      {cuenta && alCambiarAvatar && <AvatarConImagen imagen={avatarImagen} alCambiar={alCambiarAvatar} />}
 
       {!editando && cuenta && (
         <section className="tarjeta datos-lectura" aria-label="Datos de la empresa">

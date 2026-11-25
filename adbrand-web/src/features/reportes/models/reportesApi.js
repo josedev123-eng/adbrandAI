@@ -46,7 +46,7 @@ export function guardarArchivo(blob, nombre) {
   URL.revokeObjectURL(url)
 }
 
-export const NOMBRES_RED = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook' }
+export const NOMBRES_RED = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook', WHATSAPP: 'WhatsApp' }
 export const NOMBRES_ESTADO = { APROBADO: 'Aprobado', DUDOSO: 'En revisión', RECHAZADO: 'Rechazado' }
 
 // "2026-11-03T10:05:00" → "03/11/2026 10:05"

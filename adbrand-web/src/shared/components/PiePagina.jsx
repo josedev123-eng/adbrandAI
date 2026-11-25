@@ -2,8 +2,6 @@
 // Sale en la página de presentación, en el inicio de sesión, en el registro y dentro de la app.
 import './PiePagina.css'
 
-import { CORREO_CONTACTO } from '../config/contacto'
-
 export default function PiePagina({ abrir, compacto = false }) {
   const anio = new Date().getFullYear()
   return (
@@ -21,9 +19,9 @@ export default function PiePagina({ abrir, compacto = false }) {
         <button type="button" className="pie-enlace" onClick={() => abrir('ayuda')}>
           Ayuda
         </button>
-        <a className="pie-enlace" href={`mailto:${CORREO_CONTACTO}`}>
+        <button type="button" className="pie-enlace" onClick={() => abrir('contacto')}>
           Contacto
-        </a>
+        </button>
       </nav>
     </footer>
   )

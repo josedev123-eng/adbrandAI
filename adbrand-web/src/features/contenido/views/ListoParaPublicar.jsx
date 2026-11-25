@@ -65,6 +65,9 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta }) {
     imprimirAfiche,
     creandoVideo,
     descargarVideo,
+    subiendoEstado,
+    avisoEstado,
+    subirAEstado,
   } = useListoParaPublicar(anuncioId)
 
   if (!publicacion) {
@@ -98,6 +101,9 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta }) {
         <button type="button" className="boton-whatsapp" onClick={compartirWhatsapp}>
           Enviar por WhatsApp
         </button>
+        <button type="button" className="boton-whatsapp" onClick={subirAEstado} disabled={subiendoEstado}>
+          {subiendoEstado ? 'Preparando tu estado…' : 'Subir a mi estado'}
+        </button>
         <button type="button" className="boton-ia" onClick={descargarVideo} disabled={creandoVideo}>
           {creandoVideo ? '🎬 Creando tu video…' : '🎬 Video para Reels y Estados'}
         </button>
@@ -112,16 +118,21 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta }) {
           Agrega tu celular en{' '}
           {irAMiCuenta ? (
             <button type="button" className="boton-enlace" onClick={irAMiCuenta}>
-              Mi cuenta
+              Mi Cuenta
             </button>
           ) : (
-            'Mi cuenta'
+            'Mi Cuenta'
           )}{' '}
           y tus anuncios llevarán un enlace para que te pidan por WhatsApp, y podrás imprimir un afiche con QR.
         </p>
       )}
       {creandoVideo && (
         <p className="publicar-ayuda">Armando tu video de 8 segundos con tu marca… suele tardar menos de medio minuto.</p>
+      )}
+      {avisoEstado && (
+        <p className="publicar-nota" role="status">
+          {avisoEstado}
+        </p>
       )}
       {error && <p className="campo-error">{error}</p>}
     </section>

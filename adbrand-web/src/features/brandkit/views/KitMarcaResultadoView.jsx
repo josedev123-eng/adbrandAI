@@ -1,6 +1,5 @@
 // View: visualización del Kit de Marca generado con opción a descargar (HU-11).
 import Aviso from '../../../shared/components/Aviso'
-import { useState } from 'react'
 import LogoMarca from './LogoMarca'
 import IdentidadMarca from './IdentidadMarca'
 import './KitMarcaResultadoView.css'
@@ -69,28 +68,6 @@ export default function KitMarcaResultadoView({
   alEditarIdentidad,
   alActualizarKit,
 }) {
-  const [copiado, setCopiado] = useState(null)
-
-  async function copiarJson() {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(kit, null, 2))
-      setCopiado('json')
-      setTimeout(() => setCopiado(null), 2000)
-    } catch {
-      alert('No se pudo copiar. Selecciona el texto manualmente.')
-    }
-  }
-
-  async function descargarJson() {
-    const blob = new Blob([JSON.stringify(kit, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `kit-marca-${kit.nombreNegocio?.replace(/\s+/g, '-') || kit.id}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <main className="pagina pagina-kit-resultado">
       <header className="pagina-cabecera">
@@ -116,7 +93,12 @@ export default function KitMarcaResultadoView({
 
       <div className="kit-grid">
         <Seccion titulo="Concepto de Logo" icono="🎨">
-          {kit.logoDiseno && <LogoMarca diseno={kit.logoDiseno} tamano={120} />}
+          {/* El logo real (subido o hecho con IA) si ya hay; si no, solo las letras del concepto, sin fondo. */}
+          {kit.logoImagen ? (
+            <img className="kit-logo-imagen" src={kit.logoImagen} alt={`Logo de ${kit.nombreNegocio}`} />
+          ) : (
+            kit.logoDiseno && <LogoMarca diseno={kit.logoDiseno} tamano={120} soloLetras />
+          )}
           <p className="kit-texto">{kit.logoConcepto || 'No disponible'}</p>
         </Seccion>
 
@@ -159,12 +141,6 @@ export default function KitMarcaResultadoView({
         )}
         <button type="button" className="boton-secundario" onClick={alPedirOtra} disabled={generando}>
           {generando ? '✦ Generando otra versión...' : '🔁 Pedir otra versión'}
-        </button>
-        <button type="button" className="boton-secundario" onClick={copiarJson} disabled={generando}>
-          {copiado === 'json' ? '✓ Copiado' : '📋 Copiar JSON'}
-        </button>
-        <button type="button" className="boton-secundario" onClick={descargarJson} disabled={generando}>
-          💾 Descargar JSON
         </button>
       </div>
     </main>

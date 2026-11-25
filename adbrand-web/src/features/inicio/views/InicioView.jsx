@@ -3,7 +3,7 @@
 import { useInicio } from '../viewmodels/useInicio'
 import './InicioView.css'
 
-const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook' }
+const REDES = { INSTAGRAM: 'Instagram', FACEBOOK: 'Facebook', WHATSAPP: 'WhatsApp' }
 const FORMATO_DIA = new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
 
 const TOKENS = new Intl.NumberFormat('es-PE')

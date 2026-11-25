@@ -2,12 +2,14 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { guardarEmpresa, obtenerEmpresa } from '../models/cuentaApi'
+import { cambiarAvatar, guardarEmpresa, obtenerEmpresa, quitarAvatar } from '../models/cuentaApi'
 import MiCuentaView from './MiCuentaView'
 
 vi.mock('../models/cuentaApi', () => ({
   obtenerEmpresa: vi.fn(),
   guardarEmpresa: vi.fn(),
+  cambiarAvatar: vi.fn(),
+  quitarAvatar: vi.fn(),
 }))
 
 const EMPRESA = {
@@ -103,5 +105,33 @@ describe('MiCuentaView: color del avatar', () => {
 
     expect(guardarEmpresa).toHaveBeenCalledWith(expect.objectContaining({ colorAvatar: 'VERDE' }))
     expect(alGuardar).toHaveBeenCalledWith(expect.objectContaining({ colorAvatar: 'VERDE' }))
+  })
+
+  it('el avatar puede ser el logo del kit y se puede quitar', async () => {
+    obtenerEmpresa.mockResolvedValue(EMPRESA)
+    cambiarAvatar.mockResolvedValue({ avatarImagen: 'data:image/png;base64,LOGO' })
+    quitarAvatar.mockResolvedValue({ avatarImagen: null })
+    const alCambiarAvatar = vi.fn()
+    const { rerender } = render(<MiCuentaView alCambiarAvatar={alCambiarAvatar} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Usar el logo de mi kit' }))
+    expect(cambiarAvatar).toHaveBeenCalledWith({ usarLogoDelKit: true })
+    expect(alCambiarAvatar).toHaveBeenCalledWith('data:image/png;base64,LOGO')
+
+    rerender(<MiCuentaView alCambiarAvatar={alCambiarAvatar} avatarImagen="data:image/png;base64,LOGO" />)
+    expect(screen.getByAltText('Tu avatar actual')).toHaveAttribute('src', 'data:image/png;base64,LOGO')
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar imagen' }))
+    expect(alCambiarAvatar).toHaveBeenLastCalledWith(null)
+  })
+
+  it('no acepta archivos que no son PNG o JPG', async () => {
+    obtenerEmpresa.mockResolvedValue(EMPRESA)
+    render(<MiCuentaView alCambiarAvatar={vi.fn()} />)
+
+    const archivo = new File(['gif'], 'foto.gif', { type: 'image/gif' })
+    await userEvent.upload(await screen.findByLabelText('Elegir foto para el avatar'), archivo, { applyAccept: false })
+
+    expect(screen.getByText('Elige una imagen PNG o JPG.')).toBeInTheDocument()
+    expect(cambiarAvatar).not.toHaveBeenCalled()
   })
 })

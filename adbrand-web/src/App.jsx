@@ -6,6 +6,7 @@ import PaginaNoEncontrada from './shared/components/PaginaNoEncontrada'
 import { navegar, pantallaDeRuta, useRuta } from './shared/navegacion/navegacion'
 import { marcarTutorialVisto } from './features/tutorial/models/tutorialApi'
 import MenuUsuario from './shared/components/MenuUsuario'
+import { usePlanDelMenu } from './features/pagos/viewmodels/usePlanDelMenu'
 import AvisoConexion from './shared/components/AvisoConexion'
 import LimiteDeErrores from './shared/components/LimiteDeErrores'
 import PantallaArranque from './shared/components/PantallaArranque'
@@ -34,6 +35,7 @@ const InformeCampanasView = lazy(() => import('./features/reportes/views/Informe
 const MisAnunciosView = lazy(() => import('./features/misAnuncios/views/MisAnunciosView'))
 const DocumentoLegalView = lazy(() => import('./features/legal/views/DocumentoLegalView'))
 const AyudaView = lazy(() => import('./features/ayuda/views/AyudaView'))
+const ContactoView = lazy(() => import('./features/contacto/views/ContactoView'))
 const TutorialGuiado = lazy(() => import('./features/tutorial/views/TutorialGuiado'))
 
 const CARGANDO_PANTALLA = (
@@ -56,6 +58,7 @@ const RUTAS_PRIVADAS = {
   terminos: '/terminos',
   privacidad: '/privacidad',
   ayuda: '/ayuda',
+  contacto: '/contacto',
 }
 const RUTAS_PUBLICAS = {
   inicio: '/',
@@ -66,6 +69,7 @@ const RUTAS_PUBLICAS = {
   terminos: '/terminos',
   privacidad: '/privacidad',
   ayuda: '/ayuda',
+  contacto: '/contacto',
 }
 const SOLO_SIN_SESION = ['/', '/iniciar-sesion', '/crear-cuenta', '/recuperar-contrasena', '/confirmar-correo']
 
@@ -73,7 +77,12 @@ const SOLO_SIN_SESION = ['/', '/iniciar-sesion', '/crear-cuenta', '/recuperar-co
 let rutaPendiente = null
 
 // Páginas de información que se abren desde el pie (y se cierran volviendo a donde se estaba).
-const NOMBRES_LEGALES = { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad', ayuda: 'Ayuda' }
+const NOMBRES_LEGALES = {
+  terminos: 'Términos y condiciones',
+  privacidad: 'Política de privacidad',
+  ayuda: 'Ayuda',
+  contacto: 'Contacto',
+}
 const TEXTO_VOLVER = {
   inicio: 'Volver al inicio',
   login: 'Volver a iniciar sesión',
@@ -107,6 +116,8 @@ function App() {
   useTituloPagina(titulo)
   // Decisiones del moderador sin ver: el número junto a "Mis anuncios".
   const { avisos, limpiarAvisos } = useAvisosModeracion(Boolean(usuario), pantalla)
+  // El plan debajo del nombre en el menú ("Plan Gratis", "Plan Pro"…).
+  const planDelMenu = usePlanDelMenu(Boolean(usuario), pantalla)
   // Si la sesión se cerró sola (venció o la cuenta fue suspendida), se muestra el inicio de sesión con el aviso.
   useEffect(() => {
     if (avisoSalida) navegar(RUTAS_PUBLICAS.login, { reemplazar: true })
@@ -171,7 +182,9 @@ function App() {
     const enLegal = pantallaPublica === 'terminos' || pantallaPublica === 'privacidad'
     // Si se abren los Términos desde el registro, el formulario se oculta (no se desmonta) para no perder lo escrito.
     const enAyuda = pantallaPublica === 'ayuda'
-    const registroVisible = pantallaPublica === 'registro' || ((enLegal || enAyuda) && volverDeLegal === 'registro')
+    const enContacto = pantallaPublica === 'contacto'
+    const registroVisible =
+      pantallaPublica === 'registro' || ((enLegal || enAyuda || enContacto) && volverDeLegal === 'registro')
 
     if (pantallaPublica === 'inicio') {
       return (
@@ -201,7 +214,7 @@ function App() {
             />
           )}
           {registroVisible && (
-            <div hidden={enLegal || enAyuda}>
+            <div hidden={enLegal || enAyuda || enContacto}>
               <RegistroView
                 irALogin={() => irALogin()}
                 abrir={abrirLegal}
@@ -237,6 +250,11 @@ function App() {
         {enAyuda && (
           <Suspense fallback={CARGANDO_PANTALLA}>
             <AyudaView alVolver={cerrarLegal} />
+          </Suspense>
+        )}
+        {enContacto && (
+          <Suspense fallback={CARGANDO_PANTALLA}>
+            <ContactoView alVolver={cerrarLegal} irAAyuda={() => setPantallaPublica('ayuda')} />
           </Suspense>
         )}
         {enLegal && (
@@ -284,6 +302,8 @@ function App() {
         alCambiar={setPantalla}
         empresa={usuario.nombreEmpresa}
         colorAvatar={usuario.colorAvatar}
+        imagenAvatar={usuario.avatarImagen}
+        plan={planDelMenu}
         alSalir={cerrarSesion}
         contadores={{ misAnuncios: avisos }}
         forzarAbierto={tutorialAbierto}
@@ -321,8 +341,8 @@ function App() {
             {pantalla === 'planes' && <PlanesView />}
             {pantalla === 'calendario' && (
               <CalendarioView
-                alCrearAnuncio={(idea) => {
-                  guardarOfertaSugerida(idea)
+                alCrearAnuncio={(idea, ocasion) => {
+                  guardarOfertaSugerida(idea, ocasion)
                   setPantalla('anuncio')
                 }}
               />
@@ -332,12 +352,22 @@ function App() {
               <MiCuentaView
                 alGuardar={(empresa) => actualizarUsuario({ colorAvatar: empresa.colorAvatar })}
                 alVerTutorial={() => setVerTutorial(true)}
+                avatarImagen={usuario.avatarImagen}
+                alCambiarAvatar={(avatarImagen) => actualizarUsuario({ avatarImagen })}
               />
             )}
             {(pantalla === 'terminos' || pantalla === 'privacidad') && (
               <DocumentoLegalView tipo={pantalla} alVolver={cerrarLegal} />
             )}
             {pantalla === 'ayuda' && <AyudaView />}
+            {pantalla === 'contacto' && (
+              <ContactoView
+                nombre={usuario.nombre}
+                correo={usuario.correo}
+                alVolver={cerrarLegal}
+                irAAyuda={() => setPantalla('ayuda')}
+              />
+            )}
             {pantalla === 'noEncontrada' && <PaginaNoEncontrada alVolver={() => setPantalla('inicio')} />}
           </Suspense>
         </LimiteDeErrores>

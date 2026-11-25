@@ -104,3 +104,9 @@ export function elegirEslogan(id, eslogan) {
 export function descargarManualMarca(id) {
   return apiDescargar(`/kit-marca/${id}/manual`)
 }
+
+// Editar el logo con una instrucción corta ("pon la taza más grande"). Devuelve { imagen, retoquesRestantes }
+// sin guardarla: se guarda con guardarLogoImagen si la empresa dice "Usar esta versión".
+export function retocarLogo(id, instruccion) {
+  return apiRequest(`/kit-marca/${id}/logo/retocar`, { method: 'POST', body: { instruccion }, tiempoMaximo: TIEMPO_IA })
+}
