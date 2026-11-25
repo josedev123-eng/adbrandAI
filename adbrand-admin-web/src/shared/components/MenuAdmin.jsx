@@ -11,6 +11,7 @@ const ICONOS = {
   'historial-contenidos': ['M12 7v5l3 2', 'M3 12a9 9 0 1 0 3-6.7', 'M3 4v4h4'],
   administradores: ['M15 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1', 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z', 'M19 8v6', 'M16 11h6'],
   empresas: ['M3 21h18', 'M5 21V7l7-4 7 4v14', 'M9 10h.01', 'M15 10h.01', 'M9 14h.01', 'M15 14h.01', 'M10 21v-4h4v4'],
+  'mensajes-contacto': ['M4 5h16v12H8l-4 4V5z', 'M8 9h8', 'M8 13h5'],
   'lista-administradores': ['M9 6h11', 'M9 12h11', 'M9 18h11', 'M4 6h.01', 'M4 12h.01', 'M4 18h.01'],
   auditoria: ['M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3Z', 'M9 12l2 2 4-4'],
   'panel-financiero': ['M3 7h18v10H3z', 'M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z', 'M6 10v4', 'M18 10v4'],

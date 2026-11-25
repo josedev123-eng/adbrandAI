@@ -72,6 +72,7 @@ describe('App (login y menú por rol)', () => {
       'Revisión de contenido',
       'Historial de contenidos',
       'Empresas',
+      'Mensajes de contacto',
       'Crear administrador',
       'Lista de administradores',
       'Auditoría',
@@ -88,7 +89,7 @@ describe('App (login y menú por rol)', () => {
     mostrar()
 
     expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument()
-    expect(opcionesDelMenu()).toEqual(['Inicio', 'Revisión de contenido', 'Historial de contenidos', 'Empresas'])
+    expect(opcionesDelMenu()).toEqual(['Inicio', 'Revisión de contenido', 'Historial de contenidos', 'Empresas', 'Mensajes de contacto'])
   })
 
   it('FINANZAS entra al Inicio y solo ve el panel financiero', async () => {

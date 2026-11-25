@@ -26,6 +26,7 @@ const PanelFinancieroView = lazy(() => import('./features/suscripciones/views/Pa
 const ConsumoTokensView = lazy(() => import('./features/tokens/views/ConsumoTokensView'))
 const HistorialTokensView = lazy(() => import('./features/tokens/views/HistorialTokensView'))
 const EmpresasView = lazy(() => import('./features/empresas/views/EmpresasView'))
+const MensajesContactoView = lazy(() => import('./features/contacto/views/MensajesContactoView'))
 const MiCuentaAdminView = lazy(() => import('./features/cuenta/views/MiCuentaAdminView'))
 const RecuperarContrasenaView = lazy(() => import('./features/auth/views/RecuperarContrasenaView'))
 
@@ -159,6 +160,7 @@ function App() {
             {actual === 'revision' && <BandejaRevisionView />}
             {actual === 'historial-contenidos' && <HistorialContenidosView />}
             {actual === 'empresas' && <EmpresasView />}
+            {actual === 'mensajes-contacto' && <MensajesContactoView />}
             {actual === 'administradores' && <CrearAdministradorView />}
             {actual === 'lista-administradores' && <AdministradoresView />}
             {actual === 'auditoria' && <AuditoriaView />}

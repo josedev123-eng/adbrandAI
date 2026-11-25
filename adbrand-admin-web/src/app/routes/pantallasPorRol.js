@@ -8,6 +8,8 @@ export const PANTALLAS = [
   { id: 'historial-contenidos', nombre: 'Historial de contenidos', seccion: 'Contenido', roles: ['SUPERADMIN', 'MODERADOR'] },
   // Suspender o reactivar una PYME que abusa (contenido prohibido repetido).
   { id: 'empresas', nombre: 'Empresas', seccion: 'Contenido', roles: ['SUPERADMIN', 'MODERADOR'] },
+  // Lo que escriben desde el formulario de Contacto de la web (soporte).
+  { id: 'mensajes-contacto', nombre: 'Mensajes de contacto', seccion: 'Contenido', roles: ['SUPERADMIN', 'MODERADOR'] },
   { id: 'administradores', nombre: 'Crear administrador', seccion: 'Administradores', roles: ['SUPERADMIN'] },
   { id: 'lista-administradores', nombre: 'Lista de administradores', seccion: 'Administradores', roles: ['SUPERADMIN'] },
   { id: 'auditoria', nombre: 'Auditoría', seccion: 'Administradores', roles: ['SUPERADMIN'] },

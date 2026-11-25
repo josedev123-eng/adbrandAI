@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "tokens",
     "servidor",
     "empresas",
+    "contacto",
 ]
 
 MIDDLEWARE = [
