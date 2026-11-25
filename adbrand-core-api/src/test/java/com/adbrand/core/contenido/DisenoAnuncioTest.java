@@ -78,4 +78,23 @@ class DisenoAnuncioTest {
         assertThat(Math.abs(arriba.getRed() - CAFE.getRed())).isLessThan(6);
         assertThat(new Color(imagen.getRGB(540, 600))).isEqualTo(Color.BLUE);
     }
+
+    @Test
+    void elTitularEsLaPrimeraFraseDeLaIaYNoLoQueEscribioElDueno() {
+        Textos t = DisenoAnuncio.textosDe("Creame un anuncio que promocione mis cafes a un 20% de descuento",
+                "Recargue su jornada con estilo. El aroma de nuestro café lo espera. #Cafe #Lima ☕", true);
+
+        assertThat(t.titular()).isEqualTo("Recargue su jornada con estilo");
+        assertThat(t.etiqueta()).isEqualTo("-20%");
+    }
+
+    @Test
+    void unaPrimeraFraseMuyLargaSeCortaEnUnaComaOEnUnaPalabra() {
+        Textos t = DisenoAnuncio.textosDe("Promo", "¡Esta Navidad llévate dos panetones artesanales recién horneados, "
+                + "con chocolate caliente de regalo para toda tu familia! Ven hoy.", false);
+
+        assertThat(t.titular()).isEqualTo("¡Esta Navidad llévate dos panetones artesanales recién horneados");
+        assertThat(t.titular().length()).isLessThanOrEqualTo(71);
+    }
 }
+

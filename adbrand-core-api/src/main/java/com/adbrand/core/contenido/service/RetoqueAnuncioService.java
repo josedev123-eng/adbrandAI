@@ -8,7 +8,9 @@ import com.adbrand.core.contenido.repository.OpcionAnuncioRepository;
 import com.adbrand.core.contenido.repository.VersionAnuncioRepository;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
 import com.adbrand.core.imagen.entity.ConsumoImagen;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.imagen.service.ControlGastoImagenes;
+import com.adbrand.core.imagen.service.InterpreteRetoque;
 import com.adbrand.core.imagen.service.ServicioImagenes;
 import com.adbrand.core.shared.error.RecursoNoEncontradoException;
 import com.adbrand.core.shared.error.SolicitudInvalidaException;
@@ -26,13 +28,15 @@ public class RetoqueAnuncioService {
     private final VersionAnuncioRepository versiones;
     private final ServicioImagenes imagenes;
     private final ControlGastoImagenes gasto;
+    private final InterpreteRetoque interprete;
 
     public RetoqueAnuncioService(OpcionAnuncioRepository opciones, VersionAnuncioRepository versiones,
-                                 ServicioImagenes imagenes, ControlGastoImagenes gasto) {
+                                 ServicioImagenes imagenes, ControlGastoImagenes gasto, InterpreteRetoque interprete) {
         this.opciones = opciones;
         this.versiones = versiones;
         this.imagenes = imagenes;
         this.gasto = gasto;
+        this.interprete = interprete;
     }
 
     @Transactional
@@ -44,7 +48,9 @@ public class RetoqueAnuncioService {
         }
         List<VersionAnuncio> historial = historialConOriginal(opcion);
 
-        ImagenGenerada retocada = imagenes.finalORetoque(descripcionDeRetoque(instruccion), opcion.imagen());
+        // Lo que escribió el dueño se interpreta como un cambio visual (si no, la IA a veces lo dibujaba como letras).
+        String visual = interprete.interpretar(instruccion, usuarioId, OrigenConsumo.ANUNCIO);
+        ImagenGenerada retocada = imagenes.finalORetoque(descripcionDeRetoque(visual), opcion.imagen());
         gasto.registrar(usuarioId, ConsumoImagen.Tipo.RETOQUE, retocada);
         int numero = historial.get(historial.size() - 1).getNumero() + 1;
         versiones.save(VersionAnuncio.de(opcion, numero, instruccion, retocada));
@@ -77,7 +83,7 @@ public class RetoqueAnuncioService {
     static String descripcionDeRetoque(String instruccion) {
         return ("Edit this social media advertising image. Change only this: %s. "
                 + "Keep everything else (composition, style and main subject) the same. "
-                + "Do not add text, letters or words unless the instruction asks for them.")
+                + "Do not add any text, letters, numbers or words to the image: the instruction is never text to write.")
                 .formatted(instruccion.trim());
     }
 

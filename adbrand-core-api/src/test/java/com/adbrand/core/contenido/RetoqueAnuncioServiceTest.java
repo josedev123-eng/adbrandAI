@@ -52,7 +52,11 @@ class RetoqueAnuncioServiceTest {
         imagenes = mock(ServicioImagenes.class);
         gasto = mock(ControlGastoImagenes.class);
         when(gasto.retoquesRestantes(any())).thenReturn(19);
-        servicio = new RetoqueAnuncioService(opciones, versiones, imagenes, gasto);
+        // El intérprete devuelve el pedido tal cual (su trabajo se prueba aparte).
+        com.adbrand.core.imagen.service.InterpreteRetoque interprete = org.mockito.Mockito.mock(com.adbrand.core.imagen.service.InterpreteRetoque.class);
+        org.mockito.Mockito.when(interprete.interpretar(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(i -> i.getArgument(0));
+        servicio = new RetoqueAnuncioService(opciones, versiones, imagenes, gasto, interprete);
 
         opcion = new OpcionAnuncio();
         ReflectionTestUtils.setField(opcion, "id", 102L);
@@ -121,7 +125,7 @@ class RetoqueAnuncioServiceTest {
 
         verify(imagenes).finalORetoque(
                 org.mockito.ArgumentMatchers.argThat(descripcion -> descripcion.contains("Change only this: pon el fondo más claro.")
-                        && descripcion.contains("Do not add text")),
+                        && descripcion.contains("Do not add any text")),
                 any());
     }
 

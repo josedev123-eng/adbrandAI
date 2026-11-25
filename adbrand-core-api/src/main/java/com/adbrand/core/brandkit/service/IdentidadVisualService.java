@@ -3,7 +3,9 @@ package com.adbrand.core.brandkit.service;
 import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.OpcionesLogoResponse;
 import com.adbrand.core.brandkit.dto.IdentidadVisualDtos.RetoqueLogoResponse;
 import com.adbrand.core.imagen.entity.ConsumoImagen;
+import com.adbrand.core.ia.entity.OrigenConsumo;
 import com.adbrand.core.imagen.service.ControlGastoImagenes;
+import com.adbrand.core.imagen.service.InterpreteRetoque;
 import com.adbrand.core.brandkit.dto.KitMarcaGeneradoResponse;
 import com.adbrand.core.brandkit.entity.KitMarca;
 import com.adbrand.core.brandkit.repository.KitMarcaRepository;
@@ -39,11 +41,14 @@ public class IdentidadVisualService {
     private final KitMarcaRepository kits;
     private final ServicioImagenes imagenes;
     private final ControlGastoImagenes gasto;
+    private final InterpreteRetoque interprete;
 
-    public IdentidadVisualService(KitMarcaRepository kits, ServicioImagenes imagenes, ControlGastoImagenes gasto) {
+    public IdentidadVisualService(KitMarcaRepository kits, ServicioImagenes imagenes, ControlGastoImagenes gasto,
+                                  InterpreteRetoque interprete) {
         this.kits = kits;
         this.imagenes = imagenes;
         this.gasto = gasto;
+        this.interprete = interprete;
     }
 
     // Edita el logo guardado con una instrucción corta, igual que los retoques de anuncios (cuenta como retoque).
@@ -59,7 +64,8 @@ public class IdentidadVisualService {
         }
         String tipo = kit.getLogoImagenTipo() == null ? "image/png" : kit.getLogoImagenTipo();
         ImagenGenerada actual = new ImagenGenerada(tipo, kit.getLogoImagen(), "kit", false);
-        ImagenGenerada nueva = imagenes.finalORetoque(descripcionDeRetoqueLogo(instruccion), actual);
+        String visual = interprete.interpretar(instruccion, usuarioId, OrigenConsumo.KIT_MARCA);
+        ImagenGenerada nueva = imagenes.finalORetoque(descripcionDeRetoqueLogo(visual), actual);
         gasto.registrar(usuarioId, ConsumoImagen.Tipo.RETOQUE, nueva);
         return new RetoqueLogoResponse(nueva.dataUrl(), nueva.simulado(),
                 imagenes.esSimulado() ? null : gasto.retoquesRestantes(usuarioId));
@@ -68,7 +74,7 @@ public class IdentidadVisualService {
     static String descripcionDeRetoqueLogo(String instruccion) {
         return ("Edit this brand logo. Change only this: %s. Keep it a clean, flat, professional logo centered on a "
                 + "plain white background, with the same main shape and colors unless the instruction asks otherwise. "
-                + "Do not add text, letters or words unless the instruction asks for them.").formatted(instruccion.trim());
+                + "Do not add any text, letters or words: the instruction is never text to write.").formatted(instruccion.trim());
     }
 
     // 3 propuestas de logo hechas por la IA. No se guardan: la empresa elige una y se guarda con guardarLogo.

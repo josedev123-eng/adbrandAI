@@ -49,6 +49,14 @@ class IdentidadVisualTest {
     @MockitoBean private ServicioImagenes imagenes;
     // Anotar el retoque usa su propia transacción y no ve la empresa de la prueba (que no se confirma).
     @MockitoBean private com.adbrand.core.imagen.service.ControlGastoImagenes gasto;
+    // El intérprete de retoques llama a la IA de texto; aquí devuelve el pedido tal cual.
+    @MockitoBean private com.adbrand.core.imagen.service.InterpreteRetoque interprete;
+
+    @BeforeEach
+    void interpreteTalCual() {
+        when(interprete.interpretar(anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(i -> i.getArgument(0));
+    }
 
     private Usuario usuario;
     private KitMarca kit;

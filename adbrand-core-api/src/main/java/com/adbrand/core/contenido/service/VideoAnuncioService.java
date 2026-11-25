@@ -210,14 +210,35 @@ public class VideoAnuncioService {
         g.setComposite(AlphaComposite.SrcOver);
     }
 
-    // La frase del video: la oferta si es corta; si no, la primera oración del texto (sin hashtags).
-    static String frasePrincipal(String oferta, String texto) {
-        if (oferta != null && !oferta.isBlank() && oferta.length() <= 70) {
-            return oferta.trim();
+    // El titular del anuncio (imagen, video y afiche): la primera frase del texto que escribió la IA, que ya es un
+    // gancho pensado para el público ("Recargue su jornada con estilo"). Antes se usaba lo que escribió el dueño tal
+    // cual, y si escribía "Créame un anuncio de…" eso salía en la imagen. Sin texto de la IA, se usa la oferta.
+    public static String frasePrincipal(String oferta, String texto) {
+        String limpio = texto == null ? "" : texto
+                .replaceAll("#\\S+", " ")
+                .replaceAll("[\\p{So}\\p{Cn}\\x{1F000}-\\x{1FFFF}]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (!limpio.isEmpty()) {
+            String primera = limpio.split("(?<=[.!?])\\s+")[0].trim().replaceAll("[.]+$", "");
+            if (primera.length() > 70) {
+                int coma = primera.lastIndexOf(',', 70);
+                primera = coma >= 25 ? primera.substring(0, coma) : recortarEnPalabra(primera, 67) + "…";
+            }
+            if (primera.length() >= 8) {
+                return primera;
+            }
         }
-        String limpio = texto == null ? "" : texto.replaceAll("#\\S+", "").trim();
-        String primera = limpio.split("(?<=[.!?¡])\\s+")[0].trim();
-        return primera.length() > 90 ? primera.substring(0, 87).trim() + "…" : primera;
+        String base = oferta == null ? "" : oferta.trim();
+        return base.length() > 70 ? recortarEnPalabra(base, 67) + "…" : base;
+    }
+
+    private static String recortarEnPalabra(String texto, int maximo) {
+        if (texto.length() <= maximo) {
+            return texto;
+        }
+        int espacio = texto.lastIndexOf(' ', maximo);
+        return (espacio > 20 ? texto.substring(0, espacio) : texto.substring(0, maximo)).replaceAll("[,;:]$", "").trim();
     }
 
     private static List<String> partir(String texto, FontMetrics medidas, int anchoMaximo) {
