@@ -10,5 +10,9 @@ public record PublicacionResponse(
         List<String> hashtags,
         String enlaceWhatsapp,
         String mensajePedido,
-        boolean tieneWhatsapp) {
+        boolean tieneWhatsapp,
+        // HU 64: lo que conviene corregir para cumplir las reglas de publicidad (vacío si está todo bien).
+        List<ObservacionLegal> observaciones,
+        // HU 61: logo, colores y eslogan del kit para el afiche y lo que se comparte.
+        MarcaPublicacion marca) {
 }

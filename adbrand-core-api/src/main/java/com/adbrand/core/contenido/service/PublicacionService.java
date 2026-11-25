@@ -2,6 +2,7 @@ package com.adbrand.core.contenido.service;
 
 import com.adbrand.core.auth.entity.Usuario;
 import com.adbrand.core.auth.repository.UsuarioRepository;
+import com.adbrand.core.contenido.dto.MarcaPublicacion;
 import com.adbrand.core.contenido.dto.PublicacionResponse;
 import com.adbrand.core.contenido.entity.Contenido;
 import com.adbrand.core.contenido.repository.ContenidoRepository;
@@ -47,11 +48,14 @@ public class PublicacionService {
     private final ContenidoRepository contenidos;
     private final PerfilNegocioRepository perfiles;
     private final UsuarioRepository usuarios;
+    private final MarcaDelNegocio marcas;
 
-    public PublicacionService(ContenidoRepository contenidos, PerfilNegocioRepository perfiles, UsuarioRepository usuarios) {
+    public PublicacionService(ContenidoRepository contenidos, PerfilNegocioRepository perfiles, UsuarioRepository usuarios,
+                              MarcaDelNegocio marcas) {
         this.contenidos = contenidos;
         this.perfiles = perfiles;
         this.usuarios = usuarios;
+        this.marcas = marcas;
     }
 
     @Transactional(readOnly = true)
@@ -74,7 +78,13 @@ public class PublicacionService {
         String enlace = telefono == null ? null
                 : "https://wa.me/" + telefono + "?text=" + URLEncoder.encode(mensajePedido, StandardCharsets.UTF_8).replace("+", "%20");
 
+        // HU 61: la firma de la marca con su eslogan va después del texto (antes del WhatsApp y los hashtags).
+        MarcaDelNegocio.Marca marca = marcas.de(usuarioId);
         StringBuilder texto = new StringBuilder(cuerpo);
+        String firma = firma(marca.nombre(), marca.eslogan());
+        if (firma != null) {
+            texto.append("\n\n").append(firma);
+        }
         if (telefono != null) {
             // En el texto va el enlace corto (se ve limpio en el post); el QR y el botón usan el que trae el mensaje.
             texto.append("\n\n📲 Pide por WhatsApp: wa.me/").append(telefono);
@@ -82,7 +92,17 @@ public class PublicacionService {
         if (!hashtags.isEmpty()) {
             texto.append("\n\n").append(String.join(" ", hashtags));
         }
-        return new PublicacionResponse(contenido.getId(), texto.toString(), hashtags, enlace, mensajePedido, telefono != null);
+        return new PublicacionResponse(contenido.getId(), texto.toString(), hashtags, enlace, mensajePedido, telefono != null,
+                RevisionLegalOferta.revisar(contenido.getOferta(), contenido.getTexto()), MarcaPublicacion.desde(marca));
+    }
+
+    // HU 61: "— Panadería Rosa: “El sabor de tu barrio”". Sin eslogan no se agrega nada (el nombre ya va en los hashtags).
+    public static String firma(String nombre, String eslogan) {
+        if (eslogan == null || eslogan.isBlank()) {
+            return null;
+        }
+        String limpio = eslogan.trim().replaceAll("^[\"“”]+|[\"“”]+$", "");
+        return nombre == null || nombre.isBlank() ? "— “" + limpio + "”" : "— " + nombre.trim() + ": “" + limpio + "”";
     }
 
     // Los del texto de la IA + el de la marca + los del rubro + los de Perú, sin repetir, hasta 8.
