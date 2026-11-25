@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -316,12 +317,13 @@ private fun TarjetaOpcion(
     ) {
         Column {
             Box {
+                // Ajuste 14: la opción se ve como el anuncio diseñado (cuadrado) si llegó el diseño.
                 ImagenIa(
-                    dataUrl = opcion.imagen,
+                    dataUrl = opcion.diseno ?: opcion.imagen,
                     etiqueta = "Opción ${opcion.numero}: ${opcion.estilo}",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(172.dp)
+                        .then(if (opcion.diseno != null) Modifier.aspectRatio(1f) else Modifier.height(172.dp))
                 )
 
                 Row(
@@ -537,11 +539,11 @@ private fun TarjetaResultado(
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             estado.opcionElegida?.let { opcion ->
                                 ImagenIa(
-                                    dataUrl = opcion.imagen,
-                                    etiqueta = "Imagen del anuncio (${opcion.estilo})",
+                                    dataUrl = opcion.diseno ?: opcion.imagen,
+                                    etiqueta = "Tu anuncio (${opcion.estilo})",
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(190.dp)
+                                        .then(if (opcion.diseno != null) Modifier.aspectRatio(1f) else Modifier.height(190.dp))
                                 )
 
                                 if (estado.retocando) {

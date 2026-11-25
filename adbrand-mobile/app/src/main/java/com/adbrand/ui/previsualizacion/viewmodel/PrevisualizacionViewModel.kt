@@ -37,7 +37,11 @@ data class PrevisualizacionEstado(
     // HU 64: lo que conviene corregir según INDECOPI (titulo, detalle).
     val observacionesLegales: List<Pair<String, String>> = emptyList(),
     // HU 65: el video se arma en el servidor (unos segundos).
-    val creandoVideo: Boolean = false
+    val creandoVideo: Boolean = false,
+    // Ajuste 14: el anuncio diseñado (plantilla de la opción elegida) en el formato actual. null si no llegó.
+    val diseno: ByteArray? = null,
+    // "Subir a mi estado": se pide la imagen vertical y se abre WhatsApp.
+    val subiendoEstado: Boolean = false
 )
 
 class PrevisualizacionViewModel(
@@ -60,7 +64,8 @@ class PrevisualizacionViewModel(
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, error = null) }
             when (val resultado = repositorio.obtener(codigo)) {
-                is Resultado.Exito -> _estado.update { actual ->
+                is Resultado.Exito -> {
+                    _estado.update { actual ->
                     val anuncios = resultado.dato.anuncios
                     actual.copy(
                         cargando = false,
@@ -71,8 +76,12 @@ class PrevisualizacionViewModel(
                         // El marco cambió de forma: el recorte vuelve al original.
                         ajuste = if (resultado.dato.formato.codigo != actual.formato.codigo) AjusteRecorte() else actual.ajuste,
                         // Si hay un anuncio abierto, se actualiza con su texto ajustado al nuevo formato.
-                        publicacion = actual.publicacion?.let { abierto -> anuncios.find { it.id == abierto.id } ?: abierto }
+                        publicacion = actual.publicacion?.let { abierto -> anuncios.find { it.id == abierto.id } ?: abierto },
+                        diseno = if (resultado.dato.formato.codigo != actual.formato.codigo) null else actual.diseno
                     )
+                    }
+                    // El diseño del anuncio abierto se vuelve a pedir en el formato nuevo.
+                    _estado.value.publicacion?.id?.let { id -> if (_estado.value.diseno == null) cargarDiseno(id) }
                 }
 
                 is Resultado.Error -> _estado.update {
@@ -93,10 +102,12 @@ class PrevisualizacionViewModel(
                 errorImagen = null,
                 cargandoImagen = anuncio.id != null,
                 textoPublicar = null,
-                observacionesLegales = emptyList()
+                observacionesLegales = emptyList(),
+                diseno = null
             )
         }
         val id = anuncio.id ?: return
+        cargarDiseno(id)
         viewModelScope.launch {
             val listo = repositorio.listoParaPublicar(id)
             if (listo is Resultado.Exito && _estado.value.publicacion?.id == id) {
@@ -118,7 +129,10 @@ class PrevisualizacionViewModel(
 
     fun cerrarPublicacion() {
         _estado.update {
-            it.copy(publicacion = null, imagen = null, cargandoImagen = false, errorImagen = null, ajuste = AjusteRecorte(), mensajeCompartir = null)
+            it.copy(
+                publicacion = null, imagen = null, cargandoImagen = false, errorImagen = null, ajuste = AjusteRecorte(),
+                mensajeCompartir = null, diseno = null
+            )
         }
     }
 
@@ -140,6 +154,32 @@ class PrevisualizacionViewModel(
     }
 
     fun avisar(mensaje: String) = _estado.update { it.copy(mensajeCompartir = mensaje) }
+
+    // Ajuste 14: pide el anuncio diseñado en el formato actual. Si falla, se sigue viendo el diseño de la app.
+    private fun cargarDiseno(id: Long) {
+        val formato = _estado.value.formato.codigo
+        viewModelScope.launch {
+            val resultado = repositorio.imagenFinal(id, formato)
+            if (_estado.value.publicacion?.id != id || _estado.value.formato.codigo != formato) return@launch
+            if (resultado is Resultado.Exito) _estado.update { it.copy(diseno = resultado.dato) }
+        }
+    }
+
+    // "Subir a mi estado": el anuncio en vertical (como se ven los estados) y, cuando llega, se abre WhatsApp.
+    fun subirAEstado(alListo: (ByteArray) -> Unit) {
+        val id = _estado.value.publicacion?.id ?: return
+        if (_estado.value.subiendoEstado) return
+        viewModelScope.launch {
+            _estado.update { it.copy(subiendoEstado = true, mensajeCompartir = null) }
+            when (val resultado = repositorio.imagenFinal(id, "VERTICAL")) {
+                is Resultado.Exito -> {
+                    _estado.update { it.copy(subiendoEstado = false) }
+                    alListo(resultado.dato)
+                }
+                is Resultado.Error -> _estado.update { it.copy(subiendoEstado = false, mensajeCompartir = resultado.mensaje) }
+            }
+        }
+    }
 
     // HU 65: pide el video del anuncio abierto y, cuando llega, la pantalla lo comparte ("alListo").
     fun crearVideo(alListo: (ByteArray) -> Unit) {

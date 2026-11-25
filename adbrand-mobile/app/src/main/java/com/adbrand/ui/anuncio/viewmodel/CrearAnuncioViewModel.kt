@@ -170,7 +170,7 @@ class CrearAnuncioViewModel(
                     estado.copy(
                         retocando = false,
                         historial = resultado.dato,
-                        opcionElegida = estado.opcionElegida?.copy(imagen = resultado.dato.imagenActual),
+                        opcionElegida = estado.opcionElegida?.copy(imagen = resultado.dato.imagenActual, diseno = null),
                         instruccion = "",
                         mensajeExito = "La IA retocó tu imagen. Puedes seguir ajustándola."
                     )
@@ -195,7 +195,7 @@ class CrearAnuncioViewModel(
                     estado.copy(
                         retocando = false,
                         historial = resultado.dato,
-                        opcionElegida = estado.opcionElegida?.copy(imagen = resultado.dato.imagenActual),
+                        opcionElegida = estado.opcionElegida?.copy(imagen = resultado.dato.imagenActual, diseno = null),
                         mensajeExito = "Ahora se usa la versión $numero de tu imagen."
                     )
                 }

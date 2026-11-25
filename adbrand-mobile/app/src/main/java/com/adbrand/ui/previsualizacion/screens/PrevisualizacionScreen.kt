@@ -288,7 +288,10 @@ fun PrevisualizacionScreen(
             alAvisar = viewModel::avisar,
             observacionesLegales = estado.observacionesLegales,
             creandoVideo = estado.creandoVideo,
-            alCrearVideo = viewModel::crearVideo
+            alCrearVideo = viewModel::crearVideo,
+            diseno = estado.diseno,
+            subiendoEstado = estado.subiendoEstado,
+            alSubirAEstado = viewModel::subirAEstado
         )
     }
 }

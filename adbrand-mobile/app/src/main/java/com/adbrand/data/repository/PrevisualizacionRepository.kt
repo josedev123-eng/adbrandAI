@@ -22,4 +22,7 @@ interface PrevisualizacionRepository {
 
     // HU 65: el video vertical del anuncio (MP4 de 8 s) para Reels, TikTok o Estados de WhatsApp.
     suspend fun video(contenidoId: Long): Resultado<ByteArray> = Resultado.Error("No disponible")
+
+    // Ajuste 14: el anuncio diseñado (JPG) con la plantilla de la opción elegida, la marca y el formato pedido.
+    suspend fun imagenFinal(contenidoId: Long, formato: String): Resultado<ByteArray> = Resultado.Error("No disponible")
 }

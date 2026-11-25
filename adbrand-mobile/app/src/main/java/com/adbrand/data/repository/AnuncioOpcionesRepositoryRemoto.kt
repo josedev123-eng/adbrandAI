@@ -96,7 +96,8 @@ class AnuncioOpcionesRepositoryRemoto : AnuncioOpcionesRepository {
         proveedorImagen = AnuncioJson.texto(json, "proveedorImagen"),
         imagenSimulada = json.optBoolean("imagenSimulada", false),
         textoSimulado = json.optBoolean("textoSimulado", false),
-        elegida = json.optBoolean("elegida", false)
+        elegida = json.optBoolean("elegida", false),
+        diseno = AnuncioJson.texto(json, "diseno").ifBlank { null }
     )
 
     private fun JSONArray?.aOpciones(): List<OpcionAnuncio> {

@@ -127,9 +127,15 @@ fun VistaPublicacion(
     observacionesLegales: List<Pair<String, String>> = emptyList(),
     // HU 65: video para Reels y Estados.
     creandoVideo: Boolean = false,
-    alCrearVideo: (alListo: (ByteArray) -> Unit) -> Unit = {}
+    alCrearVideo: (alListo: (ByteArray) -> Unit) -> Unit = {},
+    // Ajuste 14: el anuncio diseñado por el servidor (plantilla de la opción elegida) en este formato.
+    diseno: ByteArray? = null,
+    // "Subir a mi estado" de WhatsApp.
+    subiendoEstado: Boolean = false,
+    alSubirAEstado: (alListo: (ByteArray) -> Unit) -> Unit = {}
 ) {
     val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
+    val bitmapDiseno = remember(diseno) { diseno?.let { BitmapFactory.decodeByteArray(it, 0, it.size) } }
     val contexto = LocalContext.current
     val acento = coloresDe(kit?.paletaColores.orEmpty()).getOrNull(1) ?: Color(0xFFF97316)
     val principal = colorPrincipal(kit)
@@ -137,7 +143,9 @@ fun VistaPublicacion(
     val logoKit = remember(kit?.logoImagen) { kit?.logoImagen?.let(::decodificarBitmap) }
 
     // La imagen del anuncio con la marca, recortada como se ve en el marco (HU 46, 47 y 48).
+    // Ajuste 14: si llegó el diseño del servidor (las 4 plantillas), se guarda y se comparte ese.
     fun imagenFinal(): Bitmap {
+        bitmapDiseno?.let { return it }
         val recorte = bitmap?.let { Recorte.rectangulo(ajuste, it.width, it.height, proporcion(formato)) }
         val logo = kit?.logoDiseno
         val nombre = nombreDe(kit)
@@ -181,10 +189,18 @@ fun VistaPublicacion(
                     Aviso("Todavía no tienes kit de marca: se usan colores por defecto. Genera tu kit para ver tu logo y tus colores.")
                 }
 
-                AnuncioEnFormato(anuncio, kit, formato, bitmap, cargandoImagen, ajuste, alAjustar)
+                if (bitmapDiseno != null) {
+                    DisenoEnFormato(bitmapDiseno, formato)
+                    OutlinedButton(
+                        onClick = { alGuardar { ExportadorAnuncio.guardarEnGaleria(contexto, imagenFinal(), nombreArchivo) } },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Guardar en la galería") }
+                } else {
+                    AnuncioEnFormato(anuncio, kit, formato, bitmap, cargandoImagen, ajuste, alAjustar)
+                }
 
-                // HU 48: acercar, mover, restablecer y guardar la imagen recortada.
-                if (bitmap != null && !cargandoImagen) {
+                // HU 48: acercar, mover, restablecer y guardar la imagen recortada (cuando se usa el diseño de la app).
+                if (bitmapDiseno == null && bitmap != null && !cargandoImagen) {
                     Text(
                         "Pellizca con dos dedos para acercar o alejar y arrastra para mover. El recorte queda dentro del marco.",
                         style = MaterialTheme.typography.bodySmall,
@@ -220,6 +236,18 @@ fun VistaPublicacion(
                     enabled = !cargandoImagen,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Compartir (WhatsApp, Instagram…)") }
+                // "Subir a mi estado": abre WhatsApp con el anuncio en vertical; ahí solo eliges "Mi estado".
+                Button(
+                    onClick = {
+                        alSubirAEstado { bytes ->
+                            textoPublicar?.let { copiarAlPortapapeles(contexto, it) }
+                            subirAEstadoWhatsapp(contexto, bytes, "estado_${anuncio.id ?: 0}")
+                        }
+                    },
+                    enabled = !subiendoEstado,
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Color(0xFF1F9D55)),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (subiendoEstado) "Preparando tu estado…" else "Subir a mi estado de WhatsApp") }
                 // HU 64: lo que falta según las reglas de publicidad de INDECOPI (fecha de vigencia, stock…).
                 if (observacionesLegales.isNotEmpty()) {
                     Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
@@ -450,6 +478,51 @@ internal fun decodificarBitmap(dataUrl: String): Bitmap? = runCatching {
 private fun copiarAlPortapapeles(contexto: android.content.Context, texto: String) {
     val portapapeles = contexto.getSystemService(android.content.ClipboardManager::class.java) ?: return
     portapapeles.setPrimaryClip(android.content.ClipData.newPlainText("Anuncio", texto))
+}
+
+// Ajuste 14: el anuncio diseñado por el servidor, con la proporción del formato.
+@Composable
+private fun DisenoEnFormato(diseno: Bitmap, formato: FormatoVista) {
+    val imagen = remember(diseno) { diseno.asImageBitmap() }
+    val vertical = formato.codigo == "VERTICAL"
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(if (vertical) 0.72f else 1f),
+            shape = RoundedCornerShape(16.dp),
+            shadowElevation = 3.dp
+        ) {
+            androidx.compose.foundation.Image(
+                bitmap = imagen,
+                contentDescription = "Tu anuncio diseñado con tu marca",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().aspectRatio(proporcion(formato))
+            )
+        }
+    }
+}
+
+// "Subir a mi estado": guarda la imagen vertical y abre WhatsApp directo (o WhatsApp Business). Ahí la persona
+// elige "Mi estado". WhatsApp no deja que una app publique el estado sola. Si no hay WhatsApp, se abre el menú normal.
+private fun subirAEstadoWhatsapp(contexto: android.content.Context, bytes: ByteArray, nombre: String) {
+    val carpeta = java.io.File(contexto.cacheDir, "compartidas").apply { mkdirs() }
+    val archivo = java.io.File(carpeta, "$nombre.jpg").apply { writeBytes(bytes) }
+    val uri = androidx.core.content.FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+    fun intento(paquete: String?) = android.content.Intent(android.content.Intent.ACTION_SEND)
+        .setType("image/jpeg")
+        .putExtra(android.content.Intent.EXTRA_STREAM, uri)
+        .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        .apply { if (paquete != null) setPackage(paquete) }
+    for (paquete in listOf("com.whatsapp", "com.whatsapp.w4b")) {
+        try {
+            contexto.startActivity(intento(paquete))
+            return
+        } catch (_: android.content.ActivityNotFoundException) {
+            // Este WhatsApp no está instalado: se prueba el siguiente.
+        }
+    }
+    contexto.startActivity(
+        android.content.Intent.createChooser(intento(null), "Subir a mi estado").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
 }
 
 // HU 65: guarda el video en la caché de la app y abre el menú para compartirlo (WhatsApp, Instagram, TikTok…).

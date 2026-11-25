@@ -3,7 +3,8 @@ package com.adbrand.domain.model
 // Las redes que acepta el enum RedSocial de Spring.
 enum class RedSocial(val valor: String, val etiqueta: String, val iniciales: String) {
     INSTAGRAM("INSTAGRAM", "Instagram", "IG"),
-    FACEBOOK("FACEBOOK", "Facebook", "FB");
+    FACEBOOK("FACEBOOK", "Facebook", "FB"),
+    WHATSAPP("WHATSAPP", "WhatsApp", "WA");
 
     companion object {
         fun desde(valor: String): RedSocial =

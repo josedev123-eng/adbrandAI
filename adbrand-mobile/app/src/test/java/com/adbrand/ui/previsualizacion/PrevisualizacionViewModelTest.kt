@@ -54,6 +54,12 @@ class PrevisualizacionViewModelTest {
             compartidos += contenidoId to formato
             return Resultado.Exito(Unit)
         }
+        // Ajuste 14: el anuncio diseñado por formato.
+        val disenosPedidos = mutableListOf<String>()
+        override suspend fun imagenFinal(contenidoId: Long, formato: String): Resultado<ByteArray> {
+            disenosPedidos += formato
+            return Resultado.Exito(formato.toByteArray())
+        }
     }
 
     private fun kit() = KitMarca(
@@ -296,6 +302,40 @@ class PrevisualizacionViewModelTest {
         )
 
         assertEquals("2x1 en pan\n\n— Panadería Rosa: “El sabor de tu barrio”", mensaje.cuerpo)
+    }
+
+    // Ajuste 14: al abrir un anuncio llega su diseño (plantilla de la opción elegida) y se pide de nuevo al cambiar de formato.
+    @Test
+    fun alAbrirUnAnuncioLlegaSuDisenoYCambiaConElFormato() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        val viewModel = PrevisualizacionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+
+        viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+        assertEquals("CUADRADO", viewModel.estado.value.diseno?.decodeToString())
+
+        viewModel.cambiarFormato("VERTICAL")
+        advanceUntilIdle()
+        assertEquals("VERTICAL", viewModel.estado.value.diseno?.decodeToString())
+        assertEquals(listOf("CUADRADO", "VERTICAL"), repositorio.disenosPedidos)
+    }
+
+    // "Subir a mi estado": siempre pide la imagen vertical y se la pasa a la pantalla para abrir WhatsApp.
+    @Test
+    fun subirAMiEstadoPideLaImagenVertical() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        val viewModel = PrevisualizacionViewModel(repositorio)
+        viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+
+        var recibido: String? = null
+        viewModel.subirAEstado { recibido = it.decodeToString() }
+        advanceUntilIdle()
+
+        assertEquals("VERTICAL", recibido)
+        assertEquals(false, viewModel.estado.value.subiendoEstado)
     }
 }
 

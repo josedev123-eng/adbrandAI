@@ -252,6 +252,7 @@ private fun EtiquetaRed(redSocial: String) {
     val nombre = when (redSocial) {
         "INSTAGRAM" -> "Instagram"
         "FACEBOOK" -> "Facebook"
+        "WHATSAPP" -> "WhatsApp"
         "TIKTOK" -> "TikTok"
         else -> redSocial.lowercase().replaceFirstChar { it.uppercase() }
     }

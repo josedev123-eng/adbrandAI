@@ -12,7 +12,9 @@ data class OpcionAnuncio(
     val proveedorImagen: String = "",
     val imagenSimulada: Boolean = false,
     val textoSimulado: Boolean = false,
-    val elegida: Boolean = false
+    val elegida: Boolean = false,
+    // Ajuste 14: el anuncio ya diseñado (foto + titular + precio + botón + marca). null si no llegó.
+    val diseno: String? = null
 )
 
 // Las 4 opciones que devuelve "Generar → Elegir".

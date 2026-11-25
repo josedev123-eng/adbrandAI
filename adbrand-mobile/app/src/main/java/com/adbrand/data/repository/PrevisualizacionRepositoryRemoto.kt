@@ -138,4 +138,12 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
         if (!archivo.esExitosa) return Resultado.Error("No se pudo crear el video del anuncio.", archivo.codigo)
         return Resultado.Exito(archivo.bytes)
     }
+
+    override suspend fun imagenFinal(contenidoId: Long, formato: String): Resultado<ByteArray> {
+        val archivo = com.adbrand.core.network.ClienteApi
+            .descargarAsync("contenido/anuncios/$contenidoId/imagen-final?formato=${formato.lowercase()}")
+            .getOrElse { return errorDeRed(it) }
+        if (!archivo.esExitosa) return Resultado.Error("No se pudo armar el diseño del anuncio.", archivo.codigo)
+        return Resultado.Exito(archivo.bytes)
+    }
 }

@@ -403,6 +403,7 @@ internal fun colorDesdeHex(hex: String?): Color? {
 internal fun nombreRed(red: String): String = when (red) {
     "INSTAGRAM" -> "Instagram"
     "FACEBOOK" -> "Facebook"
+    "WHATSAPP" -> "WhatsApp"
     else -> red
 }
 
