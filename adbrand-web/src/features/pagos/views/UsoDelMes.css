@@ -1,0 +1,17 @@
+/* Tu plan y tu uso este mes (Mi Cuenta): barras de progreso como en ChatGPT o Claude. */
+.uso-mes { display: flex; flex-direction: column; gap: 14px; }
+.uso-mes-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.uso-mes-cabecera h2 { margin: 0; font-size: 1.1rem; }
+.uso-mes-plan { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+.uso-mes-plan b { color: var(--primary); }
+.uso-mes-filas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 24px; }
+.uso-barra { display: flex; flex-direction: column; gap: 6px; }
+.uso-barra-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
+.uso-barra-titulo strong { white-space: nowrap; }
+.uso-barra-titulo span { color: var(--muted); white-space: nowrap; }
+.uso-barra-detalle { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.uso-barra-fondo { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.uso-barra-relleno { height: 100%; border-radius: 999px; background: var(--primary); transition: width 0.4s ease; }
+.uso-barra-alerta .uso-barra-relleno { background: var(--warn); }
+.uso-barra-agotada .uso-barra-relleno { background: var(--bad); }
+.uso-mes small { color: var(--muted); }

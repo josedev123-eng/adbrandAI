@@ -38,6 +38,15 @@
 .boton-primario:hover:not(:disabled) { background: #4338ca; }
 .boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .boton-secundario:hover:not(:disabled) { background: var(--surface-2); }
+/* Botón con forma de enlace (antes solo estaba en Auth.css y fuera del login salía como botón del navegador). */
+.boton-enlace { border: 0; background: transparent; padding: 0; color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
+.boton-enlace:hover:not(:disabled) { text-decoration: underline; }
+/* "← Volver" de las pantallas de edición del kit (antes solo cargaba con la vista del kit). */
+.boton-volver { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; padding: 0; font-size: 0.9rem; }
+/* Acción que quita o borra algo: mismo tamaño que el secundario, en rojo suave. */
+.boton-quitar { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: 1px solid var(--bad-soft); border-radius: 10px; background: var(--surface); color: var(--bad); font: inherit; font-weight: 600; cursor: pointer; transition: background-color 0.15s, border-color 0.15s; }
+.boton-quitar:hover:not(:disabled) { background: var(--bad-soft); border-color: var(--bad); }
+.boton-quitar:disabled { opacity: 0.6; cursor: not-allowed; }
 .boton-ia { padding: 12px 18px; border: none; border-radius: 12px; background: var(--ia); color: #ffffff; font-weight: 700; }
 .boton-ia:hover:not(:disabled) { background: #9c1488; }
 .boton-primario:active:not(:disabled), .boton-secundario:active:not(:disabled), .boton-ia:active:not(:disabled) { transform: translateY(1px); }

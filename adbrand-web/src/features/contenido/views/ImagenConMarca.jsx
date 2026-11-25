@@ -1,5 +1,6 @@
 // View (HU 61): vista previa de la imagen final con la marca, en el formato elegido, para descargarla o compartirla.
 import { FORMATOS_IMAGEN, useImagenConMarca } from '../viewmodels/useImagenConMarca'
+import './ListoParaPublicar.css'
 
 export default function ImagenConMarca({ anuncioId, texto }) {
   const { formato, elegirFormato, url, cargando, error, aviso, descargar, compartir } = useImagenConMarca(anuncioId)

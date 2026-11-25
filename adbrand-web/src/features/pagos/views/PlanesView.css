@@ -66,16 +66,3 @@
 .plan-ventajas li { display: flex; gap: 8px; }
 .plan-ventajas li::before { content: '✓'; color: var(--ok); font-weight: 700; }
 .plan-ventajas li:first-child { font-weight: 700; color: var(--fg); }
-
-/* Tu uso este mes: barras de progreso como en ChatGPT o Claude. */
-.uso-mes { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
-.uso-mes h2 { margin: 0; font-size: 1.1rem; }
-.uso-mes-filas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-.uso-barra { display: flex; flex-direction: column; gap: 6px; }
-.uso-barra-titulo { display: flex; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
-.uso-barra-titulo span { color: var(--muted); }
-.uso-barra-fondo { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-.uso-barra-relleno { height: 100%; border-radius: 999px; background: var(--primary); transition: width 0.4s ease; }
-.uso-barra-alerta .uso-barra-relleno { background: var(--warn); }
-.uso-barra-agotada .uso-barra-relleno { background: var(--bad); }
-.uso-mes small { color: var(--muted); }

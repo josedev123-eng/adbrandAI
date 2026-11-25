@@ -4,6 +4,7 @@ import Aviso from '../../../shared/components/Aviso'
 import Cargando from '../../../shared/components/Cargando'
 import { COLORES_AVATAR, colorDeAvatar } from '../../../shared/components/avatar'
 import AvatarConImagen from './AvatarConImagen'
+import UsoDelMes from '../../pagos/views/UsoDelMes'
 import { iniciales } from '../../../shared/components/opcionesMenuUsuario'
 import { useMiCuenta } from '../viewmodels/useMiCuenta'
 import CambiarContrasena from './CambiarContrasena'
@@ -29,7 +30,8 @@ function Dato({ etiqueta, valor }) {
 }
 
 // "avatarImagen" y "alCambiarAvatar": el avatar con imagen (logo del kit o foto) que también se ve en el menú.
-export default function MiCuentaView({ alGuardar, alVerTutorial, avatarImagen, alCambiarAvatar }) {
+// "irAPlanes": el botón de la tarjeta "Tu plan y tu uso este mes".
+export default function MiCuentaView({ alGuardar, alVerTutorial, avatarImagen, alCambiarAvatar, irAPlanes }) {
   const {
     datos,
     cuenta,
@@ -91,6 +93,8 @@ export default function MiCuentaView({ alGuardar, alVerTutorial, avatarImagen, a
           </div>
         </section>
       )}
+
+      {cuenta && <UsoDelMes alVerPlanes={irAPlanes} />}
 
       {cuenta && alCambiarAvatar && <AvatarConImagen imagen={avatarImagen} alCambiar={alCambiarAvatar} />}
 

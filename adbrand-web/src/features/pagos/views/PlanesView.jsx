@@ -7,13 +7,13 @@ import { usePlanes } from '../viewmodels/usePlanes'
 import ConfirmacionPagoView from './ConfirmacionPagoView'
 import PagoConTarjetaView from './PagoConTarjetaView'
 import PagoConYapeView from './PagoConYapeView'
-import UsoDelMes from './UsoDelMes'
 import './pagoComun.css'
 import './PlanesView.css'
 
 const SOLES = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' })
 
-export default function PlanesView() {
+// "irAMiCuenta": el enlace "Ver tu uso en Mi Cuenta" del aviso del plan actual.
+export default function PlanesView({ irAMiCuenta }) {
   const { planes, cargando, error, planActual } = usePlanes()
   const [planElegido, setPlanElegido] = useState(null)
   const [metodo, setMetodo] = useState(null)
@@ -54,12 +54,18 @@ export default function PlanesView() {
 
       {error && <p className="aviso aviso-error">{error}</p>}
 
-      <UsoDelMes />
-
       {planActual && (
         <p className="aviso aviso-info plan-actual-aviso">
           Tu plan actual: <b>{planActual.gratuito ? 'Gratuito' : planActual.nombre}</b>
           {planActual.limite ? ` · ${NUMERO.format(planActual.limite)} tokens de IA al mes` : ''}
+          {irAMiCuenta && (
+            <>
+              {' · '}
+              <button type="button" className="boton-enlace" onClick={irAMiCuenta}>
+                Ver tu uso en Mi Cuenta
+              </button>
+            </>
+          )}
         </p>
       )}
 

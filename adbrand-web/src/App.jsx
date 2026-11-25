@@ -338,7 +338,7 @@ function App() {
               <MisAnunciosView alVerAvisos={limpiarAvisos} irACrear={() => setPantalla('anuncio')} />
             )}
             {pantalla === 'kit' && <SolicitarKitMarcaView />}
-            {pantalla === 'planes' && <PlanesView />}
+            {pantalla === 'planes' && <PlanesView irAMiCuenta={() => setPantalla('cuenta')} />}
             {pantalla === 'calendario' && (
               <CalendarioView
                 alCrearAnuncio={(idea, ocasion) => {
@@ -354,6 +354,7 @@ function App() {
                 alVerTutorial={() => setVerTutorial(true)}
                 avatarImagen={usuario.avatarImagen}
                 alCambiarAvatar={(avatarImagen) => actualizarUsuario({ avatarImagen })}
+                irAPlanes={() => setPantalla('planes')}
               />
             )}
             {(pantalla === 'terminos' || pantalla === 'privacidad') && (

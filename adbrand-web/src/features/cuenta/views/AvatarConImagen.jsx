@@ -24,8 +24,8 @@ export default function AvatarConImagen({ imagen, alCambiar }) {
             Subir una foto
           </button>
           {imagen && (
-            <button type="button" className="boton-enlace" onClick={quitar} disabled={guardando}>
-              Quitar imagen
+            <button type="button" className="boton-quitar" onClick={quitar} disabled={guardando}>
+              <span aria-hidden="true">✕</span> Quitar imagen
             </button>
           )}
           <input

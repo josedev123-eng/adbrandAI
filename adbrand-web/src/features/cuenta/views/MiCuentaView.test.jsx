@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cambiarAvatar, guardarEmpresa, obtenerEmpresa, quitarAvatar } from '../models/cuentaApi'
+import { obtenerResumenUso } from '../../pagos/models/pagosApi'
 import MiCuentaView from './MiCuentaView'
 
 vi.mock('../models/cuentaApi', () => ({
@@ -11,6 +12,8 @@ vi.mock('../models/cuentaApi', () => ({
   cambiarAvatar: vi.fn(),
   quitarAvatar: vi.fn(),
 }))
+
+vi.mock('../../pagos/models/pagosApi', () => ({ obtenerResumenUso: vi.fn(() => Promise.reject(new Error('sin datos'))) }))
 
 const EMPRESA = {
   nombreEmpresa: 'Cafetería Don Pepe',
@@ -133,5 +136,26 @@ describe('MiCuentaView: color del avatar', () => {
 
     expect(screen.getByText('Elige una imagen PNG o JPG.')).toBeInTheDocument()
     expect(cambiarAvatar).not.toHaveBeenCalled()
+  })
+
+  it('muestra el plan y el uso del mes con barras, y lleva a Planes', async () => {
+    obtenerEmpresa.mockResolvedValue(EMPRESA)
+    obtenerResumenUso.mockResolvedValueOnce({
+      consumo: { tokensUsados: 23520, limite: 150000, porcentaje: 16, origen: 'PLAN', plan: 'Pro', enAlerta: false, agotado: false },
+      anunciosCreados: 1,
+      retoquesUsados: 0,
+      limiteRetoques: 20,
+    })
+    const irAPlanes = vi.fn()
+    render(<MiCuentaView irAPlanes={irAPlanes} />)
+
+    expect(await screen.findByText('Tu plan y tu uso este mes')).toBeInTheDocument()
+    expect(screen.getByText('Pro')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'IA del plan' })).toHaveAttribute('aria-valuenow', '16')
+    expect(screen.getByText(/te alcanza para ≈ 25 anuncios más/i)).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Retoques de imagen' })).toHaveAttribute('aria-valuenow', '0')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar de plan' }))
+    expect(irAPlanes).toHaveBeenCalled()
   })
 })

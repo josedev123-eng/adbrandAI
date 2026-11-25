@@ -1,7 +1,8 @@
 // HU 25: la pantalla de planes muestra el nombre, el precio y el límite de tokens de cada plan.
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { obtenerConsumoMes, obtenerPlanes, obtenerResumenUso } from '../models/pagosApi'
+import { obtenerConsumoMes, obtenerPlanes } from '../models/pagosApi'
 import { conMiles } from '../models/formatoPlanes'
 import PlanesView from './PlanesView'
 
@@ -46,24 +47,6 @@ describe('PlanesView', () => {
     expect(screen.getByRole('list', { name: 'Ventajas del plan Premium' })).toHaveTextContent('Atención preferente')
   })
 
-  it('muestra el uso del mes con barras de progreso', async () => {
-    obtenerPlanes.mockResolvedValue(PLANES)
-    obtenerResumenUso.mockResolvedValueOnce({
-      consumo: { tokensUsados: 75000, limite: 150000, porcentaje: 50, origen: 'PLAN', plan: 'Pro', enAlerta: false, agotado: false },
-      anunciosCreados: 12,
-      retoquesUsados: 3,
-      limiteRetoques: 20,
-    })
-
-    render(<PlanesView />)
-
-    expect(await screen.findByText('Tu uso este mes')).toBeInTheDocument()
-    expect(screen.getByRole('progressbar', { name: 'IA del plan' })).toHaveAttribute('aria-valuenow', '50')
-    expect(screen.getByText(/te alcanza para ≈ 15 anuncios más/)).toBeInTheDocument()
-    expect(screen.getByText('12')).toBeInTheDocument()
-    expect(screen.getByRole('progressbar', { name: 'Retoques de imagen' })).toHaveAttribute('aria-valuenow', '15')
-  })
-
   it('avisa cuando no se pudieron cargar los planes', async () => {
     obtenerPlanes.mockRejectedValue(new Error('sin conexión'))
 
@@ -80,6 +63,15 @@ describe('PlanesView', () => {
 
     expect(await screen.findByText('Tu plan actual')).toBeInTheDocument()
     expect(screen.getByText(/Tu plan actual:/)).toHaveTextContent('Pro')
+  })
+
+  it('el aviso del plan actual lleva a ver el uso en Mi Cuenta', async () => {
+    obtenerPlanes.mockResolvedValue(PLANES)
+    const irAMiCuenta = vi.fn()
+    render(<PlanesView irAMiCuenta={irAMiCuenta} />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver tu uso en Mi Cuenta' }))
+    expect(irAMiCuenta).toHaveBeenCalled()
   })
 
   it('con el plan gratuito lo dice arriba', async () => {
