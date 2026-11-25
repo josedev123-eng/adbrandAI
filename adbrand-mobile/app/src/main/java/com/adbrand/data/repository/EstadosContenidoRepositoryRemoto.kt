@@ -32,6 +32,34 @@ class EstadosContenidoRepositoryRemoto : EstadosContenidoRepository {
             .getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
     }
 
+    override suspend fun cancelar(id: Long): Resultado<Int> =
+        accion(EstadosContenidoApi.cancelar(id), "No se pudo cancelar.") {
+            runCatching { JSONObject(it).optInt("programacionesCanceladas", 0) }.getOrDefault(0)
+        }
+
+    override suspend fun reactivar(id: Long): Resultado<Unit> =
+        accion(EstadosContenidoApi.reactivar(id), "No se pudo volver a activar.") { }
+
+    override suspend fun eliminar(id: Long): Resultado<Unit> =
+        accion(EstadosContenidoApi.eliminar(id), "No se pudo eliminar.") { }
+
+    private fun <T> accion(
+        llamada: Result<com.adbrand.core.network.RespuestaHttp>,
+        porDefecto: String,
+        leer: (String) -> T
+    ): Resultado<T> {
+        val respuesta = llamada.getOrElse {
+            return Resultado.Error(
+                if (it is IOException) "No se pudo conectar con el servidor. Revisa tu conexión." else porDefecto
+            )
+        }
+        if (!respuesta.esExitosa) {
+            val mensaje = runCatching { JSONObject(respuesta.cuerpo).optString("mensaje") }.getOrNull()
+            return Resultado.Error(if (mensaje.isNullOrBlank()) porDefecto else mensaje, respuesta.codigo)
+        }
+        return Resultado.Exito(leer(respuesta.cuerpo))
+    }
+
     private fun listaDesde(json: JSONArray): List<ContenidoConEstado> = buildList {
         for (indice in 0 until json.length()) {
             val item = json.getJSONObject(indice)
@@ -41,7 +69,10 @@ class EstadosContenidoRepositoryRemoto : EstadosContenidoRepository {
                     oferta = texto(item, "oferta"),
                     redSocial = texto(item, "redSocial").ifBlank { "INSTAGRAM" },
                     estadoActual = texto(item, "estadoActual").ifBlank { "PENDIENTE" },
-                    motivo = texto(item, "motivo")
+                    motivo = texto(item, "motivo"),
+                    titular = texto(item, "titular"),
+                    texto = texto(item, "texto"),
+                    fecha = texto(item, "fechaCreacion").take(10)
                 )
             )
         }

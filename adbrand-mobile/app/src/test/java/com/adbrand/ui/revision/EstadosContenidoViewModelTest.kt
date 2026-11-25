@@ -120,7 +120,7 @@ class EstadosContenidoViewModelTest {
 
         val primero = estados.estado.value.contenidos.first()
         assertEquals(1L, primero.id)
-        assertEquals("Rechazado", primero.etiqueta)
+        assertEquals("Cancelado", primero.etiqueta)
         assertEquals("El precio está mal", primero.motivo)
     }
 
@@ -181,7 +181,7 @@ class EstadosContenidoViewModelTest {
     fun cadaEstadoTieneSuEtiqueta() {
         assertEquals("Pendiente", ContenidoConEstado(1, estadoActual = "PENDIENTE").etiqueta)
         assertEquals("Aprobado", ContenidoConEstado(1, estadoActual = "APROBADO").etiqueta)
-        assertEquals("Rechazado", ContenidoConEstado(1, estadoActual = "RECHAZADO").etiqueta)
+        assertEquals("Cancelado", ContenidoConEstado(1, estadoActual = "RECHAZADO").etiqueta)
         assertEquals("En revisión", ContenidoConEstado(1, estadoActual = "EN_REVISION").etiqueta)
         assertEquals("Rechazado por el moderador", ContenidoConEstado(1, estadoActual = "RECHAZADO_MODERADOR").etiqueta)
     }

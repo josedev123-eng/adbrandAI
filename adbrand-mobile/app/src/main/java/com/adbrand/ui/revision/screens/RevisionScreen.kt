@@ -149,7 +149,18 @@ fun RevisionScreen(
                 )
             }
 
-            seccionEstados(estados, alReintentar = estadosViewModel::cargar)
+            seccionEstados(
+                estados,
+                alReintentar = estadosViewModel::cargar,
+                acciones = AccionesEstados(
+                    alBuscar = estadosViewModel::buscar,
+                    alVerCancelados = estadosViewModel::verCancelados,
+                    alVerMas = estadosViewModel::verMas,
+                    alCancelar = estadosViewModel::cancelar,
+                    alReactivar = estadosViewModel::reactivar,
+                    alEliminar = estadosViewModel::eliminar
+                )
+            )
         }
         }
     }
