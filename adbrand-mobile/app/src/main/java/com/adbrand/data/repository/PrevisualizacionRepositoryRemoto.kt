@@ -126,7 +126,11 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
                 val o = lista.getJSONObject(i)
                 o.optString("titulo") to o.optString("detalle")
             }
-            Resultado.Exito(com.adbrand.domain.model.ListoParaPublicar(json.getString("textoParaPublicar"), observaciones))
+            Resultado.Exito(
+                com.adbrand.domain.model.ListoParaPublicar(
+                    json.getString("textoParaPublicar"), observaciones, json.optBoolean("videoDisponible", true)
+                )
+            )
         }
             .getOrElse { Resultado.Error("La respuesta del servidor no tiene el formato esperado.") }
     }

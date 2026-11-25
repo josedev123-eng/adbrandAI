@@ -11,7 +11,12 @@ data class LogoMarca(
 
 // HU 62 y 64: el anuncio listo para publicar (texto con hashtags y WhatsApp) y lo que conviene corregir
 // según las reglas de publicidad de INDECOPI (titulo + detalle; vacío si está todo bien).
-data class ListoParaPublicar(val texto: String, val observaciones: List<Pair<String, String>> = emptyList())
+// videoDisponible: el video para Reels y Estados es de los planes de pago (false con el plan gratis).
+data class ListoParaPublicar(
+    val texto: String,
+    val observaciones: List<Pair<String, String>> = emptyList(),
+    val videoDisponible: Boolean = true
+)
 
 data class KitMarca(
     val id: Long? = null,

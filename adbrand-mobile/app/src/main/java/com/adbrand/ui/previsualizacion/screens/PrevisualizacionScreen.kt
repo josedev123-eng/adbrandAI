@@ -291,7 +291,8 @@ fun PrevisualizacionScreen(
             alCrearVideo = viewModel::crearVideo,
             diseno = estado.diseno,
             subiendoEstado = estado.subiendoEstado,
-            alSubirAEstado = viewModel::subirAEstado
+            alSubirAEstado = viewModel::subirAEstado,
+            videoDisponible = estado.videoDisponible
         )
     }
 }

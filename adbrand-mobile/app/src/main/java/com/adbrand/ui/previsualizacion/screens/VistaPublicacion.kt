@@ -132,7 +132,9 @@ fun VistaPublicacion(
     diseno: ByteArray? = null,
     // "Subir a mi estado" de WhatsApp.
     subiendoEstado: Boolean = false,
-    alSubirAEstado: (alListo: (ByteArray) -> Unit) -> Unit = {}
+    alSubirAEstado: (alListo: (ByteArray) -> Unit) -> Unit = {},
+    // El video es de los planes de pago: con el plan gratis el botón lleva a ver los planes (en la web).
+    videoDisponible: Boolean = true
 ) {
     val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
     val bitmapDiseno = remember(diseno) { diseno?.let { BitmapFactory.decodeByteArray(it, 0, it.size) } }
@@ -249,22 +251,34 @@ fun VistaPublicacion(
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(if (subiendoEstado) "Preparando tu estado…" else "Subir a mi estado de WhatsApp") }
                 // HU 64: lo que falta según las reglas de publicidad de INDECOPI (fecha de vigencia, stock…).
+                // Discreto: una línea que se abre al tocarla para ver el detalle.
                 if (observacionesLegales.isNotEmpty()) {
-                    Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    var verLegal by remember { androidx.compose.runtime.mutableStateOf(false) }
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        onClick = { verLegal = !verLegal }
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                "Tu oferta, sin multas (reglas de INDECOPI)",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            observacionesLegales.forEach { (titulo, detalle) ->
-                                Text("• $titulo. $detalle", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Text(
-                                "Agrégalo al texto antes de publicar. Son recomendaciones, no una asesoría legal.",
+                                "ⓘ Tu oferta, sin multas: ${observacionesLegales.size} " +
+                                    (if (observacionesLegales.size == 1) "sugerencia" else "sugerencias") + " de INDECOPI " +
+                                    (if (verLegal) "▲" else "▼"),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
                             )
+                            if (verLegal) {
+                                observacionesLegales.forEach { (titulo, detalle) ->
+                                    Text("• $titulo. $detalle", style = MaterialTheme.typography.bodySmall)
+                                }
+                                Text(
+                                    "Agrégalo al texto antes de publicar. Son recomendaciones, no una asesoría legal.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -283,7 +297,11 @@ fun VistaPublicacion(
                     )
                 }
                 // HU 65: video vertical de 8 s con la imagen, el texto y la marca, listo para Reels o Estados.
-                OutlinedButton(
+                if (!videoDisponible) {
+                    OutlinedButton(onClick = { abrirPlanesEnLaWeb(contexto) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("🔒 Video para Reels y Estados · planes de pago")
+                    }
+                } else OutlinedButton(
                     onClick = {
                         alCrearVideo { bytes ->
                             textoPublicar?.let { copiarAlPortapapeles(contexto, it) }
@@ -498,6 +516,17 @@ private fun DisenoEnFormato(diseno: Bitmap, formato: FormatoVista) {
                 modifier = Modifier.fillMaxWidth().aspectRatio(proporcion(formato))
             )
         }
+    }
+}
+
+// El pago se hace en la web (como en Spotify o Canva): se abre la página de planes en el navegador.
+private fun abrirPlanesEnLaWeb(contexto: android.content.Context) {
+    val url = com.adbrand.BuildConfig.WEB_URL.trimEnd('/') + "/planes"
+    runCatching {
+        contexto.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 }
 

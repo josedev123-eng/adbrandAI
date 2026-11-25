@@ -41,7 +41,9 @@ data class PrevisualizacionEstado(
     // Ajuste 14: el anuncio diseñado (plantilla de la opción elegida) en el formato actual. null si no llegó.
     val diseno: ByteArray? = null,
     // "Subir a mi estado": se pide la imagen vertical y se abre WhatsApp.
-    val subiendoEstado: Boolean = false
+    val subiendoEstado: Boolean = false,
+    // El video es de los planes de pago: con el plan gratis el botón sale con candado.
+    val videoDisponible: Boolean = true
 )
 
 class PrevisualizacionViewModel(
@@ -111,7 +113,13 @@ class PrevisualizacionViewModel(
         viewModelScope.launch {
             val listo = repositorio.listoParaPublicar(id)
             if (listo is Resultado.Exito && _estado.value.publicacion?.id == id) {
-                _estado.update { it.copy(textoPublicar = listo.dato.texto, observacionesLegales = listo.dato.observaciones) }
+                _estado.update {
+                    it.copy(
+                        textoPublicar = listo.dato.texto,
+                        observacionesLegales = listo.dato.observaciones,
+                        videoDisponible = listo.dato.videoDisponible
+                    )
+                }
             }
         }
         viewModelScope.launch {
