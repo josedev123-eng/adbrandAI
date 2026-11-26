@@ -24,7 +24,11 @@ public final class JsonDeIa {
     }
 
     // Un elemento de la lista: su texto y, si vino, un dato extra (por ejemplo la escena de la imagen).
-    public record TextoConExtra(String texto, String extra) {
+    // HU 67: "titular" es el titular corto que la IA escribe aparte (null si no vino).
+    public record TextoConExtra(String texto, String extra, String titular) {
+        public TextoConExtra(String texto, String extra) {
+            this(texto, extra, null);
+        }
     }
 
     // Lee una lista cuyos elementos pueden ser textos ("…") u objetos ({"texto": "…", "escena": "…"}).
@@ -41,8 +45,10 @@ public final class JsonDeIa {
             for (JsonNode elemento : lista) {
                 String texto = elemento.isObject() ? elemento.path(campoTexto).asText("") : elemento.asText("");
                 String extra = elemento.isObject() ? elemento.path(campoExtra).asText("") : "";
+                String titular = elemento.isObject() ? elemento.path("titular").asText("") : "";
                 if (!texto.isBlank()) {
-                    elementos.add(new TextoConExtra(texto.strip(), extra.isBlank() ? null : extra.strip()));
+                    elementos.add(new TextoConExtra(texto.strip(), extra.isBlank() ? null : extra.strip(),
+                            titular.isBlank() ? null : titular.strip()));
                 }
             }
         } catch (RuntimeException ex) {

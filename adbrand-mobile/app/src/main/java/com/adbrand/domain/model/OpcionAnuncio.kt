@@ -14,7 +14,10 @@ data class OpcionAnuncio(
     val textoSimulado: Boolean = false,
     val elegida: Boolean = false,
     // Ajuste 14: el anuncio ya diseñado (foto + titular + precio + botón + marca). null si no llegó.
-    val diseno: String? = null
+    val diseno: String? = null,
+    // HU 67: titular corto (3 a 6 palabras) y enfoque de la opción (Precio, Antojo, Confianza, Urgencia).
+    val titular: String? = null,
+    val angulo: String? = null
 )
 
 // Las 4 opciones que devuelve "Generar → Elegir".

@@ -78,7 +78,12 @@ public final class DisenoAnuncio {
 
     // Saca de la oferta lo que va en el anuncio: "2 panetones por S/ 35" → titular + etiqueta "S/ 35".
     public static Textos textosDe(String oferta, String texto, boolean conWhatsapp) {
-        String titular = VideoAnuncioService.frasePrincipal(oferta, texto);
+        return textosDe(null, oferta, texto, conWhatsapp);
+    }
+
+    // HU 67: con el titular corto de la IA (si lo hay) en vez de la primera frase del texto.
+    public static Textos textosDe(String titularIa, String oferta, String texto, boolean conWhatsapp) {
+        String titular = VideoAnuncioService.titularDe(titularIa, oferta, texto);
         String fuente = oferta == null ? "" : oferta;
         String etiqueta = null;
         Matcher promo = PROMO.matcher(fuente);

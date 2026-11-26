@@ -50,7 +50,7 @@ public class DisenadorOpciones {
                                             boolean conWhatsapp) {
         try {
             var imagen = DisenoAnuncio.dibujar(MarcaDelNegocio.leerDataUrl(o.imagen()),
-                    DisenoAnuncio.textosDe(oferta, o.texto(), conWhatsapp), marca, Plantilla.deOpcion(o.numero()),
+                    DisenoAnuncio.textosDe(o.titular(), oferta, o.texto(), conWhatsapp), marca, Plantilla.deOpcion(o.numero()),
                     LADO_VISTA, LADO_VISTA);
             String diseno = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(ImagenFinalService.jpg(imagen));
             return o.conDiseno(diseno);

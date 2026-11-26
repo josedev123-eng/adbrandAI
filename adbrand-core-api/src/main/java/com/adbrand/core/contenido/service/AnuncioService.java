@@ -64,6 +64,13 @@ public class AnuncioService {
     // Pasa el texto por el filtro (HU 13) y lo guarda como contenido. Lo usa también "elegir una opción".
     public AnuncioGeneradoResponse guardar(Long usuarioId, PerfilNegocioResponse perfil, String oferta,
                                            RedSocial red, String texto, PromptAnuncio prompt, boolean simulado) {
+        return guardar(usuarioId, perfil, oferta, red, texto, prompt, simulado, null);
+    }
+
+    // HU 67: con el titular corto de la opción elegida (null si no hay).
+    public AnuncioGeneradoResponse guardar(Long usuarioId, PerfilNegocioResponse perfil, String oferta,
+                                           RedSocial red, String texto, PromptAnuncio prompt, boolean simulado,
+                                           String titular) {
         // HU 13, criterio 1: todo texto generado pasa por el filtro antes de poder usarse.
         ResultadoRevision revision = filtro.revisar(texto);
 
@@ -74,6 +81,7 @@ public class AnuncioService {
         contenido.setTono(perfil.tono());
         contenido.setOferta(oferta);
         contenido.setTexto(texto);
+        contenido.setTitular(titular);
         // HU 13, criterio 2: si incumple alguna regla queda DUDOSO y no se publica.
         contenido.setEstado(revision.aprobado() ? EstadoContenido.APROBADO : EstadoContenido.DUDOSO);
         contenido.setMotivoRevision(recortar(revision.motivoTexto()));

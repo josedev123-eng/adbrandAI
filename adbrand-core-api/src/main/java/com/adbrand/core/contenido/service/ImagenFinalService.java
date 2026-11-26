@@ -70,10 +70,10 @@ public class ImagenFinalService {
             boolean conWhatsapp = usuarios.findById(usuarioId)
                     .map(u -> PublicacionService.celularWhatsapp(u.getTelefono()) != null).orElse(false);
             return jpg(DisenoAnuncio.dibujar(foto,
-                    DisenoAnuncio.textosDe(contenido.getOferta(), contenido.getTexto(), conWhatsapp).conCondiciones(condiciones), marca,
+                    DisenoAnuncio.textosDe(contenido.getTitular(), contenido.getOferta(), contenido.getTexto(), conWhatsapp).conCondiciones(condiciones), marca,
                     DisenoAnuncio.Plantilla.deOpcion(elegida.get().getNumero()), formato.ancho(), formato.alto()));
         }
-        String frase = VideoAnuncioService.frasePrincipal(contenido.getOferta(), contenido.getTexto());
+        String frase = VideoAnuncioService.titularDe(contenido);
         return jpg(dibujar(foto, frase, marca, formato.ancho(), formato.alto()));
     }
 

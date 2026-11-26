@@ -14,16 +14,25 @@ public record OpcionAnuncioResponse(
         boolean imagenSimulada,
         boolean textoSimulado,
         boolean elegida,
-        String diseno) {
+        String diseno,
+        // HU 67: el titular corto (null si la IA no lo escribió) y el ángulo de la opción (Precio, Antojo…).
+        String titular,
+        String angulo) {
 
     public OpcionAnuncioResponse(Long id, int numero, String estilo, String texto, String imagen, String proveedorImagen,
                                  boolean imagenSimulada, boolean textoSimulado, boolean elegida) {
-        this(id, numero, estilo, texto, imagen, proveedorImagen, imagenSimulada, textoSimulado, elegida, null);
+        this(id, numero, estilo, texto, imagen, proveedorImagen, imagenSimulada, textoSimulado, elegida, null, null,
+                anguloDe(numero));
     }
 
     public OpcionAnuncioResponse conDiseno(String nuevo) {
         return new OpcionAnuncioResponse(id, numero, estilo, texto, imagen, proveedorImagen, imagenSimulada,
-                textoSimulado, elegida, nuevo);
+                textoSimulado, elegida, nuevo, titular, angulo);
+    }
+
+    static String anguloDe(int numero) {
+        var angulos = com.adbrand.core.contenido.service.PlantillaPromptAnuncio.ANGULOS;
+        return numero >= 1 ? angulos.get((numero - 1) % angulos.size()) : null;
     }
 
     public static OpcionAnuncioResponse desde(OpcionAnuncio opcion) {
@@ -36,6 +45,9 @@ public record OpcionAnuncioResponse(
                 opcion.imagen().proveedor(),
                 opcion.imagen().simulado(),
                 opcion.isTextoSimulado(),
-                opcion.isElegida());
+                opcion.isElegida(),
+                null,
+                opcion.getTitular(),
+                anguloDe(opcion.getNumero()));
     }
 }

@@ -84,6 +84,13 @@ public class OpcionAnuncio {
     public String getTexto() { return texto; }
     public void setTexto(String texto) { this.texto = texto; }
 
+    // HU 67: titular corto (3 a 6 palabras) escrito aparte por la IA; null si no vino.
+    @Column(length = 80)
+    private String titular;
+
+    public String getTitular() { return titular; }
+    public void setTitular(String titular) { this.titular = titular; }
+
     public boolean isTextoSimulado() { return textoSimulado; }
     public void setTextoSimulado(boolean textoSimulado) { this.textoSimulado = textoSimulado; }
 

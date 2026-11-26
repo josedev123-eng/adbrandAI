@@ -378,6 +378,18 @@ private fun TarjetaOpcion(
                 modifier = Modifier.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // HU 67: el enfoque de la opción y su titular corto.
+                opcion.angulo?.let {
+                    ChipSuave(texto = "Enfoque: $it", colorTexto = IndigoOscuro, colorFondo = BordeSuave)
+                }
+                opcion.titular?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                        color = TextoPrincipal
+                    )
+                }
                 Text(
                     text = opcion.texto,
                     style = MaterialTheme.typography.bodyMedium,
