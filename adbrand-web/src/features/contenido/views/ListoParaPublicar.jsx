@@ -1,26 +1,31 @@
 // View: "Listo para publicar". El texto con hashtags para copiar, compartir por WhatsApp y el afiche con QR.
-import { useListoParaPublicar } from '../viewmodels/useListoParaPublicar'
-import ImagenConMarca from './ImagenConMarca'
-import VideoConIa from './VideoConIa'
-import { REDES } from '../models/anunciosApi'
-import './ListoParaPublicar.css'
+import { useListoParaPublicar } from "../viewmodels/useListoParaPublicar";
+import ImagenConMarca from "./ImagenConMarca";
+import VideoConIa from "./VideoConIa";
+import { REDES } from "../models/anunciosApi";
+import "./ListoParaPublicar.css";
 
 // HU 64: "Tu oferta, sin multas". Lo que conviene corregir según las reglas de publicidad (INDECOPI),
 // con campos para completar hasta cuándo vale y cuántas unidades hay; se agregan solos al texto.
 function RevisionLegal({ observaciones, condiciones, alCambiar }) {
   if (observaciones.length === 0) {
-    return <p className="publicar-legal-ok">✓ Tu anuncio cumple las reglas básicas de publicidad de promociones.</p>
+    return (
+      <p className="publicar-legal-ok">
+        ✓ Tu anuncio cumple las reglas básicas de publicidad de promociones.
+      </p>
+    );
   }
-  const pideFecha = observaciones.some((o) => o.codigo === 'FALTA_VIGENCIA')
-  const pideStock = observaciones.some((o) => o.codigo === 'FALTA_STOCK')
-  const completo = (!pideFecha || condiciones.hasta) && (!pideStock || condiciones.stock)
+  const pideFecha = observaciones.some((o) => o.codigo === "FALTA_VIGENCIA");
+  const pideStock = observaciones.some((o) => o.codigo === "FALTA_STOCK");
+  const completo =
+    (!pideFecha || condiciones.hasta) && (!pideStock || condiciones.stock);
   return (
     <details className="publicar-legal" role="note">
       <summary>
-        {completo ? '✓' : 'ⓘ'} Tu oferta, sin multas:{' '}
+        {completo ? "✓" : "ⓘ"} Tu oferta, sin multas:{" "}
         {completo
-          ? 'listo, las condiciones van en el texto y en la imagen.'
-          : `${observaciones.length} ${observaciones.length === 1 ? 'sugerencia' : 'sugerencias'} de INDECOPI`}
+          ? "listo, las condiciones van en el texto y en la imagen."
+          : `${observaciones.length} ${observaciones.length === 1 ? "sugerencia" : "sugerencias"} de INDECOPI`}
       </summary>
       <ul>
         {observaciones.map((o) => (
@@ -34,7 +39,11 @@ function RevisionLegal({ observaciones, condiciones, alCambiar }) {
           {pideFecha && (
             <label className="campo">
               <span>Válido hasta</span>
-              <input type="date" value={condiciones.hasta} onChange={(e) => alCambiar('hasta', e.target.value)} />
+              <input
+                type="date"
+                value={condiciones.hasta}
+                onChange={(e) => alCambiar("hasta", e.target.value)}
+              />
             </label>
           )}
           {pideStock && (
@@ -46,21 +55,29 @@ function RevisionLegal({ observaciones, condiciones, alCambiar }) {
                 inputMode="numeric"
                 placeholder="Ej.: 50"
                 value={condiciones.stock}
-                onChange={(e) => alCambiar('stock', e.target.value)}
+                onChange={(e) => alCambiar("stock", e.target.value)}
               />
             </label>
           )}
         </div>
       )}
-      <small>Se agregan solas al texto y, en letra chica, abajo de la imagen. Son recomendaciones, no una asesoría legal.</small>
+      <small>
+        Se agregan solas al texto y, en letra chica, abajo de la imagen. Son
+        recomendaciones, no una asesoría legal.
+      </small>
     </details>
-  )
+  );
 }
 
 // "irAMiCuenta" lleva a poner el celular si falta. El afiche y la imagen usan el logo, los colores y el eslogan del kit.
 // "irAPlanes": con el plan gratis el video sale con candado y lleva a Planes.
 // "redSocial": la imagen se abre en el formato de esa red (vertical para los Estados de WhatsApp).
-export default function ListoParaPublicar({ anuncioId, redSocial, irAMiCuenta, irAPlanes }) {
+export default function ListoParaPublicar({
+  anuncioId,
+  redSocial,
+  irAMiCuenta,
+  irAPlanes,
+}) {
   const {
     publicacion,
     textoFinal,
@@ -78,23 +95,34 @@ export default function ListoParaPublicar({ anuncioId, redSocial, irAMiCuenta, i
     subiendoEstado,
     avisoEstado,
     subirAEstado,
-  } = useListoParaPublicar(anuncioId)
+  } = useListoParaPublicar(anuncioId);
 
   if (!publicacion) {
     return (
       <div className="publicar">
-        <button type="button" className="boton-primario" onClick={abrir} disabled={cargando}>
-          {cargando ? 'Preparando…' : '📣 Listo para publicar'}
+        <button
+          type="button"
+          className="boton-primario"
+          onClick={abrir}
+          disabled={cargando}
+        >
+          {cargando ? "Preparando…" : "📣 Listo para publicar"}
         </button>
         {error && <p className="campo-error">{error}</p>}
       </div>
-    )
+    );
   }
 
   return (
-    <section className="publicar publicar-abierto" aria-label="Listo para publicar">
+    <section
+      className="publicar publicar-abierto"
+      aria-label="Listo para publicar"
+    >
       <h3>Listo para publicar</h3>
-      <p className="publicar-ayuda">Copia el texto y pégalo en Instagram o Facebook, o envíalo directo por WhatsApp.</p>
+      <p className="publicar-ayuda">
+        Copia el texto y pégalo en Instagram o Facebook, o envíalo directo por
+        WhatsApp.
+      </p>
       {/* HU 61: la imagen final con el logo, los colores y el eslogan del kit de marca. */}
       <ImagenConMarca
         anuncioId={anuncioId}
@@ -102,61 +130,105 @@ export default function ListoParaPublicar({ anuncioId, redSocial, irAMiCuenta, i
         condiciones={condiciones}
         formatoInicial={REDES.find((red) => red.valor === redSocial)?.formato}
       />
-      <RevisionLegal observaciones={publicacion.observaciones ?? []} condiciones={condiciones} alCambiar={cambiarCondicion} />
+      <RevisionLegal
+        observaciones={publicacion.observaciones ?? []}
+        condiciones={condiciones}
+        alCambiar={cambiarCondicion}
+      />
       <pre className="publicar-texto">{textoFinal}</pre>
       <ul className="publicar-hashtags" aria-label="Hashtags">
         {publicacion.hashtags.map((h) => (
           <li key={h}>{h}</li>
         ))}
       </ul>
-      <div className="publicar-acciones">
-        <button type="button" className="boton-primario" onClick={copiar}>
-          {copiado ? '¡Copiado!' : 'Copiar texto con hashtags'}
-        </button>
-        <button type="button" className="boton-whatsapp" onClick={compartirWhatsapp}>
-          Enviar por WhatsApp
-        </button>
-        <button type="button" className="boton-whatsapp" onClick={subirAEstado} disabled={subiendoEstado}>
-          {subiendoEstado ? 'Preparando tu estado…' : 'Subir a mi estado'}
-        </button>
-        {publicacion.videoDisponible === false ? (
+      {/* Botones agrupados por lo que hace el dueño, todos del mismo tamaño dentro de cada grupo. */}
+      <section className="publicar-grupo" aria-label="Compartir">
+        <h4>Compartir</h4>
+        <div className="publicar-acciones">
+          <button type="button" className="boton-primario" onClick={copiar}>
+            {copiado ? "¡Copiado!" : "Copiar texto con hashtags"}
+          </button>
           <button
             type="button"
-            className="boton-secundario boton-bloqueado"
-            onClick={irAPlanes}
-            disabled={!irAPlanes}
-            title="El video para Reels y Estados está en los planes de pago"
+            className="boton-whatsapp"
+            onClick={compartirWhatsapp}
           >
-            🔒 Video para Reels y Estados · <span>planes de pago</span>
+            Enviar por WhatsApp
           </button>
-        ) : (
-          <button type="button" className="boton-ia" onClick={descargarVideo} disabled={creandoVideo}>
-            {creandoVideo ? '🎬 Creando tu video…' : '🎬 Video para Reels y Estados'}
+          <button
+            type="button"
+            className="boton-whatsapp"
+            onClick={subirAEstado}
+            disabled={subiendoEstado}
+          >
+            {subiendoEstado ? "Preparando tu estado…" : "Subir a mi estado"}
           </button>
-        )}
-        {/* HU 66: la IA anima la foto del anuncio (Premium). */}
-        <VideoConIa anuncioId={anuncioId} irAPlanes={irAPlanes} />
-        {publicacion.tieneWhatsapp && (
-          <button type="button" className="boton-secundario" onClick={imprimirAfiche}>
-            🖨 Afiche con QR para tu local
-          </button>
-        )}
-      </div>
+        </div>
+      </section>
+      <section className="publicar-grupo" aria-label="Video">
+        <h4>Video para Reels y Estados</h4>
+        <div className="publicar-acciones">
+          {publicacion.videoDisponible === false ? (
+            <button
+              type="button"
+              className="boton-secundario boton-bloqueado"
+              onClick={irAPlanes}
+              disabled={!irAPlanes}
+              title="El video para Reels y Estados está en los planes de pago"
+            >
+              🔒 Video con plantilla · <span>planes de pago</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="boton-ia"
+              onClick={descargarVideo}
+              disabled={creandoVideo}
+            >
+              {creandoVideo ? "🎬 Creando tu video…" : "🎬 Video con plantilla"}
+            </button>
+          )}
+          {/* HU 66: la IA anima la foto del anuncio (Premium). */}
+          <VideoConIa anuncioId={anuncioId} irAPlanes={irAPlanes} />
+        </div>
+      </section>
+      {publicacion.tieneWhatsapp && (
+        <section className="publicar-grupo" aria-label="Para tu local">
+          <h4>Para tu local</h4>
+          <div className="publicar-acciones">
+            <button
+              type="button"
+              className="boton-secundario"
+              onClick={imprimirAfiche}
+            >
+              🖨 Afiche con QR para tu local
+            </button>
+          </div>
+        </section>
+      )}
       {!publicacion.tieneWhatsapp && (
         <p className="publicar-nota">
-          Agrega tu celular en{' '}
+          Agrega tu celular en{" "}
           {irAMiCuenta ? (
-            <button type="button" className="boton-enlace" onClick={irAMiCuenta}>
+            <button
+              type="button"
+              className="boton-enlace"
+              onClick={irAMiCuenta}
+            >
               Mi Cuenta
             </button>
           ) : (
-            'Mi Cuenta'
-          )}{' '}
-          y tus anuncios llevarán un enlace para que te pidan por WhatsApp, y podrás imprimir un afiche con QR.
+            "Mi Cuenta"
+          )}{" "}
+          y tus anuncios llevarán un enlace para que te pidan por WhatsApp, y
+          podrás imprimir un afiche con QR.
         </p>
       )}
       {creandoVideo && (
-        <p className="publicar-ayuda">Armando tu video de 8 segundos con tu marca… suele tardar menos de medio minuto.</p>
+        <p className="publicar-ayuda">
+          Armando tu video de 8 segundos con tu marca… suele tardar menos de
+          medio minuto.
+        </p>
       )}
       {avisoEstado && (
         <p className="publicar-nota" role="status">
@@ -165,5 +237,5 @@ export default function ListoParaPublicar({ anuncioId, redSocial, irAMiCuenta, i
       )}
       {error && <p className="campo-error">{error}</p>}
     </section>
-  )
+  );
 }

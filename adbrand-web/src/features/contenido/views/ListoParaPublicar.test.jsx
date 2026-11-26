@@ -113,7 +113,7 @@ describe('ListoParaPublicar', () => {
     render(<ListoParaPublicar anuncioId={5} irAPlanes={irAPlanes} />)
     await userEvent.click(screen.getByRole('button', { name: '📣 Listo para publicar' }))
 
-    await userEvent.click(await screen.findByRole('button', { name: /🔒 Video para Reels y Estados/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /🔒 Video con plantilla/ }))
 
     expect(irAPlanes).toHaveBeenCalled()
     expect(descargarVideoAnuncio).not.toHaveBeenCalled()
@@ -125,7 +125,7 @@ describe('ListoParaPublicar', () => {
     render(<ListoParaPublicar anuncioId={5} />)
     await userEvent.click(screen.getByRole('button', { name: '📣 Listo para publicar' }))
 
-    await userEvent.click(await screen.findByRole('button', { name: '🎬 Video para Reels y Estados' }))
+    await userEvent.click(await screen.findByRole('button', { name: '🎬 Video con plantilla' }))
 
     expect(descargarVideoAnuncio).toHaveBeenCalledWith(5)
     expect(URL.createObjectURL).toHaveBeenCalled()

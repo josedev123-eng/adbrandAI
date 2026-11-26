@@ -9,7 +9,14 @@
 }
 .publicar-hashtags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .publicar-hashtags li { padding: 3px 10px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-weight: 600; font-size: 0.85rem; }
-.publicar-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Botones del mismo ancho y alto en cada fila; en el celular se apilan. */
+.publicar-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; align-items: start; }
+.publicar-acciones > button, .publicar-acciones .video-ia > button {
+  width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  text-align: center; line-height: 1.2;
+}
+.publicar-grupo { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.publicar-grupo h4 { margin: 0; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 /* Verde de WhatsApp: es el color que la gente reconoce para "enviar por WhatsApp". */
 .boton-whatsapp { padding: 10px 16px; border: 0; border-radius: 10px; background: #1f9d55; color: #fff; font-weight: 700; cursor: pointer; }
 .boton-whatsapp:hover { background: #18834a; }
@@ -43,7 +50,8 @@
 .imagen-marca-esqueleto { max-height: 520px; width: auto; max-width: 100%; min-width: 200px; border-radius: 0; }
 
 /* HU 66: video con IA (Premium). */
-.video-ia { display: flex; flex-direction: column; gap: 6px; flex-basis: 100%; }
+.video-ia { display: flex; flex-direction: column; gap: 6px; }
+.video-ia .publicar-ayuda { font-size: 0.82rem; }
 .video-ia .publicar-ayuda { margin: 0; }
 .video-ia-avance { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; color: var(--muted); }
 .video-ia-avance::before { content: ''; display: block; height: 6px; border-radius: 3px; background: var(--borde, #e5e7eb); }
