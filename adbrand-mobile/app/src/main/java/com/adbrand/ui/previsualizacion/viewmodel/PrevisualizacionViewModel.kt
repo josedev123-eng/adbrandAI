@@ -43,11 +43,17 @@ data class PrevisualizacionEstado(
     // "Subir a mi estado": se pide la imagen vertical y se abre WhatsApp.
     val subiendoEstado: Boolean = false,
     // El video es de los planes de pago: con el plan gratis el botón sale con candado.
-    val videoDisponible: Boolean = true
+    val videoDisponible: Boolean = true,
+    // HU 66: video con IA (Premium): si lo puede usar, cuántos le quedan y en qué va el que se está creando.
+    val videoIa: com.adbrand.domain.model.DisponibilidadVideoIa? = null,
+    val creandoVideoIa: Boolean = false,
+    val progresoVideoIa: Int? = null
 )
 
 class PrevisualizacionViewModel(
-    private val repositorio: PrevisualizacionRepository = PrevisualizacionRepositoryRemoto()
+    private val repositorio: PrevisualizacionRepository = PrevisualizacionRepositoryRemoto(),
+    // Cada cuánto se pregunta en qué va el video con IA.
+    private val esperaVideoIaMs: Long = 8_000
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(PrevisualizacionEstado())
@@ -109,7 +115,15 @@ class PrevisualizacionViewModel(
             )
         }
         val id = anuncio.id ?: return
-        cargarDiseno(id)
+        // La red define el formato con que se abre: Estados de WhatsApp en vertical, Facebook horizontal,
+        // Instagram cuadrado. Si ya está en ese formato, solo se pide el diseño.
+        val formatoDeLaRed = formatoDe(anuncio.redSocial)
+        if (formatoDeLaRed != _estado.value.formato.codigo && !_estado.value.cargando) cargarEn(formatoDeLaRed)
+        else cargarDiseno(id)
+        viewModelScope.launch {
+            val disponibilidad = repositorio.disponibilidadVideoIa()
+            if (disponibilidad is Resultado.Exito) _estado.update { it.copy(videoIa = disponibilidad.dato) }
+        }
         viewModelScope.launch {
             val listo = repositorio.listoParaPublicar(id)
             if (listo is Resultado.Exito && _estado.value.publicacion?.id == id) {
@@ -163,6 +177,12 @@ class PrevisualizacionViewModel(
 
     fun avisar(mensaje: String) = _estado.update { it.copy(mensajeCompartir = mensaje) }
 
+    private fun formatoDe(redSocial: String): String = when (redSocial.uppercase()) {
+        "WHATSAPP" -> "VERTICAL"
+        "FACEBOOK" -> "HORIZONTAL"
+        else -> "CUADRADO"
+    }
+
     // Ajuste 14: pide el anuncio diseñado en el formato actual. Si falla, se sigue viendo el diseño de la app.
     private fun cargarDiseno(id: Long) {
         val formato = _estado.value.formato.codigo
@@ -202,6 +222,39 @@ class PrevisualizacionViewModel(
                 }
                 is Resultado.Error -> _estado.update { it.copy(creandoVideo = false, mensajeCompartir = resultado.mensaje) }
             }
+        }
+    }
+
+    // HU 66: pide el video con IA, pregunta cada pocos segundos en qué va y, al terminar, lo descarga ("alListo").
+    fun crearVideoIa(alListo: (ByteArray) -> Unit) {
+        val id = _estado.value.publicacion?.id ?: return
+        if (_estado.value.creandoVideoIa) return
+        viewModelScope.launch {
+            _estado.update { it.copy(creandoVideoIa = true, progresoVideoIa = null, mensajeCompartir = null) }
+            var resultado = repositorio.iniciarVideoIa(id)
+            while (resultado is Resultado.Exito && resultado.dato.estado == "CREANDO") {
+                val video = resultado.dato
+                _estado.update { it.copy(progresoVideoIa = video.progreso, videoIa = it.videoIa?.copy(usados = video.usados)) }
+                kotlinx.coroutines.delay(esperaVideoIaMs)
+                resultado = repositorio.consultarVideoIa(video.id)
+            }
+            val mensaje = when (resultado) {
+                is Resultado.Error -> resultado.mensaje
+                is Resultado.Exito -> {
+                    val video = resultado.dato
+                    _estado.update { it.copy(videoIa = it.videoIa?.copy(usados = video.usados)) }
+                    if (video.estado == "LISTO") {
+                        when (val archivo = repositorio.descargarVideoIa(video.id)) {
+                            is Resultado.Exito -> {
+                                alListo(archivo.dato)
+                                null
+                            }
+                            is Resultado.Error -> archivo.mensaje
+                        }
+                    } else video.error ?: "La IA no pudo crear el video. No se descontó de tus videos del mes."
+                }
+            }
+            _estado.update { it.copy(creandoVideoIa = false, progresoVideoIa = null, mensajeCompartir = mensaje) }
         }
     }
 

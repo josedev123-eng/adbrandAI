@@ -23,6 +23,13 @@ interface PrevisualizacionRepository {
     // HU 65: el video vertical del anuncio (MP4 de 8 s) para Reels, TikTok o Estados de WhatsApp.
     suspend fun video(contenidoId: Long): Resultado<ByteArray> = Resultado.Error("No disponible")
 
+    // HU 66: video con IA (Premium). La IA anima la foto del anuncio; tarda 1 a 3 minutos.
+    suspend fun disponibilidadVideoIa(): Resultado<com.adbrand.domain.model.DisponibilidadVideoIa> =
+        Resultado.Error("No disponible")
+    suspend fun iniciarVideoIa(contenidoId: Long): Resultado<com.adbrand.domain.model.VideoIa> = Resultado.Error("No disponible")
+    suspend fun consultarVideoIa(videoId: Long): Resultado<com.adbrand.domain.model.VideoIa> = Resultado.Error("No disponible")
+    suspend fun descargarVideoIa(videoId: Long): Resultado<ByteArray> = Resultado.Error("No disponible")
+
     // Ajuste 14: el anuncio diseñado (JPG) con la plantilla de la opción elegida, la marca y el formato pedido.
     suspend fun imagenFinal(contenidoId: Long, formato: String): Resultado<ByteArray> = Resultado.Error("No disponible")
 }

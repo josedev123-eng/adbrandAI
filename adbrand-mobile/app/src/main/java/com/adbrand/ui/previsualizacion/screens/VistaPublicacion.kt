@@ -134,7 +134,12 @@ fun VistaPublicacion(
     subiendoEstado: Boolean = false,
     alSubirAEstado: (alListo: (ByteArray) -> Unit) -> Unit = {},
     // El video es de los planes de pago: con el plan gratis el botón lleva a ver los planes (en la web).
-    videoDisponible: Boolean = true
+    videoDisponible: Boolean = true,
+    // HU 66: video con IA (Premium, 3 al mes).
+    videoIa: com.adbrand.domain.model.DisponibilidadVideoIa? = null,
+    creandoVideoIa: Boolean = false,
+    progresoVideoIa: Int? = null,
+    alCrearVideoIa: (alListo: (ByteArray) -> Unit) -> Unit = {}
 ) {
     val bitmap = remember(imagen) { imagen?.let(::decodificarBitmap) }
     val bitmapDiseno = remember(diseno) { diseno?.let { BitmapFactory.decodeByteArray(it, 0, it.size) } }
@@ -317,6 +322,40 @@ fun VistaPublicacion(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                // HU 66: la IA anima la foto del anuncio (plan Premium, 3 al mes).
+                videoIa?.let { disponibilidad ->
+                    if (disponibilidad.motivo == "PLAN") {
+                        OutlinedButton(onClick = { abrirPlanesEnLaWeb(contexto) }, modifier = Modifier.fillMaxWidth()) {
+                            Text("🔒 Video con IA · plan Premium")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                alCrearVideoIa { bytes ->
+                                    textoPublicar?.let { copiarAlPortapapeles(contexto, it) }
+                                    compartirVideo(contexto, bytes, "anuncio_ia_${anuncio.id ?: 0}", textoPublicar ?: anuncio.textoAjustado)
+                                }
+                            },
+                            enabled = !creandoVideoIa && disponibilidad.quedan > 0,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(if (creandoVideoIa) "La IA está creando tu video…" else "✨ Video con IA") }
+                        if (creandoVideoIa) {
+                            androidx.compose.material3.LinearProgressIndicator(
+                                progress = { ((progresoVideoIa ?: 8).coerceIn(8, 100)) / 100f },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        Text(
+                            when {
+                                creandoVideoIa -> "Tarda de 1 a 3 minutos. Al terminar se abre el menú para compartirlo."
+                                disponibilidad.quedan == 0 -> "Ya usaste tus ${disponibilidad.limite} videos con IA de este mes. Se renuevan el día 1."
+                                else -> "La IA anima la foto de tu anuncio y le pone tu marca. Te quedan ${disponibilidad.quedan} de ${disponibilidad.limite} este mes."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 mensajeCompartir?.let { Aviso(it) }
 

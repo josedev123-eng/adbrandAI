@@ -54,6 +54,17 @@ class PrevisualizacionViewModelTest {
             compartidos += contenidoId to formato
             return Resultado.Exito(Unit)
         }
+        // HU 66: video con IA.
+        var disponibilidad: Resultado<com.adbrand.domain.model.DisponibilidadVideoIa> =
+            Resultado.Exito(com.adbrand.domain.model.DisponibilidadVideoIa(true, null, 1, 3))
+        val consultas = ArrayDeque<com.adbrand.domain.model.VideoIa>()
+        var inicio: Resultado<com.adbrand.domain.model.VideoIa> =
+            Resultado.Exito(com.adbrand.domain.model.VideoIa(40L, "CREANDO", 10, usados = 2))
+        override suspend fun disponibilidadVideoIa() = disponibilidad
+        override suspend fun iniciarVideoIa(contenidoId: Long) = inicio
+        override suspend fun consultarVideoIa(videoId: Long): Resultado<com.adbrand.domain.model.VideoIa> =
+            Resultado.Exito(consultas.removeFirst())
+        override suspend fun descargarVideoIa(videoId: Long): Resultado<ByteArray> = Resultado.Exito("mp4".toByteArray())
         // Ajuste 14: el anuncio diseñado por formato.
         val disenosPedidos = mutableListOf<String>()
         override suspend fun imagenFinal(contenidoId: Long, formato: String): Resultado<ByteArray> {
@@ -239,9 +250,10 @@ class PrevisualizacionViewModelTest {
         val viewModel = PrevisualizacionViewModel(repositorio)
         viewModel.cargar()
         advanceUntilIdle()
-        viewModel.cambiarFormato("VERTICAL")
-        advanceUntilIdle()
+        // El anuncio se abre en el formato de su red (Instagram: cuadrado) y luego el dueño elige vertical.
         viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+        viewModel.cambiarFormato("VERTICAL")
         advanceUntilIdle()
         return viewModel
     }
@@ -336,6 +348,56 @@ class PrevisualizacionViewModelTest {
 
         assertEquals("VERTICAL", recibido)
         assertEquals(false, viewModel.estado.value.subiendoEstado)
+    }
+
+    // HU 66: pide el video con IA, pregunta hasta que está listo y lo entrega para compartir.
+    @Test
+    fun elVideoConIaSePreguntaHastaQueEstaListoYSeEntrega() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        repositorio.consultas += com.adbrand.domain.model.VideoIa(40L, "CREANDO", 60, usados = 2)
+        repositorio.consultas += com.adbrand.domain.model.VideoIa(40L, "LISTO", 100, usados = 2)
+        val viewModel = PrevisualizacionViewModel(repositorio, esperaVideoIaMs = 10)
+        viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+        assertEquals(2, viewModel.estado.value.videoIa?.quedan)
+
+        var entregado: ByteArray? = null
+        viewModel.crearVideoIa { entregado = it }
+        advanceUntilIdle()
+
+        assertEquals("mp4", entregado?.decodeToString())
+        assertEquals(1, viewModel.estado.value.videoIa?.quedan)
+        assertEquals(false, viewModel.estado.value.creandoVideoIa)
+        assertNull(viewModel.estado.value.mensajeCompartir)
+    }
+
+    @Test
+    fun siElVideoConIaFallaLoExplica() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        repositorio.inicio = Resultado.Error("Ya usaste tus 3 videos con IA de este mes. Se renuevan el día 1.")
+        val viewModel = PrevisualizacionViewModel(repositorio, esperaVideoIaMs = 10)
+        viewModel.abrirPublicacion(anuncio())
+        advanceUntilIdle()
+
+        viewModel.crearVideoIa { }
+        advanceUntilIdle()
+
+        assertEquals("Ya usaste tus 3 videos con IA de este mes. Se renuevan el día 1.", viewModel.estado.value.mensajeCompartir)
+    }
+
+    // La red define el formato con que se abre el anuncio: Estados de WhatsApp en vertical.
+    @Test
+    fun unAnuncioParaEstadosSeAbreEnVertical() = runTest {
+        val repositorio = RepositorioFalso(Resultado.Exito(Previsualizacion(kit(), listOf(anuncio()))))
+        val viewModel = PrevisualizacionViewModel(repositorio)
+        viewModel.cargar()
+        advanceUntilIdle()
+
+        viewModel.abrirPublicacion(anuncio().copy(redSocial = "WHATSAPP"))
+        advanceUntilIdle()
+
+        assertEquals("VERTICAL", viewModel.estado.value.formato.codigo)
+        assertEquals("VERTICAL", viewModel.estado.value.diseno?.decodeToString())
     }
 }
 

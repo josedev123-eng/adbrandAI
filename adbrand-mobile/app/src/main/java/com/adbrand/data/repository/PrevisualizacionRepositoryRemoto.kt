@@ -143,6 +143,56 @@ class PrevisualizacionRepositoryRemoto : PrevisualizacionRepository {
         return Resultado.Exito(archivo.bytes)
     }
 
+    // HU 66: video con IA.
+    override suspend fun disponibilidadVideoIa(): Resultado<com.adbrand.domain.model.DisponibilidadVideoIa> {
+        val respuesta = com.adbrand.core.network.ClienteApi.ejecutarAsync("GET", "contenido/video-ia/disponibilidad")
+            .getOrElse { return errorDeRed(it) }
+        if (!respuesta.esExitosa) return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
+        return runCatching {
+            val json = JSONObject(respuesta.cuerpo)
+            Resultado.Exito(
+                com.adbrand.domain.model.DisponibilidadVideoIa(
+                    json.optBoolean("disponible"),
+                    json.optString("motivo").takeIf { it.isNotBlank() && it != "null" },
+                    json.optInt("usados"),
+                    json.optInt("limite", 3)
+                )
+            )
+        }.getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
+    }
+
+    override suspend fun iniciarVideoIa(contenidoId: Long): Resultado<com.adbrand.domain.model.VideoIa> =
+        videoIaDe(com.adbrand.core.network.ClienteApi.ejecutarAsync("POST", "contenido/anuncios/$contenidoId/video-ia"))
+
+    override suspend fun consultarVideoIa(videoId: Long): Resultado<com.adbrand.domain.model.VideoIa> =
+        videoIaDe(com.adbrand.core.network.ClienteApi.ejecutarAsync("GET", "contenido/video-ia/$videoId"))
+
+    override suspend fun descargarVideoIa(videoId: Long): Resultado<ByteArray> {
+        val archivo = com.adbrand.core.network.ClienteApi
+            .descargarAsync("contenido/video-ia/$videoId/archivo", com.adbrand.core.network.ClienteApi.clienteIa)
+            .getOrElse { return errorDeRed(it) }
+        if (!archivo.esExitosa) return Resultado.Error("No se pudo descargar el video con IA.", archivo.codigo)
+        return Resultado.Exito(archivo.bytes)
+    }
+
+    private fun videoIaDe(resultado: Result<RespuestaHttp>): Resultado<com.adbrand.domain.model.VideoIa> {
+        val respuesta = resultado.getOrElse { return errorDeRed(it) }
+        if (!respuesta.esExitosa) return Resultado.Error(mensajeDeError(respuesta.codigo, respuesta.cuerpo), respuesta.codigo)
+        return runCatching {
+            val json = JSONObject(respuesta.cuerpo)
+            Resultado.Exito(
+                com.adbrand.domain.model.VideoIa(
+                    id = json.getLong("id"),
+                    estado = json.getString("estado"),
+                    progreso = if (json.isNull("progreso")) null else json.optInt("progreso"),
+                    error = json.optString("error").takeIf { it.isNotBlank() && it != "null" },
+                    usados = json.optInt("usados"),
+                    limite = json.optInt("limite", 3)
+                )
+            )
+        }.getOrElse { Resultado.Error("El servidor devolvió una respuesta inesperada.") }
+    }
+
     override suspend fun imagenFinal(contenidoId: Long, formato: String): Resultado<ByteArray> {
         val archivo = com.adbrand.core.network.ClienteApi
             .descargarAsync("contenido/anuncios/$contenidoId/imagen-final?formato=${formato.lowercase()}")

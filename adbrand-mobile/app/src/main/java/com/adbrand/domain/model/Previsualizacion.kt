@@ -18,6 +18,26 @@ data class ListoParaPublicar(
     val videoDisponible: Boolean = true
 )
 
+// HU 66: video con IA (plan Premium, 3 al mes). motivo: "PLAN" (no tiene el plan) o "LIMITE" (ya usó los del mes).
+data class DisponibilidadVideoIa(
+    val disponible: Boolean,
+    val motivo: String?,
+    val usados: Int,
+    val limite: Int
+) {
+    val quedan: Int get() = (limite - usados).coerceAtLeast(0)
+}
+
+// Un video con IA en curso: estado CREANDO, LISTO o FALLIDO.
+data class VideoIa(
+    val id: Long,
+    val estado: String,
+    val progreso: Int? = null,
+    val error: String? = null,
+    val usados: Int = 0,
+    val limite: Int = 3
+)
+
 data class KitMarca(
     val id: Long? = null,
     val nombreNegocio: String = "",
