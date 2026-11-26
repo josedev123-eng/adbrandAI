@@ -2,11 +2,12 @@
 import InputContrasena from '../../../shared/components/InputContrasena'
 import Aviso from '../../../shared/components/Aviso'
 import { useRegistro } from '../viewmodels/useRegistro'
+import { reglasDeContrasena } from '../viewmodels/validaciones'
 import CampoAuth from './CampoAuth'
 import './Auth.css'
 
 export default function RegistroView({ irALogin, abrir, irAInicio, irAVerificar }) {
-  const { formulario, errores, mensaje, enviando, creada, cambiarCampo, enviar } = useRegistro(irAVerificar)
+  const { formulario, errores, validos, mensaje, enviando, creada, cambiarCampo, tocar, enviar } = useRegistro(irAVerificar)
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -31,9 +32,10 @@ export default function RegistroView({ irALogin, abrir, irAInicio, irAVerificar 
       <Aviso mensaje={mensaje} />
 
       <form className="tarjeta formulario" onSubmit={alEnviar} noValidate>
-        <CampoAuth etiqueta="Tu nombre" error={errores.nombre}>
+        <CampoAuth etiqueta="Tu nombre" error={errores.nombre} valido={validos.nombre} ayuda="Solo letras y espacios.">
           <input
             value={formulario.nombre}
+            onBlur={() => tocar('nombre')}
             maxLength={100}
             placeholder="Ej.: Rosa Quispe"
             autoComplete="name"
@@ -41,9 +43,15 @@ export default function RegistroView({ irALogin, abrir, irAInicio, irAVerificar 
           />
         </CampoAuth>
 
-        <CampoAuth etiqueta="Nombre de la empresa" error={errores.nombreEmpresa}>
+        <CampoAuth
+          etiqueta="Nombre de la empresa"
+          error={errores.nombreEmpresa}
+          valido={validos.nombreEmpresa}
+          ayuda="Letras, números y signos simples (& . , -)."
+        >
           <input
             value={formulario.nombreEmpresa}
+            onBlur={() => tocar('nombreEmpresa')}
             maxLength={150}
             placeholder="Ej.: Panadería Doña Rosa"
             autoComplete="organization"
@@ -51,10 +59,16 @@ export default function RegistroView({ irALogin, abrir, irAInicio, irAVerificar 
           />
         </CampoAuth>
 
-        <CampoAuth etiqueta="Correo" error={errores.correo}>
+        <CampoAuth
+          etiqueta="Correo"
+          error={errores.correo}
+          valido={validos.correo}
+          ayuda="Te enviaremos un código para confirmarlo."
+        >
           <input
             type="email"
             value={formulario.correo}
+            onBlur={() => tocar('correo')}
             maxLength={150}
             placeholder="Ej.: rosa@panaderia.pe"
             autoComplete="email"
@@ -65,19 +79,27 @@ export default function RegistroView({ irALogin, abrir, irAInicio, irAVerificar 
         <CampoAuth
           etiqueta="Contraseña"
           error={errores.contrasena}
-          ayuda="Mínimo 8 caracteres, con una mayúscula, una minúscula y un número."
+          valido={validos.contrasena}
+          reglas={reglasDeContrasena(formulario.contrasena)}
         >
           <InputContrasena
             value={formulario.contrasena}
+            onBlur={() => tocar('contrasena')}
             maxLength={72}
             autoComplete="new-password"
             onChange={(e) => cambiarCampo('contrasena', e.target.value)}
           />
         </CampoAuth>
 
-        <CampoAuth etiqueta="Confirmar contraseña" error={errores.confirmarContrasena}>
+        <CampoAuth
+          etiqueta="Confirmar contraseña"
+          error={errores.confirmarContrasena}
+          valido={validos.confirmarContrasena}
+          ayuda={validos.confirmarContrasena ? 'Las contraseñas coinciden.' : 'Escríbela otra vez.'}
+        >
           <InputContrasena
             value={formulario.confirmarContrasena}
+            onBlur={() => tocar('confirmarContrasena')}
             maxLength={72}
             autoComplete="new-password"
             onChange={(e) => cambiarCampo('confirmarContrasena', e.target.value)}

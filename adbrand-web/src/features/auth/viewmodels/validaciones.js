@@ -19,6 +19,18 @@ export function problemaDeContrasena(contrasena) {
   return null
 }
 
+// Las reglas de la contraseña una por una, para mostrarlas antes de que haya un error y marcar las que ya cumple
+// mientras el usuario escribe.
+export function reglasDeContrasena(contrasena = '') {
+  return [
+    { texto: 'Al menos 8 caracteres', cumple: contrasena.length >= 8 },
+    { texto: 'Una letra mayúscula', cumple: /[A-Z]/.test(contrasena) },
+    { texto: 'Una letra minúscula', cumple: /[a-z]/.test(contrasena) },
+    { texto: 'Un número', cumple: /[0-9]/.test(contrasena) },
+    { texto: 'Sin espacios', cumple: contrasena.length > 0 && !/\s/.test(contrasena) },
+  ]
+}
+
 // Nombre de persona: solo letras (con tildes y ñ), espacios, apóstrofo o guion. Entre 2 y 100 caracteres.
 const NOMBRE_PERSONA = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+([ '-][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*$/
 

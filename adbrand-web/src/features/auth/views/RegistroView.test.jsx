@@ -53,6 +53,44 @@ describe('RegistroView', () => {
     await vi.waitFor(() => expect(irAVerificar).toHaveBeenCalledWith('rosa@panaderia.pe'))
   })
 
+  it('muestra las reglas de la contraseña desde el inicio y las marca mientras escribe', async () => {
+    render(<RegistroView irALogin={vi.fn()} abrir={vi.fn()} />)
+    const reglas = screen.getByRole('list', { name: 'Reglas de contraseña' })
+    expect(reglas).toHaveTextContent('○ Al menos 8 caracteres')
+
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'Clave')
+    expect(reglas).toHaveTextContent('✓ Una letra mayúscula')
+    expect(reglas).toHaveTextContent('○ Un número')
+
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), '1234')
+    expect(reglas).toHaveTextContent('✓ Al menos 8 caracteres')
+    expect(reglas).toHaveTextContent('✓ Un número')
+  })
+
+  it('el error aparece al salir del campo y se quita apenas se corrige', async () => {
+    render(<RegistroView irALogin={vi.fn()} abrir={vi.fn()} />)
+    const correo = screen.getByLabelText('Correo')
+
+    await userEvent.type(correo, 'rosa@')
+    // Mientras escribe no se le muestra el error, solo la ayuda.
+    expect(screen.queryByText('Ingresa un correo válido.')).toBeNull()
+    await userEvent.tab()
+    expect(screen.getByText('Ingresa un correo válido.')).toBeInTheDocument()
+
+    await userEvent.type(correo, 'panaderia.pe')
+    expect(screen.queryByText('Ingresa un correo válido.')).toBeNull()
+  })
+
+  it('avisa en cuanto la confirmación no coincide y cuando ya coincide', async () => {
+    render(<RegistroView irALogin={vi.fn()} abrir={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'Clave1234')
+
+    await userEvent.type(screen.getByLabelText(/^Confirmar contraseña/), 'Clave12')
+    expect(screen.getByText('Las contraseñas no coinciden.')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText(/^Confirmar contraseña/), '34')
+    expect(screen.getByText('Las contraseñas coinciden.')).toBeInTheDocument()
+  })
+
   it('los enlaces de la casilla abren los Términos y la Política de privacidad', async () => {
     const abrir = vi.fn()
     render(<RegistroView irALogin={vi.fn()} abrir={abrir} />)

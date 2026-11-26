@@ -88,3 +88,12 @@
 .pantalla-publica > main { flex: 1; }
 .pantalla-publica .pagina.pagina-auth { min-height: auto; }
 .auth-volver { align-self: flex-start; }
+
+/* Validación mientras se escribe: reglas visibles antes del error y ✓ cuando el campo ya cumple. */
+.campo-control { display: flex; flex-direction: column; gap: 6px; }
+.campo-control > span { font-size: 0.85rem; font-weight: 600; }
+.campo-check { color: var(--ok); font-weight: 800; }
+.campo-valido input { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
+.campo-reglas { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.78rem; color: var(--muted); }
+.campo-reglas li { transition: color 0.2s ease; }
+.campo-reglas .regla-cumple { color: var(--ok); font-weight: 600; }
