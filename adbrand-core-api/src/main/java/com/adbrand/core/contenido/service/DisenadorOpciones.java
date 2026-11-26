@@ -36,7 +36,7 @@ public class DisenadorOpciones {
         return new OpcionesAnuncioResponse(respuesta.generacionId(), respuesta.oferta(), respuesta.redSocial(),
                 respuesta.opciones().stream()
                         .map(o -> conDiseno(o, respuesta.oferta(), marca, conWhatsapp))
-                        .toList());
+                        .toList(), respuesta.avisoFoto());
     }
 
     public OpcionElegidaResponse conDiseno(Long usuarioId, OpcionElegidaResponse elegida) {

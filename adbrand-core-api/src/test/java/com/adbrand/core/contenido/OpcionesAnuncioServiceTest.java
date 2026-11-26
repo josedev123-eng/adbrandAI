@@ -161,6 +161,115 @@ class OpcionesAnuncioServiceTest {
         verify(gasto, org.mockito.Mockito.never()).registrar(any(), any(), any());
     }
 
+    // HU 67: si el dueño pide su producto en otro ambiente, las opciones 3 y 4 lo ponen en una escena con la IA de
+    // pago (con la foto como referencia) y las 1 y 2 quedan con la foto real. Solo con plan de pago y con tope.
+    private final List<ImagenGenerada> basesEnviadas = new ArrayList<>();
+
+    private OpcionesAnuncioService servicioConEscena(String origenPlan, int retoquesRestantes, boolean openRouterResponde) {
+        GeneradorImagen openRouterFalso = new GeneradorImagen() {
+            @Override
+            public String nombre() {
+                return ServicioImagenes.OPENROUTER;
+            }
+
+            @Override
+            public ImagenGenerada generar(String descripcion, ImagenGenerada imagenBase) {
+                if (!openRouterResponde) {
+                    throw new IllegalStateException("sin saldo");
+                }
+                descripciones.add(descripcion);
+                basesEnviadas.add(imagenBase);
+                return new ImagenGenerada("image/jpeg", "RVNDRU5B", ServicioImagenes.OPENROUTER, false);
+            }
+        };
+        GeneradorImagen cloudflare = new GeneradorImagen() {
+            @Override
+            public String nombre() {
+                return ServicioImagenes.CLOUDFLARE;
+            }
+
+            @Override
+            public ImagenGenerada generar(String descripcion, ImagenGenerada imagenBase) {
+                return new ImagenGenerada("image/jpeg", "Q0Y=", ServicioImagenes.CLOUDFLARE, false);
+            }
+        };
+        GeneradorImagenSimulado simulado = new GeneradorImagenSimulado();
+        ServicioImagenes imagenes = new ServicioImagenes(
+                new ImagenProperties(false, "cuenta", "token", "flux", "llave", "gemini", 90),
+                List.of(simulado, cloudflare, openRouterFalso), simulado);
+        com.adbrand.core.ia.service.LimiteConsumoIa limites = mock(com.adbrand.core.ia.service.LimiteConsumoIa.class);
+        when(limites.consumoDelMes(1L)).thenReturn(new com.adbrand.core.ia.dto.ConsumoMesResponse(
+                0, 400000, 0, origenPlan, "Pro", false, false));
+        when(gasto.retoquesRestantes(1L)).thenReturn(retoquesRestantes);
+        PlantillaPromptAnuncio plantilla = new PlantillaPromptAnuncio();
+        AnuncioService anuncios = new AnuncioService(perfilService, plantilla, ia, mock(FiltroContenido.class), contenidos, kits);
+        return new OpcionesAnuncioService(perfilService, plantilla, ia, imagenes, anuncios, kits, generaciones, opciones,
+                gasto, limites);
+    }
+
+    private static final String JSON_ESCENA = """
+            {"usoFoto": "ESCENA", "opciones": [{"texto": "Uno", "escena": "a birthday table"},
+             {"texto": "Dos", "escena": "a party"}, {"texto": "Tres", "escena": "a birthday table with balloons"},
+             {"texto": "Cuatro", "escena": "a kids party"}]}""";
+
+    @Test
+    void conPlanDePagoYPidiendoOtroAmbienteLasOpciones3Y4PonenElProductoEnUnaEscena() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn(JSON_ESCENA);
+
+        OpcionesAnuncioResponse respuesta = servicioConEscena("PLAN", 20, true).generar(1L,
+                new GenerarAnuncioRequest("Mi torta en una fiesta de cumpleaños con globos", RedSocial.INSTAGRAM, null, FOTO));
+
+        assertThat(respuesta.opciones()).extracting("imagen")
+                .containsExactly(FOTO, FOTO, "data:image/jpeg;base64,RVNDRU5B", "data:image/jpeg;base64,RVNDRU5B");
+        assertThat(respuesta.avisoFoto()).isNull();
+        // La foto va como referencia y la escena la escribió la IA de texto.
+        assertThat(basesEnviadas).hasSize(2).allSatisfy(base -> assertThat(base.dataUrl()).isEqualTo(FOTO));
+        assertThat(descripciones.get(0)).contains("exact product from the reference photo").contains("balloons");
+        verify(gasto, times(2)).registrar(org.mockito.ArgumentMatchers.eq(1L),
+                org.mockito.ArgumentMatchers.eq(ConsumoImagen.Tipo.RETOQUE), any());
+    }
+
+    @Test
+    void conElPlanGratisOSinRetoquesUsaLaFotoTalCualYLoExplica() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn(JSON_ESCENA);
+        GenerarAnuncioRequest pedido = new GenerarAnuncioRequest("Mi torta en una fiesta", RedSocial.INSTAGRAM, null, FOTO);
+
+        OpcionesAnuncioResponse gratis = servicioConEscena("GRATUITO", 20, true).generar(1L, pedido);
+        assertThat(gratis.opciones()).extracting("imagen").containsOnly(FOTO);
+        assertThat(gratis.avisoFoto()).contains("planes de pago");
+
+        OpcionesAnuncioResponse sinRetoques = servicioConEscena("PLAN", 1, true).generar(1L, pedido);
+        assertThat(sinRetoques.opciones()).extracting("imagen").containsOnly(FOTO);
+        assertThat(sinRetoques.avisoFoto()).contains("ya usaste tus retoques");
+        assertThat(basesEnviadas).isEmpty();
+    }
+
+    @Test
+    void siLaIaDePagoFallaUsaLaFotoTalCual() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn(JSON_ESCENA);
+
+        OpcionesAnuncioResponse respuesta = servicioConEscena("PLAN", 20, false).generar(1L,
+                new GenerarAnuncioRequest("Mi torta en una fiesta", RedSocial.INSTAGRAM, null, FOTO));
+
+        assertThat(respuesta.opciones()).extracting("imagen").containsOnly(FOTO);
+        assertThat(respuesta.avisoFoto()).contains("usamos tu foto tal cual");
+    }
+
+    @Test
+    void conFotoLaIaDecideSiVaDeFondoOEnEscenaEnLaMismaLlamada() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any()))
+                .thenReturn("{\"usoFoto\": \"FONDO\", \"opciones\": [\"Uno\", \"Dos\", \"Tres\", \"Cuatro\"]}");
+        ArgumentCaptor<String> sistema = ArgumentCaptor.forClass(String.class);
+
+        OpcionesAnuncioResponse respuesta = servicioConEscena("PLAN", 20, true).generar(1L,
+                new GenerarAnuncioRequest("2x1 en tortas", RedSocial.INSTAGRAM, null, FOTO));
+
+        verify(ia).generarTexto(sistema.capture(), anyString(), any(), any());
+        assertThat(sistema.getValue()).contains("\"usoFoto\": \"ESCENA\"").contains("FOTO DE SU PRODUCTO");
+        assertThat(respuesta.opciones()).extracting("imagen").containsOnly(FOTO);
+        assertThat(basesEnviadas).isEmpty();
+    }
+
     @Test
     void unaFotoQueNoEsImagenSeRechazaConUnMensajeClaro() {
         assertThatThrownBy(() -> servicio.generar(1L,

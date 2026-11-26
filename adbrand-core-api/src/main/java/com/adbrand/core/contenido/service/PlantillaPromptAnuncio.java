@@ -60,8 +60,24 @@ public class PlantillaPromptAnuncio {
 
     public PromptAnuncio construirOpciones(PerfilNegocioResponse perfil, String oferta, RedSocial red,
                                            IdentidadMarca identidad, int cantidad, String ocasion) {
+        return construirOpciones(perfil, oferta, red, identidad, cantidad, ocasion, false);
+    }
+
+    // HU 67: si el dueño subió una foto, la IA decide según lo que pidió si se usa tal cual (FONDO) o si su
+    // producto va dentro de una escena nueva (ESCENA). Va en la misma llamada: no cuesta tokens extra.
+    static final String CON_FOTO = """
+
+            El dueño subió una FOTO DE SU PRODUCTO. Según lo que pide en la oferta, agrega al JSON el campo
+            "usoFoto": "ESCENA" si pide poner su producto en otro lugar o ambiente (por ejemplo "mi torta en una
+            fiesta", "mi zapatilla en la playa"); si no pide nada de eso, "usoFoto": "FONDO" (la foto se usa tal cual).
+            Con "ESCENA", cada "escena" describe EN INGLÉS ese lugar con "the product from the reference photo"
+            en el centro. Forma: {"usoFoto": "FONDO", "opciones": [...]}""";
+
+    public PromptAnuncio construirOpciones(PerfilNegocioResponse perfil, String oferta, RedSocial red,
+                                           IdentidadMarca identidad, int cantidad, String ocasion, boolean conFoto) {
         PromptAnuncio uno = construir(perfil, oferta, red, identidad, ocasion);
-        return new PromptAnuncio(SISTEMA_OPCIONES.formatted(cantidad, angulos(cantidad)), uno.usuario());
+        String sistema = SISTEMA_OPCIONES.formatted(cantidad, angulos(cantidad)) + (conFoto ? CON_FOTO : "");
+        return new PromptAnuncio(sistema, uno.usuario());
     }
 
     public PromptAnuncio construir(PerfilNegocioResponse perfil, String oferta, RedSocial red) {

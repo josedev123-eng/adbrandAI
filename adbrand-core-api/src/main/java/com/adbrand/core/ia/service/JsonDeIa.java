@@ -23,6 +23,16 @@ public final class JsonDeIa {
         return texto;
     }
 
+    // Un campo de texto de la raíz del JSON ({"usoFoto": "ESCENA", ...}); null si no vino o no es JSON.
+    public static String campo(String respuesta, String clave) {
+        try {
+            JsonNode valor = LECTOR.readTree(sinBloqueMarkdown(respuesta)).path(clave);
+            return valor.isTextual() && !valor.asText().isBlank() ? valor.asText().strip() : null;
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
     // Un elemento de la lista: su texto y, si vino, un dato extra (por ejemplo la escena de la imagen).
     // HU 67: "titular" es el titular corto que la IA escribe aparte (null si no vino).
     public record TextoConExtra(String texto, String extra, String titular) {

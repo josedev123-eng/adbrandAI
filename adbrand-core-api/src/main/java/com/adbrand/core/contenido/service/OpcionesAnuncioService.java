@@ -13,6 +13,7 @@ import com.adbrand.core.contenido.entity.OpcionAnuncio;
 import com.adbrand.core.contenido.repository.GeneracionAnuncioRepository;
 import com.adbrand.core.contenido.repository.OpcionAnuncioRepository;
 import com.adbrand.core.ia.entity.OrigenConsumo;
+import com.adbrand.core.ia.service.LimiteConsumoIa;
 import com.adbrand.core.ia.service.JsonDeIa;
 import com.adbrand.core.ia.service.ServicioIa;
 import com.adbrand.core.imagen.dto.ImagenGenerada;
@@ -59,10 +60,23 @@ public class OpcionesAnuncioService {
     private final OpcionAnuncioRepository opciones;
     private final ControlGastoImagenes gasto;
 
+    // HU 67: para saber si la empresa tiene un plan de pago (la escena con su foto usa la IA de pago).
+    private final LimiteConsumoIa limites;
+
     public OpcionesAnuncioService(PerfilNegocioService perfilService, PlantillaPromptAnuncio plantilla,
                                   ServicioIa ia, ServicioImagenes imagenes, AnuncioService anuncios,
                                   KitMarcaRepository kits, GeneracionAnuncioRepository generaciones,
                                   OpcionAnuncioRepository opciones, ControlGastoImagenes gasto) {
+        this(perfilService, plantilla, ia, imagenes, anuncios, kits, generaciones, opciones, gasto, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public OpcionesAnuncioService(PerfilNegocioService perfilService, PlantillaPromptAnuncio plantilla,
+                                  ServicioIa ia, ServicioImagenes imagenes, AnuncioService anuncios,
+                                  KitMarcaRepository kits, GeneracionAnuncioRepository generaciones,
+                                  OpcionAnuncioRepository opciones, ControlGastoImagenes gasto,
+                                  LimiteConsumoIa limites) {
+        this.limites = limites;
         this.perfilService = perfilService;
         this.plantilla = plantilla;
         this.ia = ia;
@@ -79,10 +93,15 @@ public class OpcionesAnuncioService {
         // HU 10, criterio 1: sin perfil registrado no se puede generar (404 PERFIL_NO_ENCONTRADO).
         PerfilNegocioResponse perfil = perfilService.obtener(usuarioId);
         IdentidadMarca identidad = anuncios.identidadDe(usuarioId);
-        List<JsonDeIa.TextoConExtra> textos = pedirTextos(usuarioId, perfil, datos, identidad);
-        EstiloMarca marca = estiloDelKit(usuarioId);
-        // Con foto del producto: las 4 opciones la usan (no se gasta en imágenes de IA).
+        // La foto se revisa antes de pedir los textos, así una foto inválida no gasta tokens.
         ImagenGenerada foto = datos.tieneFoto() ? fotoDelProducto(datos.foto()) : null;
+        Textos pedido = pedirTextos(usuarioId, perfil, datos, identidad);
+        List<JsonDeIa.TextoConExtra> textos = pedido.textos();
+        EstiloMarca marca = estiloDelKit(usuarioId);
+        // HU 67, foto del producto: tal cual (FONDO, gratis) o, si el dueño pidió otro ambiente (ESCENA), las
+        // opciones 3 y 4 la ponen dentro de una escena nueva con la IA de pago; las 1 y 2 quedan con la foto real.
+        boolean quiereEscena = foto != null && "ESCENA".equalsIgnoreCase(pedido.usoFoto());
+        String avisoFoto = quiereEscena ? motivoSinEscena(usuarioId) : null;
 
         GeneracionAnuncio generacion = new GeneracionAnuncio();
         generacion.setUsuarioId(usuarioId);
@@ -95,6 +114,14 @@ public class OpcionesAnuncioService {
             // La escena la escribe la IA de texto en inglés; si no vino, se usa el producto sacado de la oferta.
             String escena = textos.get(i).extra() != null ? textos.get(i).extra() : temaSinCifras(datos.oferta());
             ImagenGenerada imagen = foto;
+            if (quiereEscena && avisoFoto == null && i >= CANTIDAD - ESCENAS_CON_FOTO) {
+                ImagenGenerada escenaIa = escenaConFoto(usuarioId, escena, foto);
+                if (escenaIa != null) {
+                    imagen = escenaIa;
+                } else {
+                    avisoFoto = "La IA no pudo armar la escena con tu producto; usamos tu foto tal cual.";
+                }
+            }
             if (imagen == null) {
                 imagen = imagenes.borrador(
                         descripcionDeImagen(perfil, escena, ESTILOS[i][1], marca) + ambienteDeOcasion(datos.ocasion()));
@@ -110,7 +137,39 @@ public class OpcionesAnuncioService {
             opcion.ponerImagen(imagen);
             respuesta.add(OpcionAnuncioResponse.desde(opciones.save(opcion)));
         }
-        return new OpcionesAnuncioResponse(generacion.getId(), generacion.getOferta(), generacion.getRedSocial(), respuesta);
+        return new OpcionesAnuncioResponse(generacion.getId(), generacion.getOferta(), generacion.getRedSocial(), respuesta,
+                avisoFoto);
+    }
+
+    // Cuántas de las 4 opciones llevan la escena con la foto (las últimas); el resto, la foto real.
+    static final int ESCENAS_CON_FOTO = 2;
+
+    // null si se puede armar la escena; si no, el motivo para avisarle al dueño.
+    private String motivoSinEscena(Long usuarioId) {
+        if (imagenes.esSimulado()) {
+            return null;
+        }
+        if (limites == null || LimiteConsumoIa.GRATUITO.equals(limites.consumoDelMes(usuarioId).origen())) {
+            return "Usamos tu foto tal cual. Poner tu producto en una escena con IA es de los planes de pago.";
+        }
+        if (gasto.retoquesRestantes(usuarioId) < ESCENAS_CON_FOTO) {
+            return "Usamos tu foto tal cual: ya usaste tus retoques con IA de este mes.";
+        }
+        return null;
+    }
+
+    // La escena nueva con el producto de la foto (IA de pago, cuenta como retoque). null si la IA de pago no respondió.
+    private ImagenGenerada escenaConFoto(Long usuarioId, String escena, ImagenGenerada foto) {
+        String descripcion = "Place the exact product from the reference photo (same shape, colors, packaging and "
+                + "details) in this scene: " + escena + ". Professional advertising photo, natural light, the product "
+                + "is the clear hero in the center. Absolutely no text, letters, numbers, logos or watermarks.";
+        ImagenGenerada resultado = imagenes.finalORetoque(descripcion, foto);
+        // Si respondió otra IA (la gratis no usa la foto), no sirve: se usa la foto tal cual.
+        if (!imagenes.esSimulado() && !ServicioImagenes.OPENROUTER.equals(resultado.proveedor())) {
+            return null;
+        }
+        gasto.registrar(usuarioId, ConsumoImagen.Tipo.RETOQUE, resultado);
+        return resultado;
     }
 
     private static final java.util.regex.Pattern FOTO =
@@ -179,10 +238,14 @@ public class OpcionesAnuncioService {
 
     // Una sola llamada a la IA de texto pide las 4 versiones en JSON, cada una con su escena para la imagen.
     // Si la respuesta no trae las 4 (o no es JSON, como en el modo simulado), las que faltan se piden de una en una.
-    private List<JsonDeIa.TextoConExtra> pedirTextos(Long usuarioId, PerfilNegocioResponse perfil, GenerarAnuncioRequest datos,
-                                     IdentidadMarca identidad) {
+    // Los textos de las opciones y, si hay foto, cómo la quiere usar el dueño ("FONDO" o "ESCENA").
+    private record Textos(List<JsonDeIa.TextoConExtra> textos, String usoFoto) {
+    }
+
+    private Textos pedirTextos(Long usuarioId, PerfilNegocioResponse perfil, GenerarAnuncioRequest datos,
+                               IdentidadMarca identidad) {
         PromptAnuncio promptOpciones = plantilla.construirOpciones(perfil, datos.oferta(), datos.redSocial(),
-                identidad, CANTIDAD, datos.ocasion());
+                identidad, CANTIDAD, datos.ocasion(), datos.tieneFoto());
         String respuesta = ia.generarTexto(promptOpciones.sistema(), promptOpciones.usuario(), usuarioId,
                 OrigenConsumo.ANUNCIO);
         List<JsonDeIa.TextoConExtra> textos = new ArrayList<>(
@@ -193,7 +256,7 @@ public class OpcionesAnuncioService {
             String texto = ia.generarTexto(promptUno.sistema(), promptUno.usuario(), usuarioId, OrigenConsumo.ANUNCIO);
             textos.add(new JsonDeIa.TextoConExtra(texto, null));
         }
-        return textos.subList(0, CANTIDAD);
+        return new Textos(textos.subList(0, CANTIDAD), JsonDeIa.campo(respuesta, "usoFoto"));
     }
 
     // Lo que el kit de marca más reciente aporta a la imagen: hasta 4 colores (#RRGGBB) y el estilo visual.
