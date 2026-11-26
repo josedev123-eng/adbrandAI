@@ -35,6 +35,8 @@ class ImagenesEmpresaSerializer(serializers.Serializer):
     empresa = serializers.CharField()
     borradores = serializers.IntegerField()
     retoques = serializers.IntegerField()
+    videos = serializers.IntegerField(default=0)  # HU 66
+    costo_videos = serializers.FloatField(default=0)
     ultima = serializers.DateTimeField()
     en_limite = serializers.BooleanField()
 
@@ -44,6 +46,8 @@ class ImagenesMesSerializer(serializers.Serializer):
 
     borradores = serializers.IntegerField()
     retoques = serializers.IntegerField()
+    videos = serializers.IntegerField(default=0)  # HU 66
+    costo_videos = serializers.FloatField(default=0)
     limite_retoques = serializers.IntegerField()
     empresas = ImagenesEmpresaSerializer(many=True)
 

@@ -65,15 +65,18 @@ class ConsumoImagen(models.Model):
     """Una imagen generada con IA (control de gasto). La tabla la crea Flyway (V40) y la llena Spring.
 
     BORRADOR: las 4 opciones del anuncio (IA gratis, Cloudflare). RETOQUE: editar la opción elegida (IA de pago, OpenRouter).
+    VIDEO (HU 66): un video con IA del plan Premium (OpenRouter); "costo" guarda lo que cobró en dólares.
     """
 
     BORRADOR = "BORRADOR"
     RETOQUE = "RETOQUE"
+    VIDEO = "VIDEO"
 
     usuario_id = models.BigIntegerField()  # la empresa que pidió la imagen
     tipo = models.CharField(max_length=20)
     proveedor = models.CharField(max_length=20)  # simulado, cloudflare u openrouter
     simulado = models.BooleanField(default=False)
+    costo = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)  # V75, solo videos
     fecha = models.DateTimeField()
 
     class Meta:

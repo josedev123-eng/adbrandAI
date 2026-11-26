@@ -130,6 +130,8 @@ def imagenes_del_mes(inicio=None):
         .annotate(
             borradores=Count("id", filter=Q(tipo=ConsumoImagen.BORRADOR)),
             retoques=Count("id", filter=Q(tipo=ConsumoImagen.RETOQUE)),
+            videos=Count("id", filter=Q(tipo=ConsumoImagen.VIDEO)),
+            costo_videos=Sum("costo", filter=Q(tipo=ConsumoImagen.VIDEO)),
             ultima=Max("fecha"),
         )
         .order_by("-retoques", "-borradores", "usuario_id")
@@ -141,9 +143,13 @@ def imagenes_del_mes(inicio=None):
     for fila in filas:
         fila["empresa"] = nombres.get(fila["usuario_id"], f"Empresa #{fila['usuario_id']}")
         fila["en_limite"] = fila["retoques"] >= limite
+        fila["costo_videos"] = float(fila["costo_videos"] or 0)
     return {
         "borradores": sum(fila["borradores"] for fila in filas),
         "retoques": sum(fila["retoques"] for fila in filas),
+        # HU 66: videos con IA (Premium) y lo que costaron en dólares este mes.
+        "videos": sum(fila["videos"] for fila in filas),
+        "costo_videos": round(sum(fila["costo_videos"] for fila in filas), 4),
         "limite_retoques": limite,
         "empresas": filas,
     }

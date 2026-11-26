@@ -65,6 +65,10 @@ function ImagenesDelMes({ imagenes }) {
           <strong className="consumo-imagenes-limite">{imagenes.limite_retoques}</strong>
           <span>retoques por empresa al mes</span>
         </div>
+        <div>
+          <strong className="consumo-imagenes-pago">{imagenes.videos ?? 0}</strong>
+          <span>videos con IA (US${(imagenes.costo_videos ?? 0).toFixed(2)})</span>
+        </div>
       </div>
 
       {imagenes.empresas.length === 0 ? (
@@ -76,6 +80,7 @@ function ImagenesDelMes({ imagenes }) {
               <th>Empresa</th>
               <th className="consumo-numero">Borradores</th>
               <th className="consumo-numero">Retoques</th>
+              <th className="consumo-numero">Videos IA</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -86,6 +91,10 @@ function ImagenesDelMes({ imagenes }) {
                 <td className="consumo-numero">{fila.borradores}</td>
                 <td className="consumo-numero">
                   {fila.retoques} / {imagenes.limite_retoques}
+                </td>
+                <td className="consumo-numero">
+                  {fila.videos ?? 0}
+                  {fila.costo_videos > 0 && ` · US$${fila.costo_videos.toFixed(2)}`}
                 </td>
                 <td>
                   <span className={fila.en_limite ? 'consumo-estado consumo-estado-limite' : 'consumo-estado'}>

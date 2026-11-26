@@ -168,8 +168,10 @@ describe('ConsumoTokensView (HU-17)', () => {
         borradores: 12,
         retoques: 21,
         limite_retoques: 20,
+        videos: 2,
+        costo_videos: 0.48,
         empresas: [
-          { usuario_id: 1, empresa: 'Panadería Doña Rosa', borradores: 8, retoques: 20, ultima: '2026-11-20T10:00:00-05:00', en_limite: true },
+          { usuario_id: 1, empresa: 'Panadería Doña Rosa', borradores: 8, retoques: 20, videos: 2, costo_videos: 0.48, ultima: '2026-11-20T10:00:00-05:00', en_limite: true },
           { usuario_id: 2, empresa: 'Empresa #2', borradores: 4, retoques: 1, ultima: '2026-11-20T11:00:00-05:00', en_limite: false },
         ],
       },
@@ -181,6 +183,9 @@ describe('ConsumoTokensView (HU-17)', () => {
     expect(within(seccion).getByText('21')).toBeInTheDocument()
     expect(within(seccion).getByRole('row', { name: /Panadería Doña Rosa/ })).toHaveTextContent('Llegó al límite')
     expect(within(seccion).getByRole('row', { name: /Empresa #2/ })).toHaveTextContent('Dentro del límite')
+    // HU 66: videos con IA y su costo.
+    expect(within(seccion).getByText('videos con IA (US$0.48)')).toBeInTheDocument()
+    expect(within(seccion).getByRole('row', { name: /Panadería Doña Rosa/ })).toHaveTextContent('2 · US$0.48')
   })
 })
 

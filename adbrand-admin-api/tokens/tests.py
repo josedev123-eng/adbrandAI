@@ -363,9 +363,10 @@ class HistorialTests(APITestCase):
         self.assertEqual(respuesta.status_code, 403)
 
 
-def imagen(usuario_id, tipo, proveedor="cloudflare", simulado=False, fecha=None):
+def imagen(usuario_id, tipo, proveedor="cloudflare", simulado=False, fecha=None, costo=None):
     return ConsumoImagen.objects.create(
         usuario_id=usuario_id, tipo=tipo, proveedor=proveedor, simulado=simulado, fecha=fecha or timezone.now(),
+        costo=costo,
     )
 
 
@@ -417,6 +418,18 @@ class ConsumoImagenesTests(APITestCase):
 
         self.assertEqual(datos["retoques"], 0)
         self.assertEqual(datos["empresas"], [])
+
+    def test_cuenta_los_videos_con_ia_y_lo_que_costaron(self):
+        imagen(1, ConsumoImagen.VIDEO, proveedor="openrouter", costo="0.24")
+        imagen(1, ConsumoImagen.VIDEO, proveedor="openrouter", costo="0.24")
+        imagen(1, ConsumoImagen.VIDEO, proveedor="simulado", simulado=True, costo="0")
+
+        datos = self.imagenes()
+
+        self.assertEqual(datos["videos"], 2)
+        self.assertAlmostEqual(datos["costo_videos"], 0.48)
+        self.assertEqual(datos["empresas"][0]["videos"], 2)
+        self.assertAlmostEqual(datos["empresas"][0]["costo_videos"], 0.48)
 
     def test_marca_a_la_empresa_que_llego_al_limite_de_retoques(self):
         for _ in range(3):
