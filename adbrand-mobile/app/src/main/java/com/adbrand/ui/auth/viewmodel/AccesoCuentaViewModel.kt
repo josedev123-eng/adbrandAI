@@ -20,6 +20,16 @@ data class AccesoCuentaEstado(
     val mensaje: String? = null, val error: String? = null
 )
 
+// Las reglas de la contraseña una por una (texto y si ya se cumple), para mostrarlas desde el inicio y
+// marcarlas mientras el usuario escribe, antes de que haya un error.
+fun reglasDeContrasena(clave: String): List<Pair<String, Boolean>> = listOf(
+    "Al menos 8 caracteres" to (clave.length >= 8),
+    "Una letra mayúscula" to clave.any(Char::isUpperCase),
+    "Una letra minúscula" to clave.any(Char::isLowerCase),
+    "Un número" to clave.any(Char::isDigit),
+    "Sin espacios" to (clave.isNotEmpty() && clave.none(Char::isWhitespace))
+)
+
 class AccesoCuentaViewModel(
     private val repo: AccesoCuentaRepository = AccesoCuentaRepositoryFirebase()
 ) : ViewModel() {

@@ -145,16 +145,20 @@ fun RegistroScreen(alVolver: () -> Unit, viewModel: AccesoCuentaViewModel = view
                 alCambiar = viewModel::contrasena,
                 etiqueta = "Contraseña",
                 icono = Icons.Filled.Lock,
-                ayuda = "8 caracteres o más, con mayúscula, minúscula y número.",
                 tipoTeclado = KeyboardType.Password,
                 accionIme = ImeAction.Next,
                 transformacion = PasswordVisualTransformation()
             )
+            // Las reglas se ven desde el inicio y se marcan con ✓ mientras escribe.
+            ReglasContrasena(s.contrasena)
             CampoAdbrand(
                 valor = s.repetir,
                 alCambiar = viewModel::repetir,
                 etiqueta = "Repite la contraseña",
                 icono = Icons.Filled.Lock,
+                // Avisa en cuanto deja de coincidir, sin esperar a "Crear cuenta".
+                error = if (s.repetir.isNotEmpty() && s.repetir != s.contrasena) "Las contraseñas no coinciden." else null,
+                ayuda = if (s.repetir.isNotEmpty() && s.repetir == s.contrasena) "✓ Las contraseñas coinciden." else null,
                 tipoTeclado = KeyboardType.Password,
                 accionIme = ImeAction.Done,
                 transformacion = PasswordVisualTransformation()
@@ -420,6 +424,20 @@ private fun FondoAuth(contenido: @Composable () -> Unit) {
                 .clipToBounds()
         ) {
             contenido()
+        }
+    }
+}
+
+// Lista de reglas de la contraseña: ○ pendiente, ✓ cumplida (en verde).
+@Composable
+private fun ReglasContrasena(clave: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        com.adbrand.ui.auth.viewmodel.reglasDeContrasena(clave).forEach { (texto, cumple) ->
+            Text(
+                text = (if (cumple) "✓ " else "○ ") + texto,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (cumple) com.adbrand.core.theme.ExitoVerde else TextoSecundario
+            )
         }
     }
 }
