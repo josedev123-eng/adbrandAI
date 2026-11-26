@@ -69,6 +69,47 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
     expect(within(tarjetas[1]).getByRole('img')).toHaveAttribute('src', 'data:image/jpeg;base64,IMG2')
   })
 
+  it('HU 67: cada opción muestra su enfoque y su titular corto', async () => {
+    generarOpciones.mockResolvedValue({
+      generacionId: 7,
+      oferta: '2x1 en pan de yema',
+      redSocial: 'INSTAGRAM',
+      opciones: [1, 2, 3, 4].map((numero) => ({
+        ...opcion(numero),
+        angulo: ['Precio', 'Antojo', 'Confianza', 'Urgencia'][numero - 1],
+        titular: numero === 2 ? 'Tu pan, recién salido' : null,
+      })),
+    })
+    render(<GenerarAnuncioView />)
+    await pedirOpciones()
+
+    const tarjetas = await screen.findAllByRole('article', { name: /Opción \d/ })
+    expect(within(tarjetas[0]).getByText('Enfoque: Precio')).toBeInTheDocument()
+    expect(within(tarjetas[1]).getByText('Tu pan, recién salido')).toBeInTheDocument()
+    expect(within(tarjetas[3]).getByText('Enfoque: Urgencia')).toBeInTheDocument()
+  })
+
+  it('deja agregar una foto del producto y la manda para que las 4 opciones la usen', async () => {
+    render(<GenerarAnuncioView />)
+    const foto = new File(['png'], 'pan.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText('Agregar una foto de tu producto'), foto)
+
+    expect(await screen.findByRole('img', { name: 'Foto de tu producto' })).toHaveAttribute('src', expect.stringMatching(/^data:image\/png;base64,/))
+    await pedirOpciones()
+    expect(generarOpciones).toHaveBeenCalledWith(expect.objectContaining({ foto: expect.stringMatching(/^data:image\/png/) }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar foto' }))
+    expect(screen.queryByRole('img', { name: 'Foto de tu producto' })).toBeNull()
+  })
+
+  it('una foto que no es JPG ni PNG se rechaza', async () => {
+    render(<GenerarAnuncioView />)
+    await userEvent.upload(screen.getByLabelText('Agregar una foto de tu producto'), new File(['x'], 'a.gif', { type: 'image/gif' }), {
+      applyAccept: false,
+    })
+    expect(await screen.findByText('Sube tu foto en JPG o PNG.')).toBeInTheDocument()
+  })
+
   it('sin oferta no pide opciones', async () => {
     render(<GenerarAnuncioView />)
     await userEvent.click(screen.getByRole('button', { name: '✦ Generar 4 opciones' }))

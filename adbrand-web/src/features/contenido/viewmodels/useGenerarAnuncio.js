@@ -25,6 +25,10 @@ function validar(solicitud) {
   return errores
 }
 
+// Foto del producto (opcional): JPG o PNG de hasta 5 MB.
+const TIPOS_FOTO = ['image/jpeg', 'image/png']
+const TAMANO_MAXIMO_FOTO = 5 * 1024 * 1024
+
 export function useGenerarAnuncio() {
   // HU 63: si viene de "Tu mes de contenido", la idea de la fecha llega ya escrita y con su festividad ("ocasion"),
   // para que el texto y la imagen se ambienten en ella. Desde "Crear anuncio" directo no hay ocasión.
@@ -104,6 +108,27 @@ export function useGenerarAnuncio() {
     setSolicitud((actual) => ({ ...actual, ocasion: undefined }))
   }
 
+  // La foto de lo que vende: las 4 opciones la usan en vez de una imagen inventada por la IA.
+  function ponerFoto(archivo) {
+    if (!archivo) return
+    if (!TIPOS_FOTO.includes(archivo.type)) {
+      setErrores((actuales) => ({ ...actuales, foto: 'Sube tu foto en JPG o PNG.' }))
+      return
+    }
+    if (archivo.size > TAMANO_MAXIMO_FOTO) {
+      setErrores((actuales) => ({ ...actuales, foto: 'La foto puede pesar hasta 5 MB.' }))
+      return
+    }
+    const lector = new FileReader()
+    lector.onload = () => cambiarCampo('foto', String(lector.result))
+    lector.onerror = () => setErrores((actuales) => ({ ...actuales, foto: 'No pudimos leer tu foto. Prueba con otra.' }))
+    lector.readAsDataURL(archivo)
+  }
+
+  function quitarFoto() {
+    cambiarCampo('foto', undefined)
+  }
+
   function cambiarCampo(campo, valor) {
     setSolicitud((actual) => ({ ...actual, [campo]: valor }))
     setErrores((actuales) => ({ ...actuales, [campo]: undefined }))
@@ -119,6 +144,8 @@ export function useGenerarAnuncio() {
       // Criterio 2: si la IA falla (o se llegó al límite de retoques), se muestra un mensaje claro.
       // Va antes del 400 genérico porque OPCION_NO_ELEGIDA y LIMITE_RETOQUES también son 400.
       setAviso(error.message)
+    } else if (error.codigo === 'FOTO_INVALIDA') {
+      setErrores({ foto: error.message })
     } else if (error.status === 400) {
       setErrores(error.campos ?? {})
     } else {
@@ -280,6 +307,8 @@ export function useGenerarAnuncio() {
     historial,
     retocando,
     cambiarCampo,
+    ponerFoto,
+    quitarFoto,
     cambiarInstruccion,
     retocar,
     volverAVersion,

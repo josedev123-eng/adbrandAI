@@ -16,7 +16,7 @@
 .red-activa { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); font-weight: 700; }
 .red:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
 .boton-ia { padding: 12px 18px; border: none; border-radius: 12px; background: var(--ia); color: #ffffff; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(181, 23, 158, .2); }
-.boton-ia:disabled { opacity: 0.6; cursor: wait; }
+.boton-ia:disabled { opacity: 0.55; cursor: default; filter: grayscale(0.5); /* gris suave en vez del círculo de espera */ }
 .boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; cursor: pointer; }
 .resultado { display: flex; flex-direction: column; gap: 14px; }
 .resultado-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -73,7 +73,7 @@
 .version span { position: absolute; left: 4px; bottom: 4px; padding: 0 6px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font-size: .7rem; font-weight: 700; }
 .version:hover:not(:disabled) { border-color: var(--line); }
 .version-actual { border-color: var(--primary); cursor: default; }
-.version:disabled:not(.version-actual) { opacity: .6; cursor: wait; }
+.version:disabled:not(.version-actual) { opacity: 0.55; cursor: default; filter: grayscale(0.5); /* gris suave en vez del círculo de espera */ }
 @media (max-width: 760px) {
   .anuncio-columnas { grid-template-columns: 1fr; }
   .anuncio-bienvenida { align-items: flex-start; padding: 16px; }
@@ -82,3 +82,15 @@
 
 /* Anuncio para una fecha del calendario (Halloween, Navidad…). */
 .anuncio-ocasion { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--ia-soft); color: var(--fg); font-size: 0.9rem; }
+
+/* Foto del producto (opcional) en el formulario. */
+.campo-foto { display: flex; flex-direction: column; gap: 6px; }
+.foto-subir { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border: 1.5px dashed var(--line); border-radius: 10px; color: var(--muted); cursor: pointer; font-weight: 600; }
+.foto-subir:hover { border-color: var(--ia); color: var(--ia); }
+.foto-subir input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.foto-producto { display: flex; align-items: center; gap: 12px; }
+.foto-producto img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+
+/* HU 67: enfoque y titular de cada opción. */
+.opcion-angulo { align-self: flex-start; margin: 0; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: .72rem; font-weight: 700; }
+.opcion-titular { margin: 0; font-weight: 800; font-size: 1rem; line-height: 1.25; }

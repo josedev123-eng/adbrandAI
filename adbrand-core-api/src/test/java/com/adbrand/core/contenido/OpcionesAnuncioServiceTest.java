@@ -142,6 +142,57 @@ class OpcionesAnuncioServiceTest {
         verify(ia, times(1)).generarTexto(anyString(), anyString(), any(), any());
     }
 
+    // La foto del producto que subió el dueño: las 4 opciones la usan y no se gasta en imágenes de IA.
+    private static final String FOTO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAE0lEQVR4nGP4z8DwnwGM/zMwAAAf7gP9NRsAMwAAAABJRU5ErkJggg==";
+
+    @Test
+    void conLaFotoDelProductoLasCuatroOpcionesLaUsanSinPedirImagenesALaIa() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any()))
+                .thenReturn("{\"opciones\": [\"Uno\", \"Dos\", \"Tres\", \"Cuatro\"]}");
+
+        OpcionesAnuncioResponse respuesta = servicio.generar(1L,
+                new GenerarAnuncioRequest("2x1 en pan de yema", RedSocial.INSTAGRAM, null, FOTO));
+
+        assertThat(respuesta.opciones()).allSatisfy(opcion -> {
+            assertThat(opcion.imagen()).isEqualTo(FOTO);
+            assertThat(opcion.proveedorImagen()).isEqualTo("foto");
+        });
+        assertThat(descripciones).isEmpty();
+        verify(gasto, org.mockito.Mockito.never()).registrar(any(), any(), any());
+    }
+
+    @Test
+    void unaFotoQueNoEsImagenSeRechazaConUnMensajeClaro() {
+        assertThatThrownBy(() -> servicio.generar(1L,
+                new GenerarAnuncioRequest("2x1", RedSocial.INSTAGRAM, null, "data:image/png;base64,bm9lc3VuYWltYWdlbg==")))
+                .isInstanceOf(SolicitudInvalidaException.class).hasMessageContaining("No pudimos abrir tu foto");
+        assertThatThrownBy(() -> servicio.generar(1L,
+                new GenerarAnuncioRequest("2x1", RedSocial.INSTAGRAM, null, "data:text/html;base64,PGI+")))
+                .isInstanceOf(SolicitudInvalidaException.class).hasMessageContaining("JPG o PNG");
+    }
+
+    // HU 67: el titular corto de cada opción se guarda y pasa al anuncio al elegirla.
+    @Test
+    void elTitularDeLaOpcionSeGuardaYPasaAlAnuncioAlElegirla() {
+        when(ia.generarTexto(anyString(), anyString(), any(), any())).thenReturn("""
+                {"opciones": [{"titular": "Tu pan, recién salido", "texto": "Uno"}, {"texto": "Dos"},
+                 {"texto": "Tres"}, {"texto": "Cuatro"}]}""");
+
+        OpcionesAnuncioResponse respuesta = servicio.generar(1L, pedido());
+
+        assertThat(respuesta.opciones().get(0).titular()).isEqualTo("Tu pan, recién salido");
+        assertThat(respuesta.opciones().get(0).angulo()).isEqualTo("Precio");
+        assertThat(respuesta.opciones().get(1).titular()).isNull();
+        when(opciones.findByIdAndGeneracionUsuarioId(101L, 1L)).thenReturn(Optional.of(guardadas.get(0)));
+        when(opciones.findByGeneracionIdOrderByNumero(7L)).thenReturn(guardadas);
+        ArgumentCaptor<Contenido> guardado = ArgumentCaptor.forClass(Contenido.class);
+
+        servicio.elegir(1L, 101L);
+
+        verify(contenidos).save(guardado.capture());
+        assertThat(guardado.getValue().getTitular()).isEqualTo("Tu pan, recién salido");
+    }
+
     @Test
     void siLaIaNoDevuelveJsonPideLosTextosDeUnoEnUno() {
         when(ia.generarTexto(anyString(), anyString(), any(), any()))

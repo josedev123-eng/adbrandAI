@@ -81,6 +81,8 @@ public class OpcionesAnuncioService {
         IdentidadMarca identidad = anuncios.identidadDe(usuarioId);
         List<JsonDeIa.TextoConExtra> textos = pedirTextos(usuarioId, perfil, datos, identidad);
         EstiloMarca marca = estiloDelKit(usuarioId);
+        // Con foto del producto: las 4 opciones la usan (no se gasta en imágenes de IA).
+        ImagenGenerada foto = datos.tieneFoto() ? fotoDelProducto(datos.foto()) : null;
 
         GeneracionAnuncio generacion = new GeneracionAnuncio();
         generacion.setUsuarioId(usuarioId);
@@ -92,18 +94,48 @@ public class OpcionesAnuncioService {
         for (int i = 0; i < CANTIDAD; i++) {
             // La escena la escribe la IA de texto en inglés; si no vino, se usa el producto sacado de la oferta.
             String escena = textos.get(i).extra() != null ? textos.get(i).extra() : temaSinCifras(datos.oferta());
-            ImagenGenerada imagen = imagenes.borrador(descripcionDeImagen(perfil, escena, ESTILOS[i][1], marca));
-            gasto.registrar(usuarioId, ConsumoImagen.Tipo.BORRADOR, imagen);
+            ImagenGenerada imagen = foto;
+            if (imagen == null) {
+                imagen = imagenes.borrador(
+                        descripcionDeImagen(perfil, escena, ESTILOS[i][1], marca) + ambienteDeOcasion(datos.ocasion()));
+                gasto.registrar(usuarioId, ConsumoImagen.Tipo.BORRADOR, imagen);
+            }
             OpcionAnuncio opcion = new OpcionAnuncio();
             opcion.setGeneracion(generacion);
             opcion.setNumero(i + 1);
             opcion.setEstilo(ESTILOS[i][0]);
             opcion.setTexto(textos.get(i).texto());
+            opcion.setTitular(com.adbrand.core.contenido.service.VideoAnuncioService.titularCorto(textos.get(i).titular()));
             opcion.setTextoSimulado(ia.esSimulado());
             opcion.ponerImagen(imagen);
             respuesta.add(OpcionAnuncioResponse.desde(opciones.save(opcion)));
         }
         return new OpcionesAnuncioResponse(generacion.getId(), generacion.getOferta(), generacion.getRedSocial(), respuesta);
+    }
+
+    private static final java.util.regex.Pattern FOTO =
+            java.util.regex.Pattern.compile("^data:(image/(png|jpeg|jpg));base64,([A-Za-z0-9+/=\\s]+)$");
+
+    // La foto que subió el dueño, revisada (que de verdad sea una imagen) y aligerada a 1024 px como las de la IA.
+    static ImagenGenerada fotoDelProducto(String dataUrl) {
+        java.util.regex.Matcher partes = FOTO.matcher(dataUrl.trim());
+        if (!partes.matches()) {
+            throw new com.adbrand.core.shared.error.SolicitudInvalidaException("FOTO_INVALIDA",
+                    "La foto debe ser JPG o PNG.");
+        }
+        String base64 = partes.group(3).replaceAll("\\s", "");
+        try {
+            byte[] bytes = java.util.Base64.getDecoder().decode(base64);
+            java.awt.image.BufferedImage leida = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+            if (leida == null) {
+                throw new IllegalArgumentException("no es una imagen");
+            }
+        } catch (java.io.IOException | IllegalArgumentException ex) {
+            throw new com.adbrand.core.shared.error.SolicitudInvalidaException("FOTO_INVALIDA",
+                    "No pudimos abrir tu foto. Prueba con otra en JPG o PNG.");
+        }
+        String tipo = "image/jpg".equals(partes.group(1)) ? "image/jpeg" : partes.group(1);
+        return com.adbrand.core.imagen.service.OptimizadorImagen.optimizar(new ImagenGenerada(tipo, base64, "foto", false));
     }
 
     // Elegir una opción la guarda como contenido (con el filtro de la HU 13). Elegirla otra vez no la duplica.
@@ -118,7 +150,7 @@ public class OpcionesAnuncioService {
                 anuncios.identidadDe(usuarioId));
 
         AnuncioGeneradoResponse anuncio = anuncios.guardar(usuarioId, perfil, generacion.getOferta(),
-                generacion.getRedSocial(), opcion.getTexto(), prompt, opcion.isTextoSimulado());
+                generacion.getRedSocial(), opcion.getTexto(), prompt, opcion.isTextoSimulado(), opcion.getTitular());
 
         for (OpcionAnuncio otra : opciones.findByGeneracionIdOrderByNumero(generacion.getId())) {
             otra.setElegida(otra.getId().equals(opcion.getId()));
@@ -204,6 +236,37 @@ public class OpcionesAnuncioService {
     // La oferta va SIN cifras, precios ni descuentos: si la IA ve "2x1" o "S/ 35" intenta escribirlos y salen
     // letras deformes. Solo se le describe el producto y el negocio.
     // "tema" es la escena en inglés que escribió la IA de texto, o el producto sacado de la oferta (temaSinCifras).
+    // Ajuste de la revisión: si el anuncio es para una fecha especial (se creó desde el calendario), la imagen se
+    // ambienta en ella con sus decoraciones típicas. Así un anuncio de Navidad no sale con hojas de otoño.
+    private static final java.util.Map<String, String> AMBIENTE_POR_OCASION = java.util.Map.ofEntries(
+            java.util.Map.entry("navidad", "Christmas in Peru: warm string lights, pine branches, red and gold ornaments, panetón on the table"),
+            java.util.Map.entry("halloween", "Halloween: carved pumpkins, candles, orange and purple tones, playful and friendly (not scary)"),
+            java.util.Map.entry("black friday", "Black Friday shopping mood: black and gold accents, gift boxes and shopping bags"),
+            java.util.Map.entry("madre", "Mother's Day: fresh flowers, soft pink tones, a wrapped gift"),
+            java.util.Map.entry("padre", "Father's Day: warm tones, a wrapped gift, cozy family setting"),
+            java.util.Map.entry("fiestas patrias", "Peruvian Independence Day: red and white Peruvian flag colors and rosettes (escarapelas)"),
+            java.util.Map.entry("valentin", "Valentine's Day: hearts, red roses, warm romantic light"),
+            java.util.Map.entry("cancion criolla", "Peruvian creole music night: cajon drum, guitar, festive warm lights"),
+            java.util.Map.entry("muertos", "Peruvian Day of the Dead: flowers, candles and traditional tantawawa bread"),
+            java.util.Map.entry("ano nuevo", "New Year's Eve: golden lights, confetti, yellow accents"),
+            java.util.Map.entry("fin de ano", "New Year's Eve: golden lights, confetti, yellow accents"),
+            java.util.Map.entry("del pan", "World Bread Day: freshly baked bread, rustic wooden table, flour"),
+            java.util.Map.entry("del cafe", "Peruvian Coffee Day: coffee beans, steaming cups, morning light"));
+
+    public static String ambienteDeOcasion(String ocasion) {
+        if (ocasion == null || ocasion.isBlank()) {
+            return "";
+        }
+        String clave = java.text.Normalizer.normalize(ocasion, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT);
+        String ambiente = AMBIENTE_POR_OCASION.entrySet().stream()
+                .filter(e -> clave.contains(e.getKey()))
+                .map(java.util.Map.Entry::getValue)
+                .findFirst()
+                .orElse(ocasion.trim() + " in Peru, with its typical decorations, colors and symbols");
+        return " Seasonal theme (make it clearly visible): " + ambiente + ". Still no text of any kind.";
+    }
+
     public static String descripcionDeImagen(PerfilNegocioResponse perfil, String tema, String estilo,
                                              List<String> colores) {
         return descripcionDeImagen(perfil, tema, estilo, new EstiloMarca(colores, null));

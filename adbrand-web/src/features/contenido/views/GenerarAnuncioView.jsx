@@ -22,6 +22,9 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
         <span className="opcion-estilo">{opcion.estilo}</span>
         {opcion.elegida && <span className="opcion-marca">✓ Elegida</span>}
       </div>
+      {/* HU 67: cada opción va por un ángulo distinto (precio, antojo, confianza, urgencia) y tiene su titular. */}
+      {opcion.angulo && <span className="opcion-angulo">Enfoque: {opcion.angulo}</span>}
+      {opcion.titular && <p className="opcion-titular">{opcion.titular}</p>}
       <p className="opcion-texto">{opcion.texto}</p>
       <div className="opcion-pie">
         {(opcion.imagenSimulada || opcion.textoSimulado) && <span className="etiqueta-simulado">De prueba</span>}
@@ -58,6 +61,8 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
     historial,
     retocando,
     cambiarCampo,
+    ponerFoto,
+    quitarFoto,
     cambiarInstruccion,
     retocar,
     volverAVersion,
@@ -143,6 +148,39 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
             )}
           </label>
 
+          {/* Foto del producto (opcional): así el anuncio muestra lo que de verdad vende. */}
+          <div className={errores.foto ? 'campo campo-foto campo-con-error' : 'campo campo-foto'}>
+            <span>Foto de tu producto (opcional)</span>
+            {solicitud.foto ? (
+              <div className="foto-producto">
+                <img src={solicitud.foto} alt="Foto de tu producto" />
+                <button type="button" className="boton-enlace" onClick={quitarFoto}>
+                  Quitar foto
+                </button>
+              </div>
+            ) : (
+              <label className="foto-subir">
+                📷 Agregar una foto
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  aria-label="Agregar una foto de tu producto"
+                  onChange={(e) => {
+                    ponerFoto(e.target.files?.[0])
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            )}
+            {errores.foto ? (
+              <small className="campo-error">{errores.foto}</small>
+            ) : (
+              <small className="campo-ayuda">
+                Si tienes una foto de lo que quieres promocionar, las 4 opciones la usarán en vez de una imagen hecha por la IA.
+              </small>
+            )}
+          </div>
+
           <fieldset className="redes">
             <legend>Red social</legend>
             <div className="redes-opciones">
@@ -159,7 +197,11 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
                 </label>
               ))}
             </div>
-            {errores.redSocial && <small className="campo-error">{errores.redSocial}</small>}
+            {errores.redSocial ? (
+              <small className="campo-error">{errores.redSocial}</small>
+            ) : (
+              <small className="campo-ayuda">{REDES.find((red) => red.valor === solicitud.redSocial)?.detalle}</small>
+            )}
           </fieldset>
 
           <button className="boton-ia" type="submit" disabled={cargando || eligiendoId !== null || faltaPerfil}>
@@ -286,6 +328,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
                 <ListoParaPublicar
                   key={anuncio.id}
                   anuncioId={anuncio.id}
+                  redSocial={anuncio.redSocial}
                   irAMiCuenta={irAMiCuenta}
                   irAPlanes={irAPlanes}
                 />

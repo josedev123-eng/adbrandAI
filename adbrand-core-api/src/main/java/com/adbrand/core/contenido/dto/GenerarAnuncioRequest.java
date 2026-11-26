@@ -16,10 +16,23 @@ public record GenerarAnuncioRequest(
         // Festividad elegida en el calendario ("Halloween", "Navidad"…): el texto y la imagen se ambientan en ella.
         // Llega vacía cuando el anuncio se crea desde "Crear anuncio" directamente.
         @Size(max = 80, message = "Máximo 80 caracteres.")
-        String ocasion) {
+        String ocasion,
+
+        // Foto del producto que subió el dueño (data URL JPG o PNG, opcional). Si viene, las 4 opciones usan esa
+        // foto en vez de una imagen inventada por la IA, así el anuncio muestra lo que de verdad vende.
+        @Size(max = 8_000_000, message = "La foto es muy pesada. Usa una de menos de 5 MB.")
+        String foto) {
 
     public GenerarAnuncioRequest(String oferta, RedSocial redSocial) {
-        this(oferta, redSocial, null);
+        this(oferta, redSocial, null, null);
+    }
+
+    public GenerarAnuncioRequest(String oferta, RedSocial redSocial, String ocasion) {
+        this(oferta, redSocial, ocasion, null);
+    }
+
+    public boolean tieneFoto() {
+        return foto != null && !foto.isBlank();
     }
 
     public boolean tieneOcasion() {
