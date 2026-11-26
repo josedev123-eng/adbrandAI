@@ -11,6 +11,10 @@ interface AnuncioOpcionesRepository {
 
     suspend fun generar(oferta: String, redSocial: RedSocial): Resultado<OpcionesAnuncio>
 
+    // HU 67: con la foto del producto (data URL JPG o PNG). Por defecto la ignora (para las pruebas sin red).
+    suspend fun generar(oferta: String, redSocial: RedSocial, foto: String?): Resultado<OpcionesAnuncio> =
+        generar(oferta, redSocial)
+
     suspend fun elegir(opcionId: Long): Resultado<OpcionElegida>
 
     suspend fun retocar(opcionId: Long, instruccion: String): Resultado<VersionesAnuncio>

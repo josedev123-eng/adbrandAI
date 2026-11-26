@@ -41,7 +41,11 @@ data class CrearAnuncioEstado(
     val regenerando: Boolean = false,
     val copiado: Boolean = false,
     val propuesta: AnuncioGenerado? = null,
-    val errorRegeneracion: String? = null
+    val errorRegeneracion: String? = null,
+    // HU 67: foto del producto (opcional) y el aviso si se usó tal cual cuando se pidió una escena.
+    val foto: String? = null,
+    val errorFoto: String? = null,
+    val avisoFoto: String? = null
 ) {
     val cargando: Boolean
         get() = generando || regenerando || eligiendoId != null || retocando
@@ -49,6 +53,9 @@ data class CrearAnuncioEstado(
     val hayOpciones: Boolean
         get() = opciones.isNotEmpty()
 }
+
+private val TIPOS_FOTO = setOf("image/jpeg", "image/png")
+private const val TAMANO_MAXIMO_FOTO = 5 * 1024 * 1024
 
 class CrearAnuncioViewModel(
     private val repositorio: AnuncioRepository = AnuncioRepositoryRemoto(),
@@ -60,6 +67,27 @@ class CrearAnuncioViewModel(
 
     fun actualizarOferta(valor: String) {
         _estado.update { it.copy(oferta = valor, errorOferta = null) }
+    }
+
+    // HU 67: la foto de lo que vende (JPG o PNG de hasta 5 MB). Se usa tal cual o, si el pedido dice dónde
+    // ponerla, la IA arma esa escena con el producto en 2 de las opciones (planes de pago).
+    fun ponerFoto(tipo: String?, bytes: ByteArray?) {
+        val error = when {
+            bytes == null -> "No pudimos leer tu foto. Prueba con otra."
+            tipo !in TIPOS_FOTO -> "Sube tu foto en JPG o PNG."
+            bytes.size > TAMANO_MAXIMO_FOTO -> "La foto puede pesar hasta 5 MB."
+            else -> null
+        }
+        if (error != null) {
+            _estado.update { it.copy(errorFoto = error) }
+            return
+        }
+        val dataUrl = "data:$tipo;base64," + java.util.Base64.getEncoder().encodeToString(bytes)
+        _estado.update { it.copy(foto = dataUrl, errorFoto = null) }
+    }
+
+    fun quitarFoto() {
+        _estado.update { it.copy(foto = null, errorFoto = null) }
     }
 
     fun actualizarRedSocial(red: RedSocial) {
@@ -96,12 +124,13 @@ class CrearAnuncioViewModel(
                     errorInstruccion = null
                 )
             }
-            when (val resultado = opcionesRepositorio.generar(actual.oferta.trim(), actual.redSocial)) {
+            when (val resultado = opcionesRepositorio.generar(actual.oferta.trim(), actual.redSocial, actual.foto)) {
                 is Resultado.Exito -> _estado.update { estado ->
                     val opciones = resultado.dato.opciones
                     estado.copy(
                         generando = false,
                         opciones = opciones,
+                        avisoFoto = resultado.dato.avisoFoto,
                         aviso = if (opciones.isEmpty()) {
                             "La IA no devolvió propuestas esta vez. Intenta de nuevo."
                         } else {

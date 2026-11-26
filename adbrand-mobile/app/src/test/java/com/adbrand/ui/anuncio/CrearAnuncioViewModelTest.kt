@@ -81,6 +81,12 @@ class CrearAnuncioViewModelTest {
             return generadas
         }
 
+        var fotoEnviada: String? = null
+        override suspend fun generar(oferta: String, redSocial: RedSocial, foto: String?): Resultado<OpcionesAnuncio> {
+            fotoEnviada = foto
+            return generar(oferta, redSocial)
+        }
+
         override suspend fun elegir(opcionId: Long): Resultado<OpcionElegida> {
             idElegido = opcionId
             return elegida
@@ -110,6 +116,36 @@ class CrearAnuncioViewModelTest {
         assertEquals("Escribe la oferta que quieres anunciar.", viewModel.estado.value.errorOferta)
         assertNull(opciones.ofertaEnviada)
         assertFalse(viewModel.estado.value.generando)
+    }
+
+    // HU 67: la foto del producto se manda con el pedido y, si no se pudo hacer la escena, se muestra el aviso.
+    @Test
+    fun laFotoDelProductoSeMandaConElPedidoYSeMuestraElAvisoDeLaEscena() = runTest {
+        val opciones = OpcionesFalso(Resultado.Exito(opciones().copy(avisoFoto = "Usamos tu foto tal cual.")))
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), opciones)
+        viewModel.actualizarOferta("Mi torta en una fiesta")
+        viewModel.ponerFoto("image/png", byteArrayOf(1, 2, 3))
+
+        viewModel.generar()
+        advanceUntilIdle()
+
+        assertEquals("data:image/png;base64,AQID", opciones.fotoEnviada)
+        assertEquals("Usamos tu foto tal cual.", viewModel.estado.value.avisoFoto)
+    }
+
+    @Test
+    fun unaFotoQueNoEsJpgNiPngOMuyPesadaSeRechaza() = runTest {
+        val viewModel = CrearAnuncioViewModel(AnuncioFalso(), OpcionesFalso())
+
+        viewModel.ponerFoto("image/gif", byteArrayOf(1))
+        assertEquals("Sube tu foto en JPG o PNG.", viewModel.estado.value.errorFoto)
+        viewModel.ponerFoto("image/jpeg", ByteArray(5 * 1024 * 1024 + 1))
+        assertEquals("La foto puede pesar hasta 5 MB.", viewModel.estado.value.errorFoto)
+        assertNull(viewModel.estado.value.foto)
+
+        viewModel.ponerFoto("image/jpeg", byteArrayOf(1))
+        viewModel.quitarFoto()
+        assertNull(viewModel.estado.value.foto)
     }
 
     @Test

@@ -25,7 +25,9 @@ data class OpcionesAnuncio(
     val generacionId: Long? = null,
     val oferta: String = "",
     val redSocial: RedSocial = RedSocial.INSTAGRAM,
-    val opciones: List<OpcionAnuncio> = emptyList()
+    val opciones: List<OpcionAnuncio> = emptyList(),
+    // HU 67: por qué la foto se usó tal cual cuando se pidió una escena (plan gratis, tope o falla); null si no.
+    val avisoFoto: String? = null
 )
 
 // Al elegir una opción se guarda el anuncio (ya pasa por el filtro de la HU 13).

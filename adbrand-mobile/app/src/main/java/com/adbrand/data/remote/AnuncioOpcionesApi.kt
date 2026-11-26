@@ -11,10 +11,11 @@ object AnuncioOpcionesApi {
 
     private const val BASE = "contenido/anuncios/opciones"
 
-    suspend fun generar(oferta: String, redSocial: String): Result<RespuestaHttp> {
+    suspend fun generar(oferta: String, redSocial: String, foto: String? = null): Result<RespuestaHttp> {
         val cuerpo = JSONObject()
             .put("oferta", oferta)
             .put("redSocial", redSocial)
+            .apply { if (foto != null) put("foto", foto) }
             .toString()
         return ClienteApi.ejecutarAsync("POST", BASE, cuerpo)
     }

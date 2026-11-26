@@ -174,6 +174,14 @@ fun CrearAnuncioScreen(
                     accionIme = ImeAction.Done
                 )
 
+                // HU 67: foto del producto (opcional).
+                FotoDelProducto(
+                    foto = estado.foto,
+                    error = estado.errorFoto,
+                    alElegir = viewModel::ponerFoto,
+                    alQuitar = viewModel::quitarFoto
+                )
+
                 Text(
                     text = "Red social",
                     style = MaterialTheme.typography.labelMedium,
@@ -214,6 +222,10 @@ fun CrearAnuncioScreen(
             }
 
             estado.hayOpciones -> EntradaAnimada(indice = 4) {
+                estado.avisoFoto?.let {
+                    AvisoEstado(texto = it, tipo = TipoAviso.INFO)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 TarjetaOpciones(
                     estado = estado,
                     alElegir = viewModel::elegir
@@ -1038,4 +1050,50 @@ private fun RowScope.TarjetaRedSocial(
             }
         }
     }
+}
+
+// HU 67: elegir la foto de lo que se promociona. Se usa tal cual o, si el pedido dice dónde ponerla
+// ("mi torta en una fiesta"), la IA arma esa escena con el producto en 2 de las opciones (planes de pago).
+@Composable
+private fun FotoDelProducto(
+    foto: String?,
+    error: String?,
+    alElegir: (String?, ByteArray?) -> Unit,
+    alQuitar: () -> Unit
+) {
+    val contexto = LocalContext.current
+    val elegirFoto = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val tipo = contexto.contentResolver.getType(uri)
+            val bytes = runCatching { contexto.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
+            alElegir(tipo, bytes)
+        }
+    }
+    Text(
+        text = "Foto de tu producto (opcional)",
+        style = MaterialTheme.typography.labelMedium,
+        color = TextoSecundario
+    )
+    if (foto != null) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ImagenIa(dataUrl = foto, etiqueta = "Foto de tu producto", modifier = Modifier.size(84.dp))
+            androidx.compose.material3.TextButton(onClick = alQuitar) { Text("Quitar foto") }
+        }
+    } else {
+        androidx.compose.material3.OutlinedButton(onClick = {
+            elegirFoto.launch(
+                androidx.activity.result.PickVisualMediaRequest(
+                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
+                )
+            )
+        }) { Text("📷 Agregar una foto") }
+    }
+    Text(
+        text = error ?: "Se usa tal cual, o si en tu oferta dices dónde ponerlo (por ej. \"mi torta en una fiesta\"), " +
+            "la IA arma esa escena con tu producto en 2 de las opciones (planes de pago).",
+        style = MaterialTheme.typography.bodySmall,
+        color = if (error != null) MaterialTheme.colorScheme.error else TextoSecundario
+    )
 }

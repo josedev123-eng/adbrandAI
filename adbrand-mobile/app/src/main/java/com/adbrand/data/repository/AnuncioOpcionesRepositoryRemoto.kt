@@ -16,8 +16,11 @@ import org.json.JSONObject
 // convierte en modelos de la app, conservando los códigos de error de negocio.
 class AnuncioOpcionesRepositoryRemoto : AnuncioOpcionesRepository {
 
-    override suspend fun generar(oferta: String, redSocial: RedSocial): Resultado<OpcionesAnuncio> {
-        val respuesta = AnuncioOpcionesApi.generar(oferta, redSocial.valor)
+    override suspend fun generar(oferta: String, redSocial: RedSocial): Resultado<OpcionesAnuncio> =
+        generar(oferta, redSocial, null)
+
+    override suspend fun generar(oferta: String, redSocial: RedSocial, foto: String?): Resultado<OpcionesAnuncio> {
+        val respuesta = AnuncioOpcionesApi.generar(oferta, redSocial.valor, foto)
             .getOrElse { return AnuncioJson.errorDeRed(it) }
         if (!respuesta.esExitosa) {
             return AnuncioJson.error(respuesta, "No se pudieron generar las opciones. Intenta de nuevo.")
@@ -76,7 +79,8 @@ class AnuncioOpcionesRepositoryRemoto : AnuncioOpcionesRepository {
         generacionId = json.optLong("generacionId").takeIf { it > 0 },
         oferta = AnuncioJson.texto(json, "oferta"),
         redSocial = RedSocial.desde(AnuncioJson.texto(json, "redSocial")),
-        opciones = json.optJSONArray("opciones").aOpciones()
+        opciones = json.optJSONArray("opciones").aOpciones(),
+        avisoFoto = AnuncioJson.texto(json, "avisoFoto").ifBlank { null }
     )
 
     internal fun versionesDesdeJson(json: JSONObject): VersionesAnuncio = VersionesAnuncio(
