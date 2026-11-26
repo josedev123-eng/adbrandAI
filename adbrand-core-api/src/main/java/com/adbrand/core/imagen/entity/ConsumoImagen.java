@@ -17,7 +17,8 @@ import java.time.OffsetDateTime;
 public class ConsumoImagen {
 
     // BORRADOR: las 4 opciones del anuncio (IA gratis). RETOQUE: editar la opción elegida (IA de pago).
-    public enum Tipo { BORRADOR, RETOQUE }
+    // VIDEO (HU 66): un video con IA, con su costo en dólares.
+    public enum Tipo { BORRADOR, RETOQUE, VIDEO }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +40,10 @@ public class ConsumoImagen {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime fecha;
 
+    // Lo que cobró la IA (dólares). Solo se anota en los videos (V75); null en imágenes.
+    @Column(precision = 10, scale = 4)
+    private java.math.BigDecimal costo;
+
     @PrePersist
     void alCrear() {
         fecha = OffsetDateTime.now();
@@ -53,6 +58,13 @@ public class ConsumoImagen {
         return consumo;
     }
 
+    public static ConsumoImagen video(Long usuarioId, String proveedor, boolean simulado, java.math.BigDecimal costo) {
+        ConsumoImagen consumo = de(usuarioId, Tipo.VIDEO, proveedor, simulado);
+        consumo.costo = costo;
+        return consumo;
+    }
+
+    public java.math.BigDecimal getCosto() { return costo; }
     public Long getId() { return id; }
     public Long getUsuarioId() { return usuarioId; }
     public Tipo getTipo() { return tipo; }

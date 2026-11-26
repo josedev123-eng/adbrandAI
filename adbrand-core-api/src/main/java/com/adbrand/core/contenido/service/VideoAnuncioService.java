@@ -69,6 +69,13 @@ public class VideoAnuncioService {
             throw new AccesoDenegadoException("PLAN_REQUERIDO",
                     "El video para Reels y Estados está en los planes de pago. Elige un plan para usarlo.");
         }
+        return codificar(guionDe(usuarioId, contenidoId));
+    }
+
+    // Lo que lleva el video de un anuncio: su foto actual (con los retoques), el titular y la marca.
+    // HU 66: el video con IA usa el mismo guion para el titular y el cierre de marca.
+    @Transactional(readOnly = true)
+    public Guion guionDe(Long usuarioId, Long contenidoId) {
         Contenido contenido = contenidos.findById(contenidoId)
                 .filter(c -> c.getUsuarioId().equals(usuarioId))
                 .orElseThrow(() -> new RecursoNoEncontradoException("ANUNCIO_NO_ENCONTRADO", "Ese anuncio no existe."));
@@ -78,13 +85,13 @@ public class VideoAnuncioService {
         String telefono = usuario == null ? null : PublicacionService.celularWhatsapp(usuario.getTelefono());
         Guion guion = new Guion(
                 MarcaDelNegocio.leerDataUrl(previsualizacion.imagen(usuarioId, contenidoId).imagen()),
-                frasePrincipal(contenido.getOferta(), contenido.getTexto()),
+                titularDe(contenido),
                 marca.nombre(),
                 marca.eslogan(),
                 marca.logo(),
                 marca.principal(),
                 telefono == null ? null : "+" + telefono.substring(0, 2) + " " + telefono.substring(2));
-        return codificar(guion);
+        return guion;
     }
 
     // Arma los 192 cuadros (8 s a 24 por segundo) y los guarda como MP4.
@@ -120,6 +127,18 @@ public class VideoAnuncioService {
         } else {
             escenaMarca(g, guion, t - SEGUNDOS_IMAGEN);
         }
+        g.dispose();
+        return lienzo;
+    }
+
+    // HU 66: el cierre de marca (logo, nombre, eslogan y "Pide por WhatsApp") en el segundo "t" desde que empieza.
+    // Lo usa el video con IA para terminar igual que el video de plantilla.
+    public static BufferedImage cuadroMarca(Guion guion, double t) {
+        BufferedImage lienzo = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D g = lienzo.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        escenaMarca(g, guion, t);
         g.dispose();
         return lienzo;
     }
@@ -213,6 +232,39 @@ public class VideoAnuncioService {
     // El titular del anuncio (imagen, video y afiche): la primera frase del texto que escribió la IA, que ya es un
     // gancho pensado para el público ("Recargue su jornada con estilo"). Antes se usaba lo que escribió el dueño tal
     // cual, y si escribía "Créame un anuncio de…" eso salía en la imagen. Sin texto de la IA, se usa la oferta.
+    // HU 67: el titular corto que escribió la IA aparte (3 a 6 palabras); si no hay (anuncios anteriores),
+    // la primera frase del texto. Lo usan la imagen, el afiche, el video y Mis anuncios.
+    public static String titularDe(String titular, String oferta, String texto) {
+        String limpio = titularCorto(titular);
+        return limpio != null ? limpio : frasePrincipal(oferta, texto);
+    }
+
+    public static String titularDe(com.adbrand.core.contenido.entity.Contenido contenido) {
+        return titularDe(contenido.getTitular(), contenido.getOferta(), contenido.getTexto());
+    }
+
+    // Deja el titular de la IA en 3 a 6 palabras, sin hashtags, emojis ni comillas. null si no sirve.
+    public static String titularCorto(String titular) {
+        if (titular == null) {
+            return null;
+        }
+        String limpio = titular
+                .replaceAll("#\\S+", " ")
+                .replaceAll("[\\p{So}\\p{Cn}\\x{1F000}-\\x{1FFFF}]", " ")
+                .replaceAll("[\"“”«»]", "")
+                .replaceAll("\\s+", " ")
+                .trim()
+                .replaceAll("[.]+$", "");
+        String[] palabras = limpio.isEmpty() ? new String[0] : limpio.split(" ");
+        if (palabras.length < 3) {
+            return null;
+        }
+        if (palabras.length > 6) {
+            limpio = String.join(" ", java.util.Arrays.copyOf(palabras, 6)).replaceAll("[,;:]$", "");
+        }
+        return limpio.length() > 80 ? limpio.substring(0, 80).trim() : limpio;
+    }
+
     public static String frasePrincipal(String oferta, String texto) {
         String limpio = texto == null ? "" : texto
                 .replaceAll("#\\S+", " ")

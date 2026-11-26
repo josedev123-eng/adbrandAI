@@ -12,7 +12,7 @@ import org.springframework.web.client.RestClient;
 
 // Crea el cliente HTTP que habla con el servidor de IA, con su dirección, clave y tiempo máximo de espera.
 @Configuration
-@EnableConfigurationProperties({IaProperties.class, ImagenProperties.class})
+@EnableConfigurationProperties({IaProperties.class, ImagenProperties.class, VideoIaProperties.class})
 public class IaConfig {
 
     @Bean
