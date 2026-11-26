@@ -37,7 +37,7 @@
 .boton-secundario:hover:not(:disabled) { background: var(--surface-2); }
 .boton-peligro { padding: 11px 18px; border: none; border-radius: 10px; background: var(--bad); color: #ffffff; }
 .boton-primario:active:not(:disabled), .boton-secundario:active:not(:disabled), .boton-peligro:active:not(:disabled) { transform: translateY(1px); }
-.boton-primario:disabled, .boton-secundario:disabled, .boton-peligro:disabled { opacity: 0.6; cursor: wait; }
+.boton-primario:disabled, .boton-secundario:disabled, .boton-peligro:disabled { opacity: 0.55; cursor: default; filter: grayscale(0.5); /* gris suave en vez del círculo de espera */ }
 
 /* ---------- Avisos (ver shared/components/Aviso.jsx) ---------- */
 .aviso { padding: 12px 14px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; }

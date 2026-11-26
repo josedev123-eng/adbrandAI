@@ -50,7 +50,7 @@
 .boton-ia { padding: 12px 18px; border: none; border-radius: 12px; background: var(--ia); color: #ffffff; font-weight: 700; }
 .boton-ia:hover:not(:disabled) { background: #9c1488; }
 .boton-primario:active:not(:disabled), .boton-secundario:active:not(:disabled), .boton-ia:active:not(:disabled) { transform: translateY(1px); }
-.boton-primario:disabled, .boton-secundario:disabled, .boton-ia:disabled { opacity: 0.6; cursor: wait; }
+.boton-primario:disabled, .boton-secundario:disabled, .boton-ia:disabled { opacity: 0.55; cursor: default; filter: grayscale(0.5); /* gris suave en vez del círculo de espera */ }
 
 /* ---------- Etiquetas ---------- */
 .etiqueta-ia { background: var(--ia-soft); color: var(--ia); font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }

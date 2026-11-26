@@ -16,7 +16,7 @@
 .login-campo small { font-size: 0.8rem; color: var(--bad); }
 .login-campo-error input { border-color: var(--bad); }
 .login-boton { margin-top: 4px; padding: 11px 18px; border: none; border-radius: 10px; background: var(--primary); color: #ffffff; font-weight: 600; cursor: pointer; }
-.login-boton:disabled { opacity: 0.6; cursor: wait; }
+.login-boton:disabled { opacity: 0.55; cursor: default; filter: grayscale(0.5); /* gris suave en vez del círculo de espera */ }
 
 /* Enlaces del login: "¿Olvidaste tu contraseña?" y volver. */
 .login-enlace { align-self: center; border: 0; padding: 4px; background: transparent; color: var(--primary); font-weight: 600; font-size: 0.88rem; cursor: pointer; }

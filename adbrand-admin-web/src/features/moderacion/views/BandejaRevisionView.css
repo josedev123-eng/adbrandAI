@@ -1,7 +1,7 @@
 .pagina.pagina-bandeja { max-width: 960px; }
 .bandeja-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .boton-secundario { padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; cursor: pointer; }
-.boton-secundario:disabled { opacity: 0.6; cursor: wait; }
+.boton-secundario:disabled { opacity: 0.55; cursor: default; filter: grayscale(0.5); /* gris suave en vez del círculo de espera */ }
 .bandeja { display: flex; flex-direction: column; gap: 14px; }
 .bandeja-titulo { display: flex; align-items: center; gap: 10px; }
 .bandeja-titulo h2 { margin: 0; }
