@@ -1,6 +1,7 @@
 // HU 26: con llaves de Mercado Pago se usa su formulario; sin ellas, el formulario simulado.
 // El SDK de Mercado Pago se reemplaza por uno falso: estas pruebas no salen a internet.
 import { act, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cargarSdkMercadoPago } from '../models/mercadoPagoSdk'
 import { obtenerConfiguracionPago, pagarConMercadoPago } from '../models/pagosApi'
@@ -94,9 +95,13 @@ describe('PagoConTarjetaView', () => {
 
     render(<PagoConTarjetaView plan={PLAN} alPagar={alPagar} alVolver={() => {}} />)
     await waitFor(() => expect(brick.opciones).not.toBeNull())
-    await act(() =>
-      brick.opciones.callbacks.onSubmit(DATOS_TARJETA, { cardholderName: 'APRO', lastFourDigits: '0604', bin: '503175' }),
-    )
+    let envio
+    act(() => {
+      envio = brick.opciones.callbacks.onSubmit(DATOS_TARJETA, { cardholderName: 'APRO', lastFourDigits: '0604', bin: '503175' })
+    })
+    expect(await screen.findByRole('dialog', { name: '¿Confirmas el pago?' })).toHaveTextContent('Tarjeta •••• 0604')
+    await userEvent.click(screen.getByRole('button', { name: /Sí, pagar/ }))
+    await act(() => envio)
 
     expect(pagarConMercadoPago).toHaveBeenCalledWith({
       planId: 2,
@@ -121,12 +126,38 @@ describe('PagoConTarjetaView', () => {
 
     render(<PagoConTarjetaView plan={PLAN} alPagar={alPagar} alVolver={() => {}} />)
     await waitFor(() => expect(brick.opciones).not.toBeNull())
+    let envio
+    act(() => {
+      // El error se captura enseguida para que no quede como rechazo sin atender.
+      envio = brick.opciones.callbacks.onSubmit(DATOS_TARJETA).catch((error) => error)
+    })
+    await userEvent.click(await screen.findByRole('button', { name: /Sí, pagar/ }))
     await act(async () => {
-      await expect(brick.opciones.callbacks.onSubmit(DATOS_TARJETA)).rejects.toThrow()
+      expect(await envio).toBeInstanceOf(Error)
     })
 
     expect(await screen.findByText('La tarjeta no tiene fondos suficientes.')).toBeInTheDocument()
     expect(alPagar).not.toHaveBeenCalled()
+  })
+
+  it('si cancela en "Confirma tu pago" no se cobra y el formulario deja reintentar', async () => {
+    obtenerConfiguracionPago.mockResolvedValue({ pasarela: 'mercadopago', publicKey: 'TEST-publica' })
+    const brick = sdkFalso()
+
+    render(<PagoConTarjetaView plan={PLAN} alPagar={vi.fn()} alVolver={() => {}} />)
+    await waitFor(() => expect(brick.opciones).not.toBeNull())
+    let envio
+    act(() => {
+      // El error se captura enseguida para que no quede como rechazo sin atender.
+      envio = brick.opciones.callbacks.onSubmit(DATOS_TARJETA).catch((error) => error)
+    })
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar' }))
+    await act(async () => {
+      expect(await envio).toBeInstanceOf(Error)
+    })
+
+    expect(pagarConMercadoPago).not.toHaveBeenCalled()
+    expect(screen.getByText('Cancelaste el pago. No se hizo ningún cobro.')).toBeInTheDocument()
   })
 
   it('si el SDK no carga avisa al usuario', async () => {

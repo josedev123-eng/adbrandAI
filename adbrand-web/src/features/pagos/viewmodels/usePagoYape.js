@@ -3,7 +3,8 @@ import { useState } from 'react'
 import QRCode from 'qrcode'
 import { confirmarYape, registrarYape } from '../models/pagosApi'
 
-export function usePagoYape(plan, alConfirmar) {
+// "confirmar": modal "Confirma tu pago" antes de avisar que ya se pagó (true si confirma).
+export function usePagoYape(plan, alConfirmar, confirmar = async () => true) {
   const [operacion, setOperacion] = useState(null)
   const [qr, setQr] = useState(null)
   const [cargando, setCargando] = useState(false)
@@ -24,8 +25,9 @@ export function usePagoYape(plan, alConfirmar) {
     }
   }
 
-  async function confirmar() {
+  async function confirmarPago() {
     setError(null)
+    if (!(await confirmar({ metodo: 'Yape (QR de AdBrand)' }))) return
     setConfirmando(true)
     try {
       const pago = await confirmarYape(operacion.id)
@@ -44,6 +46,6 @@ export function usePagoYape(plan, alConfirmar) {
     confirmando,
     error,
     generar,
-    confirmar,
+    confirmar: confirmarPago,
   }
 }

@@ -38,6 +38,7 @@ describe('PagoYapeView', () => {
     expect(registrarYape).toHaveBeenCalledWith({ planId: 2 })
 
     await usuario.click(screen.getByRole('button', { name: /Ya pagué, confirmar/ }))
+    await usuario.click(await screen.findByRole('button', { name: /Sí, pagar/ }))
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
     expect(confirmarYape).toHaveBeenCalledWith(7)
   })
@@ -51,6 +52,7 @@ describe('PagoYapeView', () => {
     await usuario.click(screen.getByRole('button', { name: /Generar QR de pago/ }))
     await screen.findByText('YPE-ABC12345')
     await usuario.click(screen.getByRole('button', { name: /Ya pagué, confirmar/ }))
+    await usuario.click(await screen.findByRole('button', { name: /Sí, pagar/ }))
     expect(await screen.findByText(/ya fue confirmada/)).toBeInTheDocument()
   })
 })

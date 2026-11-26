@@ -21,6 +21,16 @@ async function llenarTarjeta(numero) {
 }
 
 describe('PagoTarjetaView', () => {
+  it('si cancela en "Confirma tu pago" no se cobra nada', async () => {
+    render(<PagoTarjetaView plan={PLAN} alPagar={vi.fn()} alVolver={() => {}} />)
+    await llenarTarjeta('4111111111111111')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(pagarConTarjeta).not.toHaveBeenCalled()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -38,6 +48,13 @@ describe('PagoTarjetaView', () => {
 
     render(<PagoTarjetaView plan={PLAN} alPagar={alPagar} alVolver={() => {}} />)
     await llenarTarjeta('4111111111111111')
+    // Antes de cobrar sale el modal "Confirma tu pago" con el plan, el monto y la tarjeta.
+    const modal = await screen.findByRole('dialog', { name: '¿Confirmas el pago?' })
+    expect(modal).toHaveTextContent('Tarjeta •••• 1111')
+    expect(modal).toHaveTextContent(/Renovación\s*Mensual/)
+    expect(modal).toHaveTextContent('Pro')
+    expect(pagarConTarjeta).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: /Sí, pagar/ }))
 
     await waitFor(() => expect(alPagar).toHaveBeenCalledTimes(1))
     expect(pagarConTarjeta).toHaveBeenCalledWith(
@@ -60,6 +77,7 @@ describe('PagoTarjetaView', () => {
 
     render(<PagoTarjetaView plan={PLAN} alPagar={vi.fn()} alVolver={() => {}} />)
     await llenarTarjeta('4000000000000002')
+    await userEvent.click(await screen.findByRole('button', { name: /Sí, pagar/ }))
 
     expect(await screen.findByText(/rechazada por el banco/)).toBeInTheDocument()
   })

@@ -1,12 +1,15 @@
 // View: pago con Yape. Genera el QR de la cuenta de AdBrand y luego confirma la operación.
 import { usePagoYape } from '../viewmodels/usePagoYape'
+import { useConfirmarPago } from '../viewmodels/useConfirmarPago'
+import ModalConfirmarPago from './ModalConfirmarPago'
 import './pagoComun.css'
 import './PagoYapeView.css'
 
 const SOLES = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' })
 
 export default function PagoYapeView({ plan, alConfirmar, alVolver }) {
-  const { operacion, qr, cargando, confirmando, error, generar, confirmar } = usePagoYape(plan, alConfirmar)
+  const { pedir, modal } = useConfirmarPago()
+  const { operacion, qr, cargando, confirmando, error, generar, confirmar } = usePagoYape(plan, alConfirmar, pedir)
 
   function alGenerar(evento) {
     evento.preventDefault()
@@ -62,6 +65,7 @@ export default function PagoYapeView({ plan, alConfirmar, alVolver }) {
           </div>
         </section>
       )}
+      <ModalConfirmarPago {...modal} plan={plan} />
     </main>
   )
 }

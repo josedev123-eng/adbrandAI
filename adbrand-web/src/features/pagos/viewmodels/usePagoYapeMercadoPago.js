@@ -19,7 +19,8 @@ export function validarYape(formulario) {
   return errores
 }
 
-export function usePagoYapeMercadoPago(plan, publicKey, alConfirmar) {
+// "confirmar": modal "Confirma tu pago" (true si confirma).
+export function usePagoYapeMercadoPago(plan, publicKey, alConfirmar, confirmar = async () => true) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState(null)
@@ -37,6 +38,7 @@ export function usePagoYapeMercadoPago(plan, publicKey, alConfirmar) {
     if (Object.keys(locales).length > 0) return
 
     const celular = formulario.celular.replace(/\s/g, '')
+    if (!(await confirmar({ metodo: `Yape ${celular}` }))) return
     setEnviando(true)
     try {
       let token

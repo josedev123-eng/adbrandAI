@@ -1,5 +1,6 @@
 package com.adbrand.ui.plan.screens
 
+import androidx.compose.runtime.setValue
 import com.adbrand.BuildConfig
 
 import androidx.compose.foundation.BorderStroke
@@ -67,6 +68,20 @@ fun PantallaPlanScreen(
 ) {
     val estado by viewModel.estado.collectAsState()
     val contexto = androidx.compose.ui.platform.LocalContext.current
+    // "¿Confirmas el pago?": el plan elegido espera la confirmación antes de abrir el pago.
+    var planPorConfirmar by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<PlanDisponible?>(null)
+    }
+    planPorConfirmar?.let { plan ->
+        DialogoConfirmarPago(
+            plan = plan,
+            alConfirmar = {
+                planPorConfirmar = null
+                abrirPagoEnLaWeb(contexto)
+            },
+            alCancelar = { planPorConfirmar = null }
+        )
+    }
 
     LaunchedEffect(Unit) { viewModel.cargar() }
 
@@ -131,7 +146,7 @@ fun PantallaPlanScreen(
                     TarjetaPlan(
                         plan = plan,
                         esActual = plan.nombre.equals(estado.suscripcion.plan, ignoreCase = true),
-                        alElegir = { abrirPagoEnLaWeb(contexto) }
+                        alElegir = { planPorConfirmar = plan }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -368,6 +383,31 @@ private fun TarjetaPlan(plan: PlanDisponible, esActual: Boolean, alElegir: () ->
             }
         }
     }
+}
+
+// "¿Confirmas el pago?" antes de ir a pagar: plan, precio, renovación mensual y medio de pago (tarjeta o Yape,
+// que se elige en la página segura de la web). Solo con "Sí, pagar" se abre el pago.
+@Composable
+private fun DialogoConfirmarPago(plan: PlanDisponible, alConfirmar: () -> Unit, alCancelar: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = alCancelar,
+        title = { Text("¿Confirmas el pago?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Plan: ${plan.nombre}")
+                Text("Precio: ${plan.precioLegible}", fontWeight = FontWeight.Bold, color = IndigoAdbrand)
+                Text("Medio de pago: tarjeta o Yape (lo eliges en la página segura de pago)")
+                Text("Renovación: mensual")
+                Text(
+                    "Al confirmar se abre la página de pago de AdBrand con Mercado Pago.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextoSecundario
+                )
+            }
+        },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = alConfirmar) { Text("Sí, pagar") } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = alCancelar) { Text("Cancelar") } }
+    )
 }
 
 // El pago (tarjeta o Yape con Mercado Pago) se hace en la web, como en Spotify o Canva: se abre la página de planes

@@ -3,13 +3,16 @@
 import Aviso from '../../../shared/components/Aviso'
 import Cargando from '../../../shared/components/Cargando'
 import { ID_CONTENEDOR, usePagoMercadoPago } from '../viewmodels/usePagoMercadoPago'
+import { useConfirmarPago } from '../viewmodels/useConfirmarPago'
+import ModalConfirmarPago from './ModalConfirmarPago'
 import './pagoComun.css'
 import './PagoTarjetaView.css'
 
 const SOLES = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' })
 
 export default function PagoMercadoPagoView({ plan, publicKey, alPagar, alVolver }) {
-  const { listo, mensaje, enviando } = usePagoMercadoPago(plan, publicKey, alPagar)
+  const { pedir, modal } = useConfirmarPago()
+  const { listo, mensaje, enviando } = usePagoMercadoPago(plan, publicKey, alPagar, pedir)
 
   return (
     <main className="pagina">
@@ -39,6 +42,7 @@ export default function PagoMercadoPagoView({ plan, publicKey, alPagar, alVolver
           </button>
         </div>
       </section>
+      <ModalConfirmarPago {...modal} plan={plan} />
     </main>
   )
 }

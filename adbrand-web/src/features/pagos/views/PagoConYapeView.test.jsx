@@ -40,6 +40,9 @@ async function llenarYPagar({ celular = '111111111', codigo = '123456', correo =
   if (codigo) await usuario.type(screen.getByLabelText(/Código de aprobación/), codigo)
   if (correo) await usuario.type(screen.getByLabelText(/Correo/), correo)
   await usuario.click(screen.getByRole('button', { name: /con Yape/ }))
+  // Con datos válidos sale "Confirma tu pago": se confirma.
+  const confirmar = screen.queryByRole('button', { name: /Sí, pagar/ })
+  if (confirmar) await usuario.click(confirmar)
 }
 
 describe('PagoConYapeView', () => {

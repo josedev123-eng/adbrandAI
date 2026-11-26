@@ -1,6 +1,8 @@
 // View: pago con Yape por Mercado Pago (HU 27). La lógica está en usePagoYapeMercadoPago.
 import Aviso from '../../../shared/components/Aviso'
 import { usePagoYapeMercadoPago } from '../viewmodels/usePagoYapeMercadoPago'
+import { useConfirmarPago } from '../viewmodels/useConfirmarPago'
+import ModalConfirmarPago from './ModalConfirmarPago'
 import './pagoComun.css'
 import './PagoYapeView.css'
 
@@ -18,10 +20,12 @@ function Campo({ etiqueta, error, ayuda, children }) {
 }
 
 export default function PagoYapeMercadoPagoView({ plan, publicKey, alConfirmar, alVolver }) {
+  const { pedir, modal } = useConfirmarPago()
   const { formulario, errores, mensaje, enviando, cambiarCampo, pagar } = usePagoYapeMercadoPago(
     plan,
     publicKey,
     alConfirmar,
+    pedir,
   )
 
   function alEnviar(evento) {
@@ -102,6 +106,7 @@ export default function PagoYapeMercadoPagoView({ plan, publicKey, alConfirmar, 
           </button>
         </div>
       </form>
+      <ModalConfirmarPago {...modal} plan={plan} />
     </main>
   )
 }

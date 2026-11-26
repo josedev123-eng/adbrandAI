@@ -1,6 +1,8 @@
 // View: formulario de pago con tarjeta. Toda la lógica está en usePagoTarjeta (HU 26).
 import Aviso from '../../../shared/components/Aviso'
 import { usePagoTarjeta } from '../viewmodels/usePagoTarjeta'
+import { useConfirmarPago } from '../viewmodels/useConfirmarPago'
+import ModalConfirmarPago from './ModalConfirmarPago'
 import './pagoComun.css'
 import './PagoTarjetaView.css'
 
@@ -18,7 +20,8 @@ function Campo({ etiqueta, error, ayuda, children }) {
 }
 
 export default function PagoTarjetaView({ plan, alPagar, alVolver }) {
-  const { formulario, errores, mensaje, enviando, cambiarCampo, pagar } = usePagoTarjeta(plan, alPagar)
+  const { pedir, modal } = useConfirmarPago()
+  const { formulario, errores, mensaje, enviando, cambiarCampo, pagar } = usePagoTarjeta(plan, alPagar, pedir)
 
   function alEnviar(evento) {
     evento.preventDefault()
@@ -100,6 +103,7 @@ export default function PagoTarjetaView({ plan, alPagar, alVolver }) {
           </button>
         </div>
       </form>
+      <ModalConfirmarPago {...modal} plan={plan} />
     </main>
   )
 }

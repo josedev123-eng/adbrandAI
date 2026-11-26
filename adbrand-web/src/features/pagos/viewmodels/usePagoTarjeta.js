@@ -58,7 +58,8 @@ export function validarTarjeta(formulario) {
   return errores
 }
 
-export function usePagoTarjeta(plan, alPagar) {
+// "confirmar" abre el modal "Confirma tu pago" y responde true o false (por defecto, confirma).
+export function usePagoTarjeta(plan, alPagar, confirmar = async () => true) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState(null)
@@ -74,6 +75,8 @@ export function usePagoTarjeta(plan, alPagar) {
     const locales = validarTarjeta(formulario)
     setErrores(locales)
     if (Object.keys(locales).length > 0) return
+    const ultimos = soloDigitos(formulario.numeroTarjeta).slice(-4)
+    if (!(await confirmar({ metodo: `Tarjeta •••• ${ultimos}` }))) return
 
     setEnviando(true)
     try {

@@ -26,15 +26,18 @@ export function datosDelPago(plan, datosTarjeta, datosExtra = {}) {
   }
 }
 
-export function usePagoMercadoPago(plan, publicKey, alPagar) {
+// "confirmar": modal "Confirma tu pago" antes de cobrar (true si confirma).
+export function usePagoMercadoPago(plan, publicKey, alPagar, confirmar = async () => true) {
   const [listo, setListo] = useState(false)
   const [mensaje, setMensaje] = useState(null)
   const [enviando, setEnviando] = useState(false)
   // alPagar puede cambiar en cada render; el Brick se crea una sola vez y lee siempre el último.
   const alPagarActual = useRef(alPagar)
+  const confirmarActual = useRef(confirmar)
   useEffect(() => {
     alPagarActual.current = alPagar
-  }, [alPagar])
+    confirmarActual.current = confirmar
+  }, [alPagar, confirmar])
 
   useEffect(() => {
     let controlador = null
@@ -72,6 +75,12 @@ export function usePagoMercadoPago(plan, publicKey, alPagar) {
     // El Brick espera una promesa: si se rechaza, deja corregir la tarjeta y reintentar.
     async function enviar(datosTarjeta, datosExtra) {
       setMensaje(null)
+      const digitos = /^\d{4}$/.test(datosExtra?.lastFourDigits ?? '') ? ` •••• ${datosExtra.lastFourDigits}` : ''
+      if (!(await confirmarActual.current({ metodo: `Tarjeta${digitos}` }))) {
+        setMensaje({ tipo: 'info', texto: 'Cancelaste el pago. No se hizo ningún cobro.' })
+        // El Brick espera que se rechace para dejar volver a intentarlo.
+        throw new Error('Pago cancelado por el usuario.')
+      }
       setEnviando(true)
       try {
         const pago = await pagarConMercadoPago(datosDelPago(plan, datosTarjeta, datosExtra))
