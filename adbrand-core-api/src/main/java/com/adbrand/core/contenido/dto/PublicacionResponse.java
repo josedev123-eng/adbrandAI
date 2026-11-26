@@ -16,5 +16,9 @@ public record PublicacionResponse(
         // HU 61: logo, colores y eslogan del kit para el afiche y lo que se comparte.
         MarcaPublicacion marca,
         // El video para Reels y Estados es de los planes de pago: false con el plan gratis (la web muestra el candado).
-        boolean videoDisponible) {
+        boolean videoDisponible,
+        // HU 62 (afiche): el titular corto del anuncio (la primera frase de la IA) y la oferta destacada
+        // ("-20% en todos los cafés"); null si la oferta no se puede resumir.
+        String titular,
+        String ofertaDestacada) {
 }

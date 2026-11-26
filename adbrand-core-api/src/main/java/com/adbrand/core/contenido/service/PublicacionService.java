@@ -97,7 +97,38 @@ public class PublicacionService {
         }
         return new PublicacionResponse(contenido.getId(), texto.toString(), hashtags, enlace, mensajePedido, telefono != null,
                 RevisionLegalOferta.revisar(contenido.getOferta(), contenido.getTexto()), MarcaPublicacion.desde(marca),
-                !LimiteConsumoIa.GRATUITO.equals(limites.consumoDelMes(usuarioId).origen()));
+                !LimiteConsumoIa.GRATUITO.equals(limites.consumoDelMes(usuarioId).origen()),
+                VideoAnuncioService.titularDe(contenido.getTitular(), contenido.getOferta(), cuerpo), ofertaDestacada(contenido.getOferta()));
+    }
+
+    private static final Pattern PORCENTAJE = Pattern.compile(
+            "(\\d{1,2})\\s*%(?:\\s*(?:de\\s+)?(?:descuento|dscto\\.?|off))?\\s*((?:en|a|para|por)\\s+[^.,;!?\\n]{3,40})?",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern DOS_POR_UNO = Pattern.compile(
+            "(\\d\\s*[x×]\\s*\\d)\\s*((?:en|de|por)\\s+[^.,;!?\\n]{3,40})?", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern PEDIDO_A_LA_IA = Pattern.compile(
+            "\\b(cr[eé]a(me)?|haz(me)?|genera(me)?|quiero un|anuncio|publicaci[oó]n)\\b", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    // HU 62: la oferta en corto para destacarla en el afiche: "-20% en todos los cafés", "2x1 en pan de yema".
+    // Si el dueño escribió un pedido para la IA ("Créame un anuncio…") y no hay cifra, no se destaca nada.
+    public static String ofertaDestacada(String oferta) {
+        if (oferta == null || oferta.isBlank()) {
+            return null;
+        }
+        String texto = oferta.replaceAll("\\s+", " ").trim();
+        java.util.regex.Matcher porcentaje = PORCENTAJE.matcher(texto);
+        if (porcentaje.find()) {
+            return ("-" + porcentaje.group(1) + "%" + (porcentaje.group(2) == null ? "" : " " + porcentaje.group(2).trim())).trim();
+        }
+        java.util.regex.Matcher dosPorUno = DOS_POR_UNO.matcher(texto);
+        if (dosPorUno.find()) {
+            return (dosPorUno.group(1).replaceAll("\\s", "").replace('×', 'x').toLowerCase(Locale.ROOT)
+                    + (dosPorUno.group(2) == null ? "" : " " + dosPorUno.group(2).trim())).trim();
+        }
+        if (PEDIDO_A_LA_IA.matcher(texto).find() || texto.length() > 50) {
+            return null;
+        }
+        return Character.toUpperCase(texto.charAt(0)) + texto.substring(1).replaceAll("[.]+$", "");
     }
 
     // HU 61: "— Panadería Rosa: “El sabor de tu barrio”". Sin eslogan no se agrega nada (el nombre ya va en los hashtags).

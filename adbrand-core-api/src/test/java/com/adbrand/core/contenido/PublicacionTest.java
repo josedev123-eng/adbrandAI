@@ -66,4 +66,16 @@ class PublicacionTest {
         assertThat(com.adbrand.core.contenido.service.DisenoAnuncio.condicionesDe(null, "")).isNull();
         assertThat(com.adbrand.core.contenido.service.DisenoAnuncio.condicionesDe("mañana", "x")).isNull();
     }
+
+    // HU 62: la oferta en corto para destacarla en el afiche.
+    @Test
+    void laOfertaDestacadaDelAficheEsCortaYConLaCifra() {
+        assertThat(PublicacionService.ofertaDestacada("20% de descuento en todos los cafés este fin de semana"))
+                .isEqualTo("-20% en todos los cafés este fin de semana");
+        assertThat(PublicacionService.ofertaDestacada("Promo 2 x 1 en pan de yema, solo hoy")).isEqualTo("2x1 en pan de yema");
+        assertThat(PublicacionService.ofertaDestacada("Panetón artesanal a S/ 35")).isEqualTo("Panetón artesanal a S/ 35");
+        // Un pedido a la IA sin cifra no se destaca.
+        assertThat(PublicacionService.ofertaDestacada("Créame un anuncio para mi cafetería")).isNull();
+        assertThat(PublicacionService.ofertaDestacada(null)).isNull();
+    }
 }
