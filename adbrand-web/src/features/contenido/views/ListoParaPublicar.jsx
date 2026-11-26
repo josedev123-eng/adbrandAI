@@ -1,6 +1,8 @@
 // View: "Listo para publicar". El texto con hashtags para copiar, compartir por WhatsApp y el afiche con QR.
 import { useListoParaPublicar } from '../viewmodels/useListoParaPublicar'
 import ImagenConMarca from './ImagenConMarca'
+import VideoConIa from './VideoConIa'
+import { REDES } from '../models/anunciosApi'
 import './ListoParaPublicar.css'
 
 // HU 64: "Tu oferta, sin multas". Lo que conviene corregir según las reglas de publicidad (INDECOPI),
@@ -57,7 +59,8 @@ function RevisionLegal({ observaciones, condiciones, alCambiar }) {
 
 // "irAMiCuenta" lleva a poner el celular si falta. El afiche y la imagen usan el logo, los colores y el eslogan del kit.
 // "irAPlanes": con el plan gratis el video sale con candado y lleva a Planes.
-export default function ListoParaPublicar({ anuncioId, irAMiCuenta, irAPlanes }) {
+// "redSocial": la imagen se abre en el formato de esa red (vertical para los Estados de WhatsApp).
+export default function ListoParaPublicar({ anuncioId, redSocial, irAMiCuenta, irAPlanes }) {
   const {
     publicacion,
     textoFinal,
@@ -93,7 +96,12 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta, irAPlanes })
       <h3>Listo para publicar</h3>
       <p className="publicar-ayuda">Copia el texto y pégalo en Instagram o Facebook, o envíalo directo por WhatsApp.</p>
       {/* HU 61: la imagen final con el logo, los colores y el eslogan del kit de marca. */}
-      <ImagenConMarca anuncioId={anuncioId} texto={textoFinal} condiciones={condiciones} />
+      <ImagenConMarca
+        anuncioId={anuncioId}
+        texto={textoFinal}
+        condiciones={condiciones}
+        formatoInicial={REDES.find((red) => red.valor === redSocial)?.formato}
+      />
       <RevisionLegal observaciones={publicacion.observaciones ?? []} condiciones={condiciones} alCambiar={cambiarCondicion} />
       <pre className="publicar-texto">{textoFinal}</pre>
       <ul className="publicar-hashtags" aria-label="Hashtags">
@@ -126,6 +134,8 @@ export default function ListoParaPublicar({ anuncioId, irAMiCuenta, irAPlanes })
             {creandoVideo ? '🎬 Creando tu video…' : '🎬 Video para Reels y Estados'}
           </button>
         )}
+        {/* HU 66: la IA anima la foto del anuncio (Premium). */}
+        <VideoConIa anuncioId={anuncioId} irAPlanes={irAPlanes} />
         {publicacion.tieneWhatsapp && (
           <button type="button" className="boton-secundario" onClick={imprimirAfiche}>
             🖨 Afiche con QR para tu local

@@ -2,10 +2,27 @@
 import { apiDescargar, apiRequest, TIEMPO_IA } from '../../../shared/services/apiClient'
 
 // Los mismos valores que el enum RedSocial de Spring.
+// "detalle": qué cambia al elegir la red (largo del texto, hashtags y formato de la imagen), para que se entienda.
+// "formato": el formato de imagen con que se abre "Listo para publicar".
 export const REDES = [
-  { valor: 'INSTAGRAM', nombre: 'Instagram' },
-  { valor: 'FACEBOOK', nombre: 'Facebook' },
-  { valor: 'WHATSAPP', nombre: 'Estados de WhatsApp' },
+  {
+    valor: 'INSTAGRAM',
+    nombre: 'Instagram',
+    detalle: 'Texto de hasta 80 palabras con 4 hashtags e imagen cuadrada para tu muro.',
+    formato: 'CUADRADO',
+  },
+  {
+    valor: 'FACEBOOK',
+    nombre: 'Facebook',
+    detalle: 'Texto más largo (hasta 120 palabras) con 2 hashtags e imagen horizontal, como se ven mejor en Facebook.',
+    formato: 'HORIZONTAL',
+  },
+  {
+    valor: 'WHATSAPP',
+    nombre: 'Estados de WhatsApp',
+    detalle: 'Texto muy corto (hasta 45 palabras), 1 hashtag e imagen vertical, como se ven los estados.',
+    formato: 'VERTICAL',
+  },
 ]
 
 export const NOMBRES_TONO = {
@@ -54,6 +71,25 @@ export function prepararPublicacion(id) {
 // HU 65: video corto del anuncio (MP4 vertical de 8 s) para Reels, TikTok o Estados de WhatsApp. Tarda unos segundos.
 export function descargarVideoAnuncio(id) {
   return apiDescargar(`/contenido/anuncios/${id}/video`, { tiempoMaximo: TIEMPO_IA })
+}
+
+// HU 66: video con IA (plan Premium, 3 al mes). La IA anima la foto del anuncio; tarda 1 a 3 minutos.
+// disponibilidad: { disponible, motivo ('PLAN' | 'LIMITE' | null), usados, limite, modelo, costoEstimado }
+export function disponibilidadVideoIa() {
+  return apiRequest('/contenido/video-ia/disponibilidad')
+}
+
+// Devuelve { id, estado: 'CREANDO' | 'LISTO' | 'FALLIDO', progreso, error, usados, limite }.
+export function iniciarVideoIa(anuncioId) {
+  return apiRequest(`/contenido/anuncios/${anuncioId}/video-ia`, { method: 'POST' })
+}
+
+export function consultarVideoIa(videoId) {
+  return apiRequest(`/contenido/video-ia/${videoId}`)
+}
+
+export function descargarVideoIa(videoId) {
+  return apiDescargar(`/contenido/video-ia/${videoId}/archivo`)
 }
 
 // HU 61: la imagen final del anuncio (JPG) con el logo, los colores y el eslogan del kit.

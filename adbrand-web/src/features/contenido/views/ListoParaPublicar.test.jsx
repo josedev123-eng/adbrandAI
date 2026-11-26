@@ -3,12 +3,14 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { descargarImagenFinal, descargarVideoAnuncio, prepararPublicacion } from '../models/anunciosApi'
-import { conCondiciones, htmlAfiche } from '../viewmodels/useListoParaPublicar'
+import { conCondiciones, htmlAfiche, sinTitular, telefonoDe, vigenciaDe } from '../viewmodels/useListoParaPublicar'
 import ListoParaPublicar from './ListoParaPublicar'
 
-vi.mock('../models/anunciosApi', () => ({
+vi.mock('../models/anunciosApi', async (importOriginal) => ({
+  ...(await importOriginal()),
   prepararPublicacion: vi.fn(),
   descargarVideoAnuncio: vi.fn(),
+  disponibilidadVideoIa: vi.fn(() => Promise.resolve({ disponible: false, motivo: 'PLAN', usados: 0, limite: 3 })),
   descargarImagenFinal: vi.fn(),
 }))
 
@@ -153,6 +155,37 @@ describe('ListoParaPublicar', () => {
     expect(html).toContain('solid #F2C14E')
     expect(html).toContain('src="data:image/png;base64,AAA"')
     expect(html).toContain('“El sabor de tu barrio”')
+  })
+
+  it('el afiche lleva "Hecho con AdBrand.AI" solo con el plan gratis', () => {
+    const datos = { marca: { nombre: 'Rosa' }, texto: '', qr: '' }
+    expect(htmlAfiche(datos)).toContain('Hecho con AdBrand.AI')
+    expect(htmlAfiche({ ...datos, conMarcaAdbrand: false })).not.toContain('Hecho con AdBrand.AI')
+  })
+
+  it('HU 62: el afiche destaca la oferta y la vigencia, el titular y el número del WhatsApp', () => {
+    const html = htmlAfiche({
+      marca: { nombre: 'Café Aroma', eslogan: 'Tu dosis diaria', colorPrincipal: '#6F4E37', colorAcento: '#D4A373' },
+      imagen: 'data:image/jpeg;base64,BBB',
+      titular: 'Recarga tu jornada con estilo',
+      oferta: '-20% en todos los cafés',
+      vigencia: vigenciaDe({ hasta: '2026-12-24', stock: '' }),
+      texto: 'Ven por tu café favorito.',
+      qr: 'data:image/png;base64,CCC',
+      telefono: telefonoDe('https://wa.me/51987654321?text=Hola'),
+    })
+    expect(html).toContain('<strong>-20% en todos los cafés</strong>')
+    expect(html).toContain('Válido hasta el 24/12/2026')
+    expect(html).toContain('<h2>Recarga tu jornada con estilo</h2>')
+    expect(html).toContain('+51 987 654 321')
+    expect(html).toContain('size: A4 portrait; margin: 0')
+  })
+
+  it('HU 62: el texto del afiche no repite el titular y va corto', () => {
+    expect(sinTitular('¡Recarga tu jornada con estilo! Ven por tu café favorito.', 'Recarga tu jornada con estilo')).toBe(
+      'Ven por tu café favorito.',
+    )
+    expect(sinTitular('x '.repeat(200), 'Otro').length).toBeLessThanOrEqual(221)
   })
 
   it('HU 61: un color raro del kit no se mete en el afiche', () => {

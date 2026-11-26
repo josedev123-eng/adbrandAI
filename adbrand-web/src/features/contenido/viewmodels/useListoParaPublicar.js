@@ -74,7 +74,22 @@ export function useListoParaPublicar(anuncioId) {
     const qr = await QRCode.toDataURL(publicacion.enlaceWhatsapp, { width: 360, margin: 1 })
     const imagen = await descargarImagenFinal(anuncioId, 'CUADRADO', condiciones).then(comoDataUrl).catch(() => null)
     ventana.document.open()
-    ventana.document.write(htmlAfiche({ marca: publicacion.marca ?? {}, imagen, texto: textoSinEnlace(textoFinal), qr }))
+    // Con un plan de pago el afiche sale sin "Hecho con AdBrand.AI".
+    const conMarcaAdbrand = publicacion.videoDisponible === false
+    ventana.document.write(
+      htmlAfiche({
+        marca: publicacion.marca ?? {},
+        imagen,
+        // HU 62: el titular arriba y, abajo, el resto del texto (sin repetir el titular).
+        titular: publicacion.titular,
+        oferta: publicacion.ofertaDestacada,
+        vigencia: vigenciaDe(condiciones),
+        texto: sinTitular(textoSinEnlace(publicacion.textoParaPublicar), publicacion.titular),
+        qr,
+        telefono: telefonoDe(publicacion.enlaceWhatsapp),
+        conMarcaAdbrand,
+      }),
+    )
     ventana.document.close()
     ventana.onload = () => ventana.print()
   }
@@ -192,31 +207,77 @@ function escapar(texto) {
   return String(texto ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 }
 
-export function htmlAfiche({ marca, imagen, texto, qr }) {
+// HU 62: "Válido hasta el 24/12/2026 · Stock: 50 unidades" para el afiche (vacío si no se puso nada).
+export function vigenciaDe({ hasta, stock } = {}) {
+  const partes = []
+  if (hasta) {
+    const [anio, mes, dia] = hasta.split('-')
+    partes.push(`Válido hasta el ${dia}/${mes}/${anio}`)
+  }
+  if (stock && Number(stock) > 0) partes.push(`Stock: ${Number(stock)} unidades`)
+  return partes.join(' · ')
+}
+
+// El número del WhatsApp a la vista: "https://wa.me/51987654321?text=…" → "+51 987 654 321".
+export function telefonoDe(enlace) {
+  const numero = /wa\.me\/(\d+)/.exec(enlace ?? '')?.[1]
+  if (!numero) return ''
+  const local = numero.startsWith('51') && numero.length === 11 ? numero.slice(2) : numero
+  const prefijo = local === numero ? '+' : '+51 '
+  return prefijo + local.replace(/(\d{3})(?=\d)/g, '$1 ').trim()
+}
+
+// El texto de abajo no repite el titular: se quita la primera frase si es la del titular. Y va corto (cabe en A4).
+export function sinTitular(texto, titular) {
+  let resto = (texto ?? '').trim()
+  const clave = (titular ?? '').replace(/…$/, '').trim().toLowerCase().slice(0, 20)
+  const primera = resto.match(/^[^.!?\n]*[.!?]?/)?.[0] ?? ''
+  if (clave && primera.toLowerCase().replace(/^[^\p{L}\d]+/u, '').startsWith(clave)) resto = resto.slice(primera.length).trim()
+  if (resto.length > 220) resto = `${resto.slice(0, resto.lastIndexOf(' ', 217)).replace(/[,;:]$/, '')}…`
+  return resto
+}
+
+// Afiche A4 (HU 62), siempre en una sola hoja sin cortes: arriba el logo, el nombre grande y el eslogan; la oferta
+// destacada y su vigencia; la imagen con el titular; un resumen corto; y el QR "Escanea y pide por WhatsApp" con el
+// número a la vista. Con los colores del kit. "conMarcaAdbrand": solo con el plan gratis lleva "Hecho con AdBrand.AI".
+export function htmlAfiche({ marca, imagen, titular, oferta, vigencia, texto, qr, telefono, conMarcaAdbrand = true }) {
   const principal = colorSeguro(marca.colorPrincipal, '#4f46e5')
   const acento = colorSeguro(marca.colorAcento, '#f97316')
   const logo = /^data:image\//.test(marca.logo ?? '') ? marca.logo : null
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Afiche - ${escapar(marca.nombre)}</title>
 <style>
-  @page { size: A4; margin: 14mm; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1b1d2e; margin: 0; text-align: center; }
-  .cabecera { display: flex; align-items: center; justify-content: center; gap: 5mm; padding-bottom: 4mm; border-bottom: 2mm solid ${acento}; margin-bottom: 5mm; }
-  .cabecera img { width: 22mm; height: 22mm; object-fit: contain; border-radius: 50%; }
-  h1 { font-size: 30pt; margin: 0; color: ${principal}; }
-  .eslogan { font-style: italic; color: ${principal}; font-size: 15pt; margin: 0 0 5mm; }
-  img.anuncio { width: 100%; max-height: 120mm; object-fit: contain; border-radius: 6mm; }
-  .texto { font-size: 15pt; line-height: 1.4; margin: 6mm 0; white-space: pre-line; }
-  .pedido { display: flex; align-items: center; justify-content: center; gap: 8mm; margin-top: 4mm; padding: 4mm; border: 1mm solid ${principal}; border-radius: 6mm; }
-  .pedido img { width: 45mm; height: 45mm; }
-  .pedido p { font-size: 18pt; font-weight: 700; margin: 0; text-align: left; color: ${principal}; }
-  .pie { color: #5d6178; font-size: 9pt; margin-top: 6mm; }
-</style></head><body>
-  <div class="cabecera">${logo ? `<img src="${logo}" alt="Logo">` : ''}<h1>${escapar(marca.nombre)}</h1></div>
-  ${marca.eslogan ? `<p class="eslogan">“${escapar(marca.eslogan)}”</p>` : ''}
-  ${imagen ? `<img class="anuncio" src="${imagen}" alt="">` : ''}
-  <p class="texto">${escapar(texto)}</p>
-  <div class="pedido"><img src="${qr}" alt="QR para pedir por WhatsApp"><p>Escanea y pide<br>por WhatsApp</p></div>
-  <p class="pie">Hecho con AdBrand.AI</p>
-</body></html>`
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; width: 210mm; height: 297mm; overflow: hidden; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1b1d2e; background: #fff; }
+  .hoja { width: 210mm; height: 297mm; padding: 10mm 12mm 8mm; display: flex; flex-direction: column; gap: 5mm; overflow: hidden; break-inside: avoid; page-break-after: avoid; }
+  .cabecera { display: flex; align-items: center; justify-content: center; gap: 5mm; text-align: left; }
+  .cabecera img { width: 28mm; height: 28mm; object-fit: contain; flex-shrink: 0; }
+  h1 { font-size: 34pt; line-height: 1; margin: 0; color: ${principal}; letter-spacing: -0.5pt; }
+  .eslogan { font-style: italic; font-size: 14pt; margin: 2mm 0 0; color: #4a4d63; }
+  .oferta { background: ${principal}; color: #fff; border-radius: 6mm; padding: 5mm 8mm; text-align: center; border-bottom: 2.5mm solid ${acento}; }
+  .oferta strong { display: block; font-size: 36pt; line-height: 1.05; font-weight: 900; text-transform: uppercase; }
+  .oferta span { display: block; font-size: 13pt; margin-top: 2mm; opacity: 0.95; }
+  .foto { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 6mm; overflow: hidden; background: color-mix(in srgb, ${principal} 12%, #fff); }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto h2 { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 14mm 7mm 5mm; font-size: 22pt; line-height: 1.15; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.72)); }
+  .foto.sin-imagen h2 { position: static; color: ${principal}; background: none; padding: 8mm; font-size: 26pt; }
+  .texto { font-size: 13pt; line-height: 1.35; margin: 0; text-align: center; color: #33364a; }
+  .pedido { display: flex; align-items: center; gap: 7mm; padding: 4mm 7mm; border: 1mm solid ${acento}; border-radius: 6mm; background: color-mix(in srgb, ${acento} 10%, #fff); flex-shrink: 0; }
+  .pedido img { width: 42mm; height: 42mm; flex-shrink: 0; }
+  .pedido p { margin: 0; font-size: 21pt; font-weight: 800; line-height: 1.15; color: ${principal}; }
+  .pedido .numero { display: block; margin-top: 2mm; font-size: 17pt; font-weight: 700; color: #1b1d2e; letter-spacing: 0.5pt; }
+  .pie { color: #8a8da3; font-size: 8pt; text-align: center; margin: -2mm 0 0; flex-shrink: 0; }
+</style></head><body><div class="hoja">
+  <header class="cabecera">${logo ? `<img src="${logo}" alt="Logo">` : ''}<div><h1>${escapar(marca.nombre)}</h1>${
+    marca.eslogan ? `<p class="eslogan">“${escapar(marca.eslogan)}”</p>` : ''
+  }</div></header>
+  ${oferta || vigencia ? `<section class="oferta">${oferta ? `<strong>${escapar(oferta)}</strong>` : ''}${vigencia ? `<span>${escapar(vigencia)}</span>` : ''}</section>` : ''}
+  <section class="foto${imagen ? '' : ' sin-imagen'}">${imagen ? `<img src="${imagen}" alt="">` : ''}${titular ? `<h2>${escapar(titular)}</h2>` : ''}</section>
+  ${texto ? `<p class="texto">${escapar(texto)}</p>` : ''}
+  <div class="pedido"><img src="${qr}" alt="QR para pedir por WhatsApp"><p>Escanea y pide<br>por WhatsApp${
+    telefono ? `<span class="numero">📲 ${escapar(telefono)}</span>` : ''
+  }</p></div>
+  ${conMarcaAdbrand ? '<p class="pie">Hecho con AdBrand.AI</p>' : ''}
+</div></body></html>`
 }
