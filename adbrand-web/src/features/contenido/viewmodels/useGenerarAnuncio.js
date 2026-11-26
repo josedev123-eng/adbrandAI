@@ -48,6 +48,8 @@ export function useGenerarAnuncio() {
   const [anuncio, setAnuncio] = useState(null)
   const [opcionElegida, setOpcionElegida] = useState(null)
   const [aviso, setAviso] = useState(null)
+  // HU 67: por qué la foto se usó tal cual cuando se pidió una escena (plan gratis, tope o falla de la IA).
+  const [avisoFoto, setAvisoFoto] = useState(null)
   const [faltaPerfil, setFaltaPerfil] = useState(false)
   // Ya usó los tokens de IA de su plan este mes: se muestra el aviso con el botón para ver los planes.
   const [sinCupo, setSinCupo] = useState(null)
@@ -80,6 +82,7 @@ export function useGenerarAnuncio() {
       const respuesta = await promesa
       if (!montado.current) return
       setOpciones(respuesta.opciones ?? [])
+      setAvisoFoto(respuesta.avisoFoto ?? null)
       olvidarGeneracion()
     } catch (error) {
       if (!montado.current) return
@@ -290,6 +293,7 @@ export function useGenerarAnuncio() {
 
   return {
     solicitud,
+    avisoFoto,
     quitarOcasion,
     errores,
     opciones,

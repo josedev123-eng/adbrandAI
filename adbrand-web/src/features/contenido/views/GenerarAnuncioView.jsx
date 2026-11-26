@@ -44,6 +44,7 @@ function TarjetaOpcion({ opcion, eligiendoId, alElegir }) {
 export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }) {
   const {
     solicitud,
+    avisoFoto,
     quitarOcasion,
     errores,
     opciones,
@@ -176,7 +177,7 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
               <small className="campo-error">{errores.foto}</small>
             ) : (
               <small className="campo-ayuda">
-                Si tienes una foto de lo que quieres promocionar, las 4 opciones la usarán en vez de una imagen hecha por la IA.
+                Sube la foto de lo que promocionas. Se usa tal cual, o si en tu pedido dices dónde ponerlo (por ej. "mi torta en una fiesta"), la IA arma esa escena con tu producto en 2 de las opciones (planes de pago).
               </small>
             )}
           </div>
@@ -363,6 +364,11 @@ export default function GenerarAnuncioView({ irAPerfil, irAPlanes, irAMiCuenta }
             <h2>Elige tu opción favorita</h2>
             <p>Cada opción tiene un texto y un estilo de imagen distinto.</p>
           </div>
+          {avisoFoto && (
+            <p className="aviso aviso-info" role="status">
+              {avisoFoto}
+            </p>
+          )}
           <div className="opciones">
             {opciones.map((opcion) => (
               <TarjetaOpcion key={opcion.id} opcion={opcion} eligiendoId={eligiendoId} alElegir={elegir} />

@@ -102,6 +102,20 @@ describe('GenerarAnuncioView (Generar → Elegir)', () => {
     expect(screen.queryByRole('img', { name: 'Foto de tu producto' })).toBeNull()
   })
 
+  it('HU 67: si la escena con la foto no se pudo, explica que se usó la foto tal cual', async () => {
+    generarOpciones.mockResolvedValue({
+      generacionId: 7,
+      oferta: 'Mi torta en una fiesta',
+      redSocial: 'INSTAGRAM',
+      opciones: [1, 2, 3, 4].map((numero) => opcion(numero)),
+      avisoFoto: 'Usamos tu foto tal cual. Poner tu producto en una escena con IA es de los planes de pago.',
+    })
+    render(<GenerarAnuncioView />)
+    await pedirOpciones()
+
+    expect(await screen.findByText(/es de los planes de pago/)).toBeInTheDocument()
+  })
+
   it('una foto que no es JPG ni PNG se rechaza', async () => {
     render(<GenerarAnuncioView />)
     await userEvent.upload(screen.getByLabelText('Agregar una foto de tu producto'), new File(['x'], 'a.gif', { type: 'image/gif' }), {
